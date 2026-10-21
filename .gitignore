@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# Build artifacts
+*.so
+*.o
+*.cu.o
+
+# Local agent / editor state
+.opencode/
+.vscode/
+.idea/
+
+# Benchmark output
+bench/results/local/
+*.log
