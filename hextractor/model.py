@@ -50,10 +50,9 @@ class ExtractorTransformer(nn.Module):
         x = x + self.pos_embed[:T] * (self.d ** 0.5)             # Eq. 5
         x = self.drop(x)                                         # Eq. 7
         for n1, s1, n2, f in zip(self.norms1, self.sub1, self.norms2, self.ffn):
-            h = n1(x)
-            sub1_out = s1(h)
-            x = x + self.drop(sub1_out)                          # Eq. 18 (residual)
-            h = n2(x)
-            x = x + self.drop(f(h))                              # Eq. 19/20
+            sub1_out = s1(n1(x))                                 # Eqs. 9 + 10-17/23-28
+            x_in_sub2 = n2(self.drop(sub1_out) + x)              # Eq. 18
+            sub2_out = f(x_in_sub2)                              # Eq. 19
+            x = self.drop(sub2_out) + self.drop(sub1_out) + x    # Eq. 20 (two drops)
         x = self.final_norm(x)
         return self.head(x)                                      # Eq. 21

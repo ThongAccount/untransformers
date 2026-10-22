@@ -1,0 +1,21 @@
+[env] python=3.13.16 torch=2.11.0+cpu platform=Linux-6.6.122+-x86_64-with-glibc2.39
+...............................................................          [100%]
+63 passed, 1 skipped in 8.49s
+
+[m2 suite] pytest_rc=0
+[HE] seed=1 train_curve=[4.1622, 4.162, 4.1691, 4.1553, 4.162, 4.1631, 4.1593, 4.1642, 4.1598, 4.1624, 4.1634, 4.1598]
+[HE] seed=1 held_out_evals=[(4, 4.1612), (8, 4.1615), (12, 4.1621)]
+[HE] seed=2 train_curve=[4.1683, 4.1628, 4.1691, 4.1635, 4.1624, 4.1567, 4.1613, 4.1543, 4.162, 4.1589, 4.1552, 4.1698]
+[HE] seed=2 held_out_evals=[(4, 4.161), (8, 4.1614), (12, 4.162)]
+[HE] dispersion={4: {'mean': 4.1611, 'std': 0.0001, 'n': 2}, 8: {'mean': 4.1615, 'std': 0.0, 'n': 2}, 12: {'mean': 4.1621, 'std': 0.0001, 'n': 2}}
+[HE] mechanics_ok=True
+[attention-32h] seed=1 train_curve=[4.1621, 4.1621, 4.169, 4.1553, 4.162, 4.1631, 4.1593, 4.1642, 4.1597, 4.1625, 4.1633, 4.1598]
+[attention-32h] seed=1 held_out_evals=[(4, 4.1613), (8, 4.1616), (12, 4.1622)]
+[attention-32h] seed=2 train_curve=[4.1684, 4.1627, 4.1691, 4.1636, 4.1625, 4.1566, 4.1613, 4.1543, 4.162, 4.1589, 4.1552, 4.1698]
+[attention-32h] seed=2 held_out_evals=[(4, 4.161), (8, 4.1615), (12, 4.1621)]
+[attention-32h] dispersion={4: {'mean': 4.1611, 'std': 0.0001, 'n': 2}, 8: {'mean': 4.1615, 'std': 0.0001, 'n': 2}, 12: {'mean': 4.1622, 'std': 0.0001, 'n': 2}}
+[attention-32h] mechanics_ok=True
+DRY_RUN_DONE
+
+[m2 dry-run] rc=0
+exec-exit=0
