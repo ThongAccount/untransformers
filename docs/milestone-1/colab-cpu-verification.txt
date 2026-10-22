@@ -1,0 +1,6 @@
+[env] python=3.13.16 torch=2.11.0+cpu platform=Linux-6.6.122+-x86_64-with-glibc2.39
+.......................................                                  [100%]
+39 passed, 1 skipped in 5.53s
+
+[colab suite] pytest_rc=0
+exec-exit=0
