@@ -308,7 +308,7 @@ def _attention_incremental_mults(d: int, n_heads: int, T: int) -> int:
 # --------------------------------------------------------------------------
 def weight_traffic(cfg: TrainConfig) -> Dict:
     rows = {}
-    for arm in ("HE", "attention-32h"):
+    for arm in ("HE", "attention-32h", "attention-32h-sdpa"):
         model = build_model(arm, cfg)
         n_params = sum(p.numel() for p in model.parameters())
         param_bytes = n_params * 4                      # fp32
