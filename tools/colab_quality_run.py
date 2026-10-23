@@ -79,6 +79,7 @@ def main() -> int:
     arms = os.environ.get("ARMS", "HE,attention-32h").split(",")
     label = os.environ.get("LABEL", "pilot")
     out = os.environ.get("OUT", "/content/results.json")
+    ckpt_dir = os.environ.get("CHECKPOINT_DIR", "")
     eval_every = os.environ.get("EVAL_EVERY", "50")
     eval_batches = os.environ.get("EVAL_BATCHES", "8")
     train_seed = os.environ.get("TRAIN_SEED", "0")
@@ -90,6 +91,8 @@ def main() -> int:
            "--eval-every", eval_every, "--eval-batches", eval_batches,
            "--train-seed", train_seed, "--label", label, "--out", out,
            "--device", device]
+    if ckpt_dir:
+        cmd += ["--checkpoint-dir", ckpt_dir]
     if save_ckpt:
         cmd.append("--save-checkpoints")
 

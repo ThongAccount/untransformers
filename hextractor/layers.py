@@ -93,3 +93,42 @@ class AttentionSublayer(nn.Module):
 
     def n_params(self):
         return sum(p.numel() for p in self.parameters())
+
+
+class SDPAAttentionSublayer(nn.Module):
+    """Optimized attention baseline (Milestone 3): same math, same parameter
+    names and shapes as `AttentionSublayer`, but the attention core is
+    `torch.nn.functional.scaled_dot_product_attention` (flash / mem-efficient /
+    math kernels chosen by the runtime).
+
+    This is the "responsibly optimized attention baseline" the plan asks for:
+    the reference implementation above materialises the t x t score matrix,
+    this one asks the runtime for a fused kernel. Kernel choice depends on
+    the device and the shapes, so every measurement records which kernel the
+    runtime picked.
+
+    It is NOT part of the quality protocol — the quality arms stay exactly
+    `HE` and `attention-32h`.
+    """
+
+    def __init__(self, d, n_heads):
+        super().__init__()
+        assert d % n_heads == 0
+        self.d, self.n_heads, self.h = d, n_heads, d // n_heads
+        self.Wq = nn.Parameter(torch.empty(d, d))
+        self.Wk = nn.Parameter(torch.empty(d, d))
+        self.Wv = nn.Parameter(torch.empty(d, d))
+        self.Wo = nn.Parameter(torch.empty(d, d))
+
+    def forward(self, X):
+        t = X.shape[-2]
+        q = (X @ self.Wq).unflatten(-1, (self.n_heads, self.h)).transpose(-2, -3)
+        k = (X @ self.Wk).unflatten(-1, (self.n_heads, self.h)).transpose(-2, -3)
+        v = (X @ self.Wv).unflatten(-1, (self.n_heads, self.h)).transpose(-2, -3)
+        ctx = torch.nn.functional.scaled_dot_product_attention(
+            q, k, v, is_causal=True, scale=self.h ** -0.5)
+        ctx = ctx.transpose(-2, -3).flatten(-2)
+        return ctx @ self.Wo
+
+    def n_params(self):
+        return sum(p.numel() for p in self.parameters())

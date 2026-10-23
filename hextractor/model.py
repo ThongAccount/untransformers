@@ -5,7 +5,7 @@ sublayer-1. Used by T12 (determinism) and later milestones; no training here.
 import torch
 import torch.nn as nn
 
-from .layers import HESublayer, AttentionSublayer
+from .layers import HESublayer, AttentionSublayer, SDPAAttentionSublayer
 
 
 def make_sublayer1(arm, d, l, n_heads=32):
@@ -13,6 +13,9 @@ def make_sublayer1(arm, d, l, n_heads=32):
         return HESublayer(d, l, variant=arm)
     if arm == "attention-32h":
         return AttentionSublayer(d, n_heads=32)
+    if arm == "attention-32h-sdpa":
+        # Milestone 3 systems baseline only — same math, fused kernel.
+        return SDPAAttentionSublayer(d, n_heads=32)
     if arm == "attention-1h":
         return AttentionSublayer(d, n_heads=1)
     raise ValueError(f"unknown arm {arm!r}")

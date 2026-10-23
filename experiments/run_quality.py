@@ -172,8 +172,11 @@ def main() -> int:
         t0 = time.time()
         print(f"[{arm}] starting, seeds={args.seeds}, steps={args.steps}", flush=True)
         res = run_multi_seed_corpus(arm, cfg, args.seeds, args.steps, bundle,
-                                     train_seed=args.train_seed)
+                                     train_seed=args.train_seed,
+                                     checkpoint_dir=str(ckpt_dir) if args.save_checkpoints else None)
         res["wall_seconds"] = time.time() - t0
+        if args.save_checkpoints:
+            res["checkpoints"] = [str(ckpt_dir / f"{arm}_seed{s}.pt") for s in args.seeds]
         out["results"][arm] = res
         print(f"[{arm}] done in {res['wall_seconds']:.1f}s; "
               f"final held-out loss per seed: "

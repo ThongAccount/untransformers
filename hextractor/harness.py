@@ -14,6 +14,7 @@ D-13 gradient clipping OFF (paper silent).
 """
 
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Callable, Dict, Iterator, List, Optional, Tuple
 
 import torch
@@ -106,12 +107,18 @@ def held_out_loss(model: nn.Module, stream_factory: BatchStream,
 
 def train_one_seed(arm: str, cfg: TrainConfig, seed: int, steps: int,
                    train_stream: BatchStream, held_out_stream: BatchStream,
-                   log_every: Optional[int] = None) -> Dict:
+                   log_every: Optional[int] = None,
+                   save_path: Optional[str] = None) -> Dict:
     """One seed's trajectory: per-step train losses + held-out eval points.
 
     Returns plain data (curves only — no verdicts). Mechanics validated by
     tests/test_harness_mechanics.py; the same seed reproduces the run
     bit-exactly (determinism is a tested property, not a claim).
+
+    `save_path` (optional) writes a checkpoint carrying the arm, the seed, the
+    step count, the config, the eval points and the final held-out loss —
+    the paired quality checkpoint that Milestone 3 ties to its performance
+    numbers.
     """
     torch.manual_seed(seed)
     model = build_model(arm, cfg)
@@ -136,9 +143,18 @@ def train_one_seed(arm: str, cfg: TrainConfig, seed: int, steps: int,
         if (step + 1) % log_every == 0 or step == steps - 1:
             evals.append({"step": step + 1,
                           "held_out_loss": held_out_loss(model, held_out_stream, cfg)})
+    final = evals[-1]["held_out_loss"] if evals else None
+    if save_path is not None:
+        from dataclasses import asdict
+
+        Path(save_path).parent.mkdir(parents=True, exist_ok=True)
+        torch.save({"arm": arm, "seed": seed, "steps": steps,
+                    "config": asdict(cfg), "evals": evals,
+                    "final_held_out_loss": final,
+                    "state_dict": model.state_dict()}, save_path)
     return {"arm": arm, "seed": seed, "steps": steps,
             "train_curve": curve, "evals": evals,
-            "final_held_out_loss": evals[-1]["held_out_loss"] if evals else None}
+            "final_held_out_loss": final}
 
 
 def dispersion(runs: List[Dict]) -> Dict:
@@ -193,12 +209,21 @@ def corpus_stream_factory(bundle, cfg: TrainConfig, train_seed: int = 0,
 
 def run_multi_seed_corpus(arm: str, cfg: TrainConfig, seeds: List[int], steps: int,
                            bundle, train_seed: int = 0,
-                           log_every: Optional[int] = None) -> Dict:
-    """Multi-seed protocol on the pinned corpus. Curves only — no verdicts."""
+                           log_every: Optional[int] = None,
+                           checkpoint_dir: Optional[str] = None) -> Dict:
+    """Multi-seed protocol on the pinned corpus. Curves only — no verdicts.
+
+    `checkpoint_dir` (optional) writes one checkpoint per (arm, seed) — the
+    paired quality checkpoints Milestone 3 attaches to its performance rows.
+    """
     train_stream = corpus_stream_factory(bundle, cfg, train_seed=train_seed, held_out=False)
     held_out_stream = corpus_stream_factory(bundle, cfg, train_seed=train_seed, held_out=True)
-    runs = [train_one_seed(arm, cfg, s, steps, train_stream, held_out_stream,
-                           log_every=log_every)
-            for s in seeds]
+    runs = []
+    for s in seeds:
+        save_path = None
+        if checkpoint_dir is not None:
+            save_path = str(Path(checkpoint_dir) / f"{arm}_seed{s}.pt")
+        runs.append(train_one_seed(arm, cfg, s, steps, train_stream, held_out_stream,
+                                   log_every=log_every, save_path=save_path))
     return {"arm": arm, "seeds": seeds, "train_seed": train_seed, "steps": steps,
             "runs": runs, "dispersion": dispersion(runs)}
