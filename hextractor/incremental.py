@@ -24,7 +24,7 @@ from typing import List, Optional
 
 import torch
 
-from .layers import AttentionSublayer, HESublayer
+from .layers import AttentionSublayer, HESublayer, SDPAAttentionSublayer
 from .model import ExtractorTransformer
 
 
@@ -58,7 +58,7 @@ class ModelCache:
     def for_model(cls, model: ExtractorTransformer) -> "ModelCache":
         states = []
         for sub in model.sub1:
-            if isinstance(sub, AttentionSublayer):
+            if isinstance(sub, (AttentionSublayer, SDPAAttentionSublayer)):
                 states.append(AttentionState())
             elif isinstance(sub, HESublayer):
                 states.append(HEState())
@@ -159,6 +159,52 @@ def attention_forward_incremental(sub: AttentionSublayer, X: torch.Tensor,
 # --------------------------------------------------------------------------
 # model-level incremental forward
 # --------------------------------------------------------------------------
+def sdpa_attention_forward_incremental(sub: SDPAAttentionSublayer, X: torch.Tensor,
+                                       state: AttentionState, start: int) -> torch.Tensor:
+    """Optimized (SDPA) attention sublayer over a chunk of NEW positions.
+
+    Same function as `attention_forward_incremental` — the cache holds the same
+    K/V tensors and the softmax runs over the same set of visible columns —
+    but the attention *core* of a single new token is dispatched to PyTorch's
+    fused `scaled_dot_product_attention` kernel.
+
+    Why the chunk case is not fused: PyTorch's SDPA exposes an `is_causal`
+    mask that is aligned to the top-left of the (query, key) matrix, and it has
+    no offset-causal variant. For a chunk of new positions the visible columns
+    are "all cached columns + a causal triangle inside the chunk", which the
+    explicit masked formulation expresses exactly. The chunk case is the prompt
+    prefill (not the timed decode step), so the fused kernel is used exactly
+    where the decode latency is measured.
+    """
+    B, T, _ = X.shape
+    H, h = sub.n_heads, sub.h
+    q = (X @ sub.Wq).unflatten(-1, (H, h)).transpose(-2, -3)      # [B,H,T,h]
+    k = (X @ sub.Wk).unflatten(-1, (H, h)).transpose(-2, -3)
+    v = (X @ sub.Wv).unflatten(-1, (H, h)).transpose(-2, -3)
+
+    if state.k is None:
+        state.k, state.v = k, v
+    else:
+        state.k = torch.cat([state.k, k], dim=2)
+        state.v = torch.cat([state.v, v], dim=2)
+
+    if T == 1:
+        # The single new token sees every cached column -> no mask needed.
+        ctx = torch.nn.functional.scaled_dot_product_attention(
+            q, state.k, state.v, is_causal=False, scale=h ** -0.5)
+    else:
+        scores = q @ state.k.transpose(-1, -2) / (h ** 0.5)       # [B,H,T,Ttot]
+        Ttot = state.k.shape[2]
+        if start < Ttot:
+            mask = torch.zeros(T, Ttot, dtype=torch.bool, device=X.device)
+            mask[:, start:] = torch.ones(T, Ttot - start, dtype=torch.bool,
+                                         device=X.device).triu(diagonal=1)
+            scores = scores.masked_fill(mask, float("-inf"))
+        ctx = scores.softmax(dim=-1) @ state.v
+    ctx = ctx.transpose(-2, -3).flatten(-2)
+    return ctx @ sub.Wo
+
+
 @torch.no_grad()
 def model_forward_incremental(model: ExtractorTransformer, ids: torch.Tensor,
                               cache: ModelCache) -> torch.Tensor:
@@ -180,7 +226,9 @@ def model_forward_incremental(model: ExtractorTransformer, ids: torch.Tensor,
                                             model.norms2, model.ffn)):
         n1x = n1(x)
         st = cache.layers[i]
-        if isinstance(s1, AttentionSublayer):
+        if isinstance(s1, SDPAAttentionSublayer):
+            sub1_out = sdpa_attention_forward_incremental(s1, n1x, st, start)
+        elif isinstance(s1, AttentionSublayer):
             sub1_out = attention_forward_incremental(s1, n1x, st, start)
         else:
             sub1_out = he_forward_incremental(s1, n1x, st, start)

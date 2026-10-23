@@ -2,9 +2,21 @@
 """Gate check for the Milestone-3 systems comparison (G6 / G7).
 
 Verifies that a systems-results JSON measured everything the milestone
-requires, on both arms, at every context length, with the conditions recorded.
-It does not judge the numbers. Exit 0 prints SYSTEMS_OK (and PAIRED_QUALITY_OK
-when --require-paired-quality is given).
+requires, on every arm (including the optimized SDPA baseline), at every
+context length, with the conditions recorded. It does not judge the numbers.
+
+Since protocol revision 2 (`docs/milestone-3/PROTOCOL.md` §4.3, S1–S10) the
+check also requires the *evidence* the write-up depends on:
+
+  * the optimized baseline `attention-32h-sdpa` is timed in every block;
+  * every row carries its units and its quality level (S8, S10);
+  * the run order is palindromic and every arm has an A/A null (S2);
+  * the numerics flags are recorded (S5);
+  * the traffic rows are labelled analytic and carry their formulas (S7);
+  * the decode rows separate the first token from the steady state (S4).
+
+Exit 0 prints SYSTEMS_OK (and PAIRED_QUALITY_OK when --require-paired-quality
+is given).
 
 Usage:
     python tools/verify/check_systems_results.py --file results/systems.json
@@ -20,12 +32,33 @@ import math
 import sys
 from pathlib import Path
 
-SCHEMA = "untransformers-systems-run/1"
-ARMS = ("HE", "attention-32h")
+SCHEMA = "untransformers-systems-run/2"
+ARMS = ("HE", "attention-32h", "attention-32h-sdpa")
+QUALITY_ARMS = ("HE", "attention-32h")
 
 
 def _finite(x) -> bool:
-    return isinstance(x, (int, float)) and math.isfinite(x)
+    return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)
+
+
+def _has_stats(row: Dict, key: str) -> bool:
+    st = row.get(key) or {}
+    return (_finite(st.get("median")) and st.get("median") > 0
+            and _finite(st.get("n")) and st.get("n", 0) > 0
+            and _finite(st.get("p10")) and _finite(st.get("p90"))
+            and _finite(st.get("min")))
+
+
+def _quality_block_ok(row: Dict) -> bool:
+    """A row must say which quality level it was measured at (S8)."""
+    q = row.get("quality")
+    if not isinstance(q, dict):
+        return False
+    if q.get("loaded"):
+        return (_finite(q.get("final_held_out_loss"))
+                and isinstance(q.get("steps"), int) and q.get("steps", 0) > 0
+                and bool(q.get("quality_level")))
+    return bool(q.get("quality_level")) and "initialisation" in q["quality_level"]
 
 
 def main() -> int:
@@ -61,101 +94,166 @@ def main() -> int:
     notes.append(f"device={env.get('device')} gpu={env.get('gpu', '-')} "
                  f"torch={env.get('torch')} threads={env.get('torch_threads')}")
 
+    # --- S5: numerics settings must be recorded ----------------------------
+    num = env.get("numerics") or {}
+    for key in ("allow_tf32_matmul", "allow_tf32_cudnn", "float32_matmul_precision",
+                "cudnn_benchmark", "cudnn_deterministic"):
+        check(key in num, f"environment.numerics.{key} missing (S5)")
+    check(env.get("git_commit"), "environment.git_commit missing (the run must name its code)")
+    check(bool(env.get("arms")), "environment.arms missing")
+
     cfg = data.get("config", {}) or {}
     for key in ("d", "l", "n_layers", "ffn_width", "vocab", "batch_size",
-                "n_heads", "trials", "warmup", "gen_tokens"):
+                "n_heads", "trials", "warmup", "gen_tokens", "decode_trials",
+                "order_schedule"):
         check(key in cfg, f"config.{key} missing")
     l = cfg.get("l")
     batch = cfg.get("batch_size")
     d = cfg.get("d")
+    check(isinstance(cfg.get("trials"), int) and cfg.get("trials", 0) >= 10,
+          f"config.trials={cfg.get('trials')} is below the S3 minimum of 10")
+    check(isinstance(cfg.get("decode_trials"), int) and cfg.get("decode_trials", 0) >= 5,
+          f"config.decode_trials={cfg.get('decode_trials')} is below the S3 minimum of 5")
+    sched = cfg.get("order_schedule") or []
+    check(sched == list(ARMS) + list(reversed(ARMS)),
+          f"config.order_schedule {sched} is not the palindromic ABBA order {list(ARMS) + list(reversed(ARMS))}")
 
-    # --- A. training step ------------------------------------------------
+    # --- A. training step --------------------------------------------------
     ts_rows = data.get("training_step", []) or []
     ts_by_arm = {r.get("arm"): r for r in ts_rows}
     for arm in ARMS:
         row = ts_by_arm.get(arm)
         if row is None:
-            failures.append(f"training_step: no row for arm {arm}")
+            failures.append(f"training_step: no row for arm {arm} (S1: the optimized "
+                            f"baseline must be timed)")
             continue
-        med = (row.get("step_seconds") or {}).get("median")
-        check(_finite(med) and med > 0, f"training_step[{arm}]: median step time invalid ({med})")
+        check(_has_stats(row, "step_seconds"),
+              f"training_step[{arm}]: median/p10/p90/min/n missing or invalid (S3)")
         check(row.get("tokens_per_step") == (batch * l if batch and l else None),
               f"training_step[{arm}]: tokens_per_step {row.get('tokens_per_step')} "
               f"!= batch*l")
         check(_finite(row.get("tokens_per_second")) and row.get("tokens_per_second") > 0,
               f"training_step[{arm}]: tokens_per_second invalid")
         check("memory" in row and row["memory"], f"training_step[{arm}]: no memory row")
+        check(bool((row.get("memory") or {}).get("scope")),
+              f"training_step[{arm}]: memory row has no scope label (S6)")
+        check(bool(row.get("units")), f"training_step[{arm}]: no units (S10)")
+        check(_quality_block_ok(row),
+              f"training_step[{arm}]: no quality level attached to the timed model (S8)")
+        check((row.get("slots") or 0) >= 2,
+              f"training_step[{arm}]: only {row.get('slots')} measurement slot(s) — "
+              f"the A/A null needs the arm measured twice (S2)")
+        med = (row.get("step_seconds") or {}).get("median")
         notes.append(f"training_step[{arm}]: {med:.4f}s/step, "
-                     f"{row.get('tokens_per_second')} tok/s, params={row.get('n_params')}")
+                     f"{row.get('tokens_per_second')} tok/s, params={row.get('n_params')}, "
+                     f"quality={'checkpoint' if (row.get('quality') or {}).get('loaded') else 'init'}")
     if all(a in ts_by_arm for a in ARMS):
-        check(ts_by_arm["HE"].get("n_params") == ts_by_arm["attention-32h"].get("n_params"),
-              "training_step: the two arms do not have the same parameter count")
+        counts = {a: ts_by_arm[a].get("n_params") for a in ARMS}
+        check(len(set(counts.values())) == 1,
+              f"training_step: the arms do not have the same parameter count: {counts}")
 
-    # --- B. prefill ------------------------------------------------------
+    # --- S2: order effect / A/A null ---------------------------------------
+    order = data.get("order_effect", {}) or {}
+    for block in ("training_step", "prefill", "incremental_decode"):
+        oe = order.get(block) or {}
+        check(bool(oe), f"order_effect.{block} missing (S2)")
+        if not oe:
+            continue
+        aa = oe.get("aa_null") or {}
+        for arm in ARMS:
+            entry = aa.get(arm)
+            if not entry:
+                failures.append(f"order_effect.{block}: no A/A null for arm {arm} (S2)")
+                continue
+            check(_finite(entry.get("difference_seconds")),
+                  f"order_effect.{block}[{arm}]: A/A difference missing")
+        check(_finite(oe.get("drift_floor_seconds")),
+              f"order_effect.{block}: drift floor missing (S2)")
+    notes.append("order_effect drift floors: " + ", ".join(
+        f"{b}={(order.get(b) or {}).get('drift_floor_seconds')}"
+        for b in ("training_step", "prefill", "incremental_decode")))
+
+    # --- B. prefill --------------------------------------------------------
     pre = data.get("prefill", []) or []
-    pre_by_arm = {}
+    pre_by_arm: Dict[str, Dict] = {}
     for r in pre:
         pre_by_arm.setdefault(r.get("arm"), {})[r.get("context_tokens")] = r
     for arm in ARMS:
         rows = pre_by_arm.get(arm)
         if not rows:
-            failures.append(f"prefill: no rows for arm {arm}")
+            failures.append(f"prefill: no rows for arm {arm} (S1)")
             continue
         for ctx, row in rows.items():
-            lat = (row.get("latency") or {}).get("median")
-            check(_finite(lat) and lat > 0, f"prefill[{arm}@{ctx}]: median latency invalid")
+            check(_has_stats(row, "latency"),
+                  f"prefill[{arm}@{ctx}]: median/p10/p90/min/n missing or invalid")
             check("memory" in row and row["memory"], f"prefill[{arm}@{ctx}]: no memory row")
+            check(bool((row.get("memory") or {}).get("scope")),
+                  f"prefill[{arm}@{ctx}]: memory row has no scope label (S6)")
+            check(bool(row.get("units")), f"prefill[{arm}@{ctx}]: no units (S10)")
+            check(_quality_block_ok(row),
+                  f"prefill[{arm}@{ctx}]: no quality level attached (S8)")
             if l:
                 check(ctx + cfg.get("gen_tokens", 0) <= l,
                       f"prefill[{arm}@{ctx}]: context+gen exceeds the positional table l={l}")
         notes.append(f"prefill[{arm}]: contexts {sorted(rows)}")
     if all(a in pre_by_arm for a in ARMS):
         check(set(pre_by_arm["HE"]) == set(pre_by_arm["attention-32h"]),
-              "prefill: the two arms were not measured at the same context lengths")
+              "prefill: HE and attention-32h were not measured at the same context lengths")
+        check(set(pre_by_arm["HE"]) == set(pre_by_arm["attention-32h-sdpa"]),
+              "prefill: HE and attention-32h-sdpa were not measured at the same context lengths")
 
-    # --- C. incremental decoding ----------------------------------------
+    # --- C. incremental decoding -------------------------------------------
     inc = data.get("incremental_decode", []) or []
-    inc_by_arm = {}
+    inc_by_arm: Dict[str, Dict] = {}
     for r in inc:
         inc_by_arm.setdefault(r.get("arm"), {})[r.get("context_tokens")] = r
     for arm in ARMS:
         rows = inc_by_arm.get(arm)
         if not rows:
-            failures.append(f"incremental_decode: no rows for arm {arm}")
+            failures.append(f"incremental_decode: no rows for arm {arm} (S1)")
             continue
         for ctx, row in rows.items():
-            per = row.get("per_token_seconds") or {}
-            check(_finite(per.get("median")) and per.get("median") > 0,
-                  f"incremental_decode[{arm}@{ctx}]: median per-token time invalid")
-            check(_finite(per.get("samples")) and per.get("samples", 0) > 0,
-                  f"incremental_decode[{arm}@{ctx}]: no timing samples")
+            check(_has_stats(row, "steady_state_per_token_seconds"),
+                  f"incremental_decode[{arm}@{ctx}]: steady-state per-token stats missing (S4)")
+            check(_has_stats(row, "first_token_seconds"),
+                  f"incremental_decode[{arm}@{ctx}]: first-token stats missing (S4)")
             check(_finite(row.get("tokens_per_second")) and row.get("tokens_per_second") > 0,
                   f"incremental_decode[{arm}@{ctx}]: tokens_per_second invalid")
             check("cache_bytes_at_prompt" in row,
                   f"incremental_decode[{arm}@{ctx}]: cache bytes missing")
+            check(bool(row.get("units")), f"incremental_decode[{arm}@{ctx}]: no units (S10)")
+            check(_quality_block_ok(row),
+                  f"incremental_decode[{arm}@{ctx}]: no quality level attached (S8)")
         notes.append(f"incremental_decode[{arm}]: contexts {sorted(rows)}")
     if all(a in inc_by_arm for a in ARMS):
         check(set(inc_by_arm["HE"]) == set(inc_by_arm["attention-32h"]),
-              "incremental_decode: the two arms were not measured at the same context lengths")
+              "incremental_decode: HE and attention-32h were not measured at the same contexts")
+        check(set(inc_by_arm["HE"]) == set(inc_by_arm["attention-32h-sdpa"]),
+              "incremental_decode: HE and attention-32h-sdpa were not measured at the same contexts")
 
-    # --- D. sublayer-1 scaling ------------------------------------------
+    # --- D. sublayer-1 scaling ---------------------------------------------
     sub = data.get("sublayer_scaling", []) or []
-    sub_by_arm = {}
+    sub_by_arm: Dict[str, Dict] = {}
     for r in sub:
         sub_by_arm.setdefault(r.get("arm"), {})[r.get("context_tokens")] = r
     for arm in ARMS:
         rows = sub_by_arm.get(arm)
         if not rows:
-            failures.append(f"sublayer_scaling: no rows for arm {arm}")
+            failures.append(f"sublayer_scaling: no rows for arm {arm} (S1)")
             continue
         check(len(rows) >= 4,
               f"sublayer_scaling[{arm}]: only {len(rows)} context lengths")
         for ctx, row in rows.items():
-            med = (row.get("per_token_seconds") or {}).get("median")
-            check(_finite(med) and med > 0,
-                  f"sublayer_scaling[{arm}@{ctx}]: median per-token time invalid")
+            check(_has_stats(row, "per_token_seconds"),
+                  f"sublayer_scaling[{arm}@{ctx}]: median/p10/p90/min/n missing (S3)")
             check(_finite(row.get("state_bytes_per_layer")),
                   f"sublayer_scaling[{arm}@{ctx}]: state bytes missing")
+            check("analytic" in (row.get("state_bytes_label") or ""),
+                  f"sublayer_scaling[{arm}@{ctx}]: state bytes are not labelled analytic (S7)")
+            check(bool(row.get("state_bytes_formula")),
+                  f"sublayer_scaling[{arm}@{ctx}]: state bytes carry no formula (S7)")
+            check(row.get("scope") == "sublayer-1",
+                  f"sublayer_scaling[{arm}@{ctx}]: scope label missing (S9)")
         notes.append(f"sublayer_scaling[{arm}]: contexts {sorted(rows)}")
     if "HE" in sub_by_arm and "attention-32h" in sub_by_arm:
         he_states = {c: r.get("state_bytes_per_layer") for c, r in sub_by_arm["HE"].items()}
@@ -170,12 +268,12 @@ def main() -> int:
             check(he_states[first] == he_states[last],
                   "sublayer_scaling[HE]: state size changed with context")
 
-    # --- E. weight traffic ----------------------------------------------
+    # --- E. traffic ---------------------------------------------------------
     wt = data.get("weight_traffic", {}) or {}
     for arm in ARMS:
         row = wt.get(arm)
         if row is None:
-            failures.append(f"weight_traffic: no row for arm {arm}")
+            failures.append(f"weight_traffic: no row for arm {arm} (S1)")
             continue
         check(_finite(row.get("parameter_bytes_fp32")) and row.get("parameter_bytes_fp32", 0) > 0,
               f"weight_traffic[{arm}]: parameter bytes invalid")
@@ -183,15 +281,39 @@ def main() -> int:
               f"weight_traffic[{arm}]: training-step traffic missing")
         check(_finite(row.get("decode_step_parameter_bytes_read")),
               f"weight_traffic[{arm}]: decode-step traffic missing")
+        check("analytic" in (row.get("label") or ""),
+              f"weight_traffic[{arm}]: row is not labelled analytic (S7)")
+        check(bool(row.get("parameter_bytes_formula"))
+              and bool(row.get("training_step_parameter_bytes_formula"))
+              and bool(row.get("decode_step_parameter_bytes_formula")),
+              f"weight_traffic[{arm}]: traffic rows carry no formulas (S7)")
     if all(a in wt for a in ARMS):
         check(wt["HE"].get("n_params") == wt["attention-32h"].get("n_params"),
-              "weight_traffic: the two arms do not carry the same parameter count")
+              "weight_traffic: HE and attention-32h do not carry the same parameter count")
         notes.append(f"weight_traffic: params={wt['HE'].get('n_params')} per arm")
 
-    # --- F. paired quality ----------------------------------------------
+    stt = data.get("state_traffic", {}) or {}
+    for arm in ARMS:
+        row = stt.get(arm)
+        if row is None:
+            failures.append(f"state_traffic: no row for arm {arm} (S7)")
+            continue
+        check("analytic" in (row.get("label") or ""),
+              f"state_traffic[{arm}]: row is not labelled analytic (S7)")
+        check(bool(row.get("state_bytes_per_layer_formula")),
+              f"state_traffic[{arm}]: no formula (S7)")
+        check(bool(row.get("per_context")),
+              f"state_traffic[{arm}]: no per-context rows (S7)")
+    if "HE" in stt and "attention-32h" in stt:
+        check(stt["HE"].get("grows_with_context") is False,
+              "state_traffic[HE]: HE's per-token state is flat, not growing")
+        check(stt["attention-32h"].get("grows_with_context") is True,
+              "state_traffic[attention-32h]: the KV cache grows with the context")
+
+    # --- F. paired quality --------------------------------------------------
     paired = data.get("paired_quality", {}) or {}
     if args.require_paired_quality:
-        for arm in ARMS:
+        for arm in QUALITY_ARMS:
             seeds = paired.get(arm)
             if not seeds:
                 failures.append(f"paired_quality: no checkpoints for arm {arm}")
@@ -201,11 +323,11 @@ def main() -> int:
                       f"paired_quality[{arm} seed {seed}]: final held-out loss missing")
                 check(isinstance(row.get("steps"), int) and row.get("steps", 0) > 0,
                       f"paired_quality[{arm} seed {seed}]: steps missing")
-        if all(a in paired for a in ARMS):
+        if all(a in paired for a in QUALITY_ARMS):
             check(set(paired["HE"]) == set(paired["attention-32h"]),
                   "paired_quality: the two arms do not carry the same seeds")
         notes.append("paired_quality seeds: " +
-                     ", ".join(f"{a}={sorted(paired.get(a, {}))}" for a in ARMS))
+                     ", ".join(f"{a}={sorted(paired.get(a, {}))}" for a in QUALITY_ARMS))
 
     for note in notes:
         print(f"[info] {note}")

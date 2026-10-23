@@ -10,12 +10,16 @@ These checks are the pre-condition for quoting SDPA numbers at all:
   1. identical init — the shared parameters are drawn first and the
      sublayer-1 parameters have the same names, shapes and draw order, so
      the two arms start bit-identical under the same seed;
-  2. identical forward — same logits within fp32 tolerance.
+  2. identical forward — same logits within fp32 tolerance;
+  3. identical incremental decode — the cached SDPA path reproduces the full
+     forward for every position, so the decode latency it reports is the
+     latency of the same function the reference arm decodes.
 """
 
 import torch
 
 from hextractor.harness import TrainConfig, build_model
+from hextractor.incremental import ModelCache, model_forward_incremental
 from hextractor.init import apply_init_policy
 
 
@@ -69,3 +73,53 @@ def test_sdpa_arm_is_causal():
         out = model(perturbed)
     assert torch.equal(out[:, :8], base[:, :8])
     assert not torch.equal(out[:, 8:], base[:, 8:])
+
+
+def test_sdpa_incremental_decode_matches_full_forward():
+    """The cached SDPA decode must reproduce the full forward, position by position.
+
+    The systems leg times the single-token decode step with the fused kernel
+    and the prompt with the explicit masked formulation; this test is what
+    makes that legitimate — both paths compute the same function.
+    """
+    cfg = _cfg()
+    model = build_model("attention-32h-sdpa", cfg).eval()
+    apply_init_policy(model, seed=11)
+    torch.manual_seed(7)
+    ids = torch.randint(0, cfg.vocab, (1, 24))
+
+    with torch.no_grad():
+        full = model(ids)
+        cache = ModelCache.for_model(model)
+        stepwise = []
+        for t in range(ids.shape[1]):
+            stepwise.append(model_forward_incremental(model, ids[:, t:t + 1], cache))
+        incremental = torch.cat(stepwise, dim=1)
+
+    assert incremental.shape == full.shape
+    diff = (incremental - full).abs().max().item()
+    scale = max(1.0, full.abs().max().item())
+    assert diff <= 1e-5 * scale, f"max abs diff {diff} (scale {scale})"
+
+
+def test_sdpa_incremental_decode_matches_reference_arm():
+    """The two attention arms must decode to the same numbers."""
+    cfg = _cfg()
+    ref = build_model("attention-32h", cfg).eval()
+    sdpa = build_model("attention-32h-sdpa", cfg).eval()
+    apply_init_policy(ref, seed=11)
+    apply_init_policy(sdpa, seed=11)
+    torch.manual_seed(9)
+    ids = torch.randint(0, cfg.vocab, (1, 20))
+
+    outs = []
+    for model in (ref, sdpa):
+        with torch.no_grad():
+            cache = ModelCache.for_model(model)
+            step = [model_forward_incremental(model, ids[:, t:t + 1], cache)
+                    for t in range(ids.shape[1])]
+        outs.append(torch.cat(step, dim=1))
+
+    diff = (outs[0] - outs[1]).abs().max().item()
+    scale = max(1.0, outs[0].abs().max().item())
+    assert diff <= 1e-5 * scale, f"max abs diff {diff} (scale {scale})"
