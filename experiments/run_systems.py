@@ -213,6 +213,7 @@ def measure_incremental_decode(arm: str, cfg: TrainConfig, device: torch.device,
             "arm": arm,
             "context_tokens": T,
             "generated_tokens": gen_tokens,
+            "max_positions": cfg.l,
             "per_token_seconds": {
                 "median": _median(step_times),
                 "mean": float(sum(step_times) / len(step_times)) if step_times else None,
@@ -404,16 +405,20 @@ def main() -> int:
         out["training_step"].append(
             measure_training_step(arm, cfg, device, args.trials, args.warmup))
 
+    # The paper shape carries a positional table of `l` rows, so the total
+    # number of positions (prompt + generated) cannot exceed l. Contexts are
+    # filtered accordingly; the cap is reported with every row.
+    model_contexts = [c for c in (1, 8, 32, 64, 96, 112, 128)
+                      if c + args.gen_tokens <= cfg.l]
     for arm in args.arms:
         print(f"[prefill] {arm}", flush=True)
-        out["prefill"] += measure_prefill(arm, cfg, device,
-                                          [1, 8, 32, 64, 96, 128],
+        out["prefill"] += measure_prefill(arm, cfg, device, model_contexts,
                                           args.trials, args.warmup)
 
     for arm in args.systems_arms:
         print(f"[incremental-decode] {arm}", flush=True)
         out["incremental_decode"] += measure_incremental_decode(
-            arm, cfg, device, [1, 8, 32, 64, 96, 128], args.gen_tokens,
+            arm, cfg, device, model_contexts, args.gen_tokens,
             max(1, args.trials // 2), args.warmup)
 
     print("[sublayer-scaling] HE attention-32h", flush=True)
