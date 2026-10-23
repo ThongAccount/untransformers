@@ -43,14 +43,25 @@ def main() -> int:
     os.chdir(DEST)
     log(f"[clone] HEAD={subprocess.run(['git','rev-parse','HEAD'], capture_output=True, text=True).stdout.strip()}")
 
-    r = subprocess.run([sys.executable, "-m", "pip", "install", "-q", "pytest", "tokenizers", "numpy"],
-                       text=True, capture_output=True)
-    log(f"[pip] rc={r.returncode} {r.stderr[-400:]}")
+    missing = []
+    for mod, pkg in (("pytest", "pytest"), ("tokenizers", "tokenizers"), ("numpy", "numpy")):
+        try:
+            __import__(mod)
+        except Exception:  # noqa: BLE001
+            missing.append(pkg)
+    if missing:
+        # Install only what is absent: upgrading numpy underneath torch breaks it.
+        r = subprocess.run([sys.executable, "-m", "pip", "install", "-q", *missing],
+                           text=True, capture_output=True)
+        log(f"[pip] installed={missing} rc={r.returncode} {r.stderr[-400:]}")
+    else:
+        log("[pip] all deps present; nothing installed")
 
     try:
         import torch
         log(f"[env] torch={torch.__version__} cuda={torch.version.cuda} "
-            f"cuda_available={torch.cuda.is_available()}")
+            f"cuda_available={torch.cuda.is_available()} "
+            f"threads={torch.get_num_threads()}")
         if torch.cuda.is_available():
             log(f"[env] gpu={torch.cuda.get_device_name(0)}")
     except Exception as exc:  # noqa: BLE001

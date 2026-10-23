@@ -159,8 +159,18 @@ def main() -> int:
     if args.save_checkpoints:
         ckpt_dir.mkdir(parents=True, exist_ok=True)
 
+    out_path = Path(args.out)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    def flush_results() -> None:
+        """Write partial results after every arm so a session killed mid-sweep
+        still leaves the completed arms on disk."""
+        out["updated_utc"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        out_path.write_text(json.dumps(out, indent=2) + "\n", encoding="utf-8")
+
     for arm in args.arms:
         t0 = time.time()
+        print(f"[{arm}] starting, seeds={args.seeds}, steps={args.steps}", flush=True)
         res = run_multi_seed_corpus(arm, cfg, args.seeds, args.steps, bundle,
                                      train_seed=args.train_seed)
         res["wall_seconds"] = time.time() - t0
@@ -168,15 +178,14 @@ def main() -> int:
         print(f"[{arm}] done in {res['wall_seconds']:.1f}s; "
               f"final held-out loss per seed: "
               f"{ {r['seed']: r['final_held_out_loss'] for r in res['runs']} }", flush=True)
+        flush_results()
 
     if len(args.arms) == 2:
         out["paired_final"] = paired_stats(out["results"][args.arms[0]],
                                            out["results"][args.arms[1]])
         print(f"[paired] {json.dumps(out['paired_final'], indent=2)}", flush=True)
 
-    out_path = Path(args.out)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(out, indent=2) + "\n", encoding="utf-8")
+    flush_results()
     print(f"results written: {out_path}", flush=True)
     return 0
 
