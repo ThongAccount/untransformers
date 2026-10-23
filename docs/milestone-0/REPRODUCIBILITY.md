@@ -71,6 +71,14 @@ unpublished book list and ranking.
 **Decision needed from the user before Milestone 1** (Option A assumed in the
 code; nothing trains until sign-off).
 
+> **Decision (closed 2026-10-23, user-approved):** Option A. The snapshot is
+> built and committed: bookshelf 20, all 317 ebook IDs sorted ascending by
+> numeric ebook ID, first **100**; per-book SHA-256 for the raw download and
+> the cleaned file; the shelf listing itself is hashed and snapshotted; the
+> BPE tokenizer (vocab 5000) and the frozen 9,514,186-token array are
+> committed with their SHA-256. See `docs/milestone-2/CORPUS.md` and
+> `data/README.md`. Deviations D-01, D-19, D-20, D-21 are logged.
+
 ## 4. Tokenizer pinning
 
 - HF `tokenizers` library, BPE, **vocab_size = 5000** **[P]**. Version recorded

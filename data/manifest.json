@@ -1,0 +1,1756 @@
+{
+  "schema": "untransformers-corpus-manifest/1",
+  "created_utc": "2026-10-23T14:50:43+00:00",
+  "source": "Project Gutenberg",
+  "shelf": {
+    "id": 20,
+    "name": "Children's Literature",
+    "url": "https://www.gutenberg.org/ebooks/bookshelf/20",
+    "listing_sha256": "7fa705420b31660fd41240b58b46562c564364f2a097f7bd5a16d3c9dfc34591",
+    "books_in_shelf": 317
+  },
+  "selection_rule": "All ebook IDs of bookshelf 20 at snapshot time, sorted ascending by numeric ebook ID, first 100.",
+  "preprocessing": "UTF-8 decode, CRLF->LF, standard PG '*** START OF ... ***' / '*** END OF ... ***' header and footer blocks removed, body stripped of leading/trailing newlines, trailing newline added.",
+  "counts": {
+    "books": 100,
+    "bytes_clean_total": 32900247,
+    "chars_total": 32441249,
+    "books_with_boilerplate_stripped": 100
+  },
+  "books": [
+    {
+      "ebook_id": 11,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/11/pg11.txt",
+      "file": "00011.txt",
+      "bytes_raw": 174311,
+      "sha256_raw": "01b38ea4c710a84bc18d0bd41271a5a1a92b94e97b2812f4dece97d4a694725e",
+      "bytes_clean": 151095,
+      "sha256_clean": "b44b499274ef98e0bc12c190ee08d9c63480b7c96946101a540a0cb24b3a944c",
+      "chars": 144600,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 12,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/12/pg12.txt",
+      "file": "00012.txt",
+      "bytes_raw": 196534,
+      "sha256_raw": "e40a38f5da841f9fb6acc557355c447b7c2ccb56a208caf5fcf2b05081f14d42",
+      "bytes_clean": 172680,
+      "sha256_clean": "b325755088909c009cf8fd0df6c4179d24a0730aceb15f3411616bfb95f05b3d",
+      "chars": 164251,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 13,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/13/pg13.txt",
+      "file": "00013.txt",
+      "bytes_raw": 54952,
+      "sha256_raw": "30d6d0a4fa246393ba85df5fa4fb3d0358bdf3f4784a8d0ebb96547275bc4f74",
+      "bytes_clean": 34194,
+      "sha256_clean": "9e32692625d581c9f0e2850b6431c4d7f1ff881129d348b3e9a4051fe500d6a1",
+      "chars": 33602,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 16,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/16/pg16.txt",
+      "file": "00016.txt",
+      "bytes_raw": 288769,
+      "sha256_raw": "6b08714281fe38266a756741e4c62915cda7536c2f78cca501f7fd53f3f445ae",
+      "bytes_clean": 262746,
+      "sha256_clean": "f093a7678a91786d3d4b22cbf82f16f9ddb917939db0c4b102a4c90fcf855240",
+      "chars": 255584,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 19,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/19/pg19.txt",
+      "file": "00019.txt",
+      "bytes_raw": 215771,
+      "sha256_raw": "d3f9f0ce63af1c4dc56f80ab32c1c544a20ae879247e137e7619e392ff87975f",
+      "bytes_clean": 189538,
+      "sha256_clean": "a29b95d579f9046aecc9a9e8b10a07d6cf8de6becd4e291e2f06dfcdbeea1e16",
+      "chars": 187546,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 41,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/41/pg41.txt",
+      "file": "00041.txt",
+      "bytes_raw": 90896,
+      "sha256_raw": "6847c02f49c9ff8a5e2a0e8f49842bf3bffc7f5a87216c895a6b64f26ecf9353",
+      "bytes_clean": 69928,
+      "sha256_clean": "14dfbab6784099770a04cfc20b67213929595d47078f14143980e0f87b4e1338",
+      "chars": 69759,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 45,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/45/pg45.txt",
+      "file": "00045.txt",
+      "bytes_raw": 606693,
+      "sha256_raw": "89a5e9fb2e0bb44562a969785385366f94e1da736aebee7d9cdf459eb0b5f9f6",
+      "bytes_clean": 576121,
+      "sha256_clean": "bd14660006ea9d0394bb29548740dac66f9987d68876163f509deacfb5d1e9b0",
+      "chars": 561144,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 46,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/46/pg46.txt",
+      "file": "00046.txt",
+      "bytes_raw": 182250,
+      "sha256_raw": "8c36b93723d454982df045ec0efdf2664e5a48e6b5e2f670e883575f75ad0cc8",
+      "bytes_clean": 158416,
+      "sha256_clean": "9a17e3fa751c44022b9f9b282ca3551780b6c7385aea8ac162a59d773de2e3cd",
+      "chars": 158415,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 47,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/47/pg47.txt",
+      "file": "00047.txt",
+      "bytes_raw": 532050,
+      "sha256_raw": "e9a12333e4e6e047d5de8fca150ff66e45ab5e4f2bc85de3c9cdccd125512e81",
+      "bytes_clean": 502516,
+      "sha256_clean": "e582d45610335d079e2cf1b3acf2f9f1438ff2825b9108ca041ca0bfec898d0f",
+      "chars": 488108,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 51,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/51/pg51.txt",
+      "file": "00051.txt",
+      "bytes_raw": 468819,
+      "sha256_raw": "f9c7d035c05a39d436c36fb9f99addbfe3206e662f694437d25ed7d266f5c572",
+      "bytes_clean": 440050,
+      "sha256_clean": "92c84addd37c71252c97b9771feae1c770ab39dd824cbbf9889e94c37c19526d",
+      "chars": 424995,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 54,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/54/pg54.txt",
+      "file": "00054.txt",
+      "bytes_raw": 269667,
+      "sha256_raw": "48e4dd66643ab160d986562d635b18aa4b8f3dc6d7d47d2796c108c2c8b60759",
+      "bytes_clean": 244064,
+      "sha256_clean": "c5cf3e61535d900db145fbc40d97e58ff26630ff89c64140542bf7bdf6545534",
+      "chars": 236766,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 55,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/55/pg55.txt",
+      "file": "00055.txt",
+      "bytes_raw": 237232,
+      "sha256_raw": "969bffab7740d4d8a0bac332d78bd0152ad4a40a2efc52f06c74a9bb6120be75",
+      "bytes_clean": 212704,
+      "sha256_clean": "94a11d5818c4e3367290d16ab4e9cd909a67ea544afd271be92309e90b31fbbf",
+      "chars": 207818,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 113,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/113/pg113.txt",
+      "file": "00113.txt",
+      "bytes_raw": 475315,
+      "sha256_raw": "6b0bb5fbd0c4e873d2d22028da9d753cf3977d5f70ac58221556b28060badbf5",
+      "bytes_clean": 446098,
+      "sha256_clean": "ce9f6ca3aa4d658e54b68f666eff354b27a9006f017faa7537ef66765d5f7a1f",
+      "chars": 428651,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 120,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/120/pg120.txt",
+      "file": "00120.txt",
+      "bytes_raw": 399873,
+      "sha256_raw": "5bc08275eacea8640b1aa185c645283bb8c564d7b23df6b03437d229b4fc6ebd",
+      "bytes_clean": 372620,
+      "sha256_clean": "ef67b01f998cbd2c75650bd8aad781ddedb50dccc9d4725eefb93efa68a72f71",
+      "chars": 364520,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 146,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/146/pg146.txt",
+      "file": "00146.txt",
+      "bytes_raw": 391991,
+      "sha256_raw": "004c4e47ab69973d8e8b164e950b9d77fd605a4ee8a42ce6a87fe42ab4c9fe21",
+      "bytes_clean": 364361,
+      "sha256_clean": "07e6df760f0b871ce8c5202b398e0fa1f36c051ebc5c405f0c32eeaa64b50a66",
+      "chars": 364361,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 163,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/163/pg163.txt",
+      "file": "00163.txt",
+      "bytes_raw": 212422,
+      "sha256_raw": "42efc969e2c988e8e17066f8d85558796bb25f955e48ae7735a3a09d5ef0e959",
+      "bytes_clean": 188788,
+      "sha256_clean": "a04faad8198f47d65618f42a827a2557245c3c61aa6b1bff663d041508a5d1cf",
+      "chars": 187048,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 225,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/225/pg225.txt",
+      "file": "00225.txt",
+      "bytes_raw": 506175,
+      "sha256_raw": "6fec2c466752ca2d4c3f2b5d35fff11d21407920f1288ffd7577b3038252d70c",
+      "bytes_clean": 475928,
+      "sha256_clean": "2536b85ab46ad5350a0bcde858dbb2fd415abfe8a96d69153cc055e981a844b5",
+      "chars": 467336,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 236,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/236/pg236.txt",
+      "file": "00236.txt",
+      "bytes_raw": 303640,
+      "sha256_raw": "571353c4c69d127020fb16cd6a566f1d80101bc0fc3cf2b0c2ea5678bf4c769f",
+      "bytes_clean": 278523,
+      "sha256_clean": "716d1b35047dd9bbbc0b22cb0f8371f3abecda01af748e70b5c7d4c658170ab7",
+      "chars": 273030,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 271,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/271/pg271.txt",
+      "file": "00271.txt",
+      "bytes_raw": 333280,
+      "sha256_raw": "493a70f2cd5580db12ba0bfee8d8fe74daa578f927c3db81afe285b31391d5a5",
+      "bytes_clean": 307458,
+      "sha256_clean": "6630d911f45f5d5e9802dba896423f2b8669475a328f2e10f73178a728c07765",
+      "chars": 303978,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 289,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/289/pg289.txt",
+      "file": "00289.txt",
+      "bytes_raw": 358358,
+      "sha256_raw": "98f6b6cda20087857cefe9121b71d6166c1b92423bb7645fdba3c45ff0c141e8",
+      "bytes_clean": 332402,
+      "sha256_clean": "b9b571780cae8b1876f5163c0872e174a58ba905893fbfa36b4696f33967259e",
+      "chars": 324792,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 316,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/316/pg316.txt",
+      "file": "00316.txt",
+      "bytes_raw": 456490,
+      "sha256_raw": "cfdfb3be9d807147b9654594a0357c8658f21e0f480c64eae0669b6cf915940d",
+      "bytes_clean": 427752,
+      "sha256_clean": "3df76ecdeaf2562d7284549bc3c27dc84ba0c3d6bcca341545238075ae32705d",
+      "chars": 415058,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 384,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/384/pg384.txt",
+      "file": "00384.txt",
+      "bytes_raw": 564232,
+      "sha256_raw": "3789ffaec9ec2cdb0f4409a9f72717e3f4eae1fda5c086da21c61b2859d7f6a6",
+      "bytes_clean": 533526,
+      "sha256_clean": "e81b5fb5ee446742d3536122cff6f61d4f7c694bd1552bba5c604e28ee44194e",
+      "chars": 533523,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 419,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/419/pg419.txt",
+      "file": "00419.txt",
+      "bytes_raw": 238583,
+      "sha256_raw": "3d094e5d7269cd33545b44e7258bdb53aab277929c30c4c0cadd259a1c680ab6",
+      "bytes_clean": 213897,
+      "sha256_clean": "60ac1f76b86c7eb288a5e4e9dc82b954d2b4f3fec896f9d25de93df59a7f5340",
+      "chars": 213897,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 420,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/420/pg420.txt",
+      "file": "00420.txt",
+      "bytes_raw": 255595,
+      "sha256_raw": "3772b95e863dfeed32e8cb79d07494314e9ce12da99ee0f16a6e455e04628ffe",
+      "bytes_clean": 230465,
+      "sha256_clean": "6d439e3774d160e669ccf8b39fd339cb1fbaedd734820120440cfeab979ed4aa",
+      "chars": 230465,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 421,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/421/pg421.txt",
+      "file": "00421.txt",
+      "bytes_raw": 459911,
+      "sha256_raw": "d57ef5be2a98ff2bbe3819abc84deeeea7f5f039a4b90fd358b2babb0f75588a",
+      "bytes_clean": 431660,
+      "sha256_clean": "36a17dd72be3b4f27246b5215f1557ba8ae9c36454907c86bf5df17afa678b93",
+      "chars": 423107,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 436,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/436/pg436.txt",
+      "file": "00436.txt",
+      "bytes_raw": 222079,
+      "sha256_raw": "bb24c5f48c35b061fcb787f541b819dda9256f74916aa1fc7d5191503a7dd9e7",
+      "bytes_clean": 197934,
+      "sha256_clean": "e07ec31588fa6790f3753185cbc5d0ff936e75f9dcf3e7c2284e617ec78227b3",
+      "chars": 197934,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 460,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/460/pg460.txt",
+      "file": "00460.txt",
+      "bytes_raw": 123005,
+      "sha256_raw": "948de81103031bfac566b605601abf07d6f934718adbdb1e6e7a366e6872a4e3",
+      "bytes_clean": 100809,
+      "sha256_clean": "01b7ae94f6778541e44ab5024efed26c3df7bac2e767d58acfde1a28a7da7923",
+      "chars": 100809,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 479,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/479/pg479.txt",
+      "file": "00479.txt",
+      "bytes_raw": 345834,
+      "sha256_raw": "c0cabbd64dfc4ea7db8ed67af06f9d66747118a2a7eeeafa08ef537671a2fcc7",
+      "bytes_clean": 319665,
+      "sha256_clean": "aea84b2263a0382d6c573b0aebc78f078c21ff50840f18bbe3c1e3e97d6c6767",
+      "chars": 314501,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 485,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/485/pg485.txt",
+      "file": "00485.txt",
+      "bytes_raw": 244504,
+      "sha256_raw": "57e6340f9708dc70fd151cc721c6493d482de63a47c27372dfe71409f8614664",
+      "bytes_clean": 219556,
+      "sha256_clean": "23e3ee98356963b635f1114cc2490f134064cbae3fca08d45bdce75e351a10f9",
+      "chars": 219556,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 486,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/486/pg486.txt",
+      "file": "00486.txt",
+      "bytes_raw": 239986,
+      "sha256_raw": "a080860b4208ddf202930bb8ddfd52b37107b4f9689161c337483158cbb2dac4",
+      "bytes_clean": 215208,
+      "sha256_clean": "6d9e26616049c1d0ff425f778d65e3929003609dc3c223df27668872ac27b320",
+      "chars": 215208,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 496,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/496/pg496.txt",
+      "file": "00496.txt",
+      "bytes_raw": 275989,
+      "sha256_raw": "709c354dc6934a3a4509cdfae1bba47d4feb2597afe5c9c22c6fdb6013a561e3",
+      "bytes_clean": 251360,
+      "sha256_clean": "87725854a2dde850ccd5756fbc34b83ed891e6dec3b413dc4ad9313a97bf41c1",
+      "chars": 248748,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 498,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/498/pg498.txt",
+      "file": "00498.txt",
+      "bytes_raw": 439164,
+      "sha256_raw": "087f93898e52e08342288f5d08b76dd9a8674b138657bb23d5733b3ecd8af210",
+      "bytes_clean": 411270,
+      "sha256_clean": "285c022db2579b371e9957fb63c31481761ee3c316ef7d9e576d7fc1f509e6f6",
+      "chars": 411270,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 501,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/501/pg501.txt",
+      "file": "00501.txt",
+      "bytes_raw": 173558,
+      "sha256_raw": "be531c434149cb3a162d0c0030de47de4766b624988ee752d350c4bcd2c87f77",
+      "bytes_clean": 150080,
+      "sha256_clean": "a500a804f2d86beec81e8f7ebe93950b446919761a2974086eab603f87301323",
+      "chars": 145504,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 503,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/503/pg503.txt",
+      "file": "00503.txt",
+      "bytes_raw": 774737,
+      "sha256_raw": "212bd64fbd8d2f15312c90cd20f17f851186721804d00b187c7282a532075c3a",
+      "bytes_clean": 741388,
+      "sha256_clean": "ada3718c97cce86c9ce019a20c78f8988e57988588ca21a3ecad7efcee783290",
+      "chars": 730554,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 508,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/508/pg508.txt",
+      "file": "00508.txt",
+      "bytes_raw": 517529,
+      "sha256_raw": "2c3cdecbb1cfa41a2bb903f73d329a3fd9af235f634e5a9ebe6911374a7b49f3",
+      "bytes_clean": 488523,
+      "sha256_clean": "b94e39c6be601b98ab5a10a9229a38a894018bc5e6970e2635a9aa39142db3d5",
+      "chars": 488523,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 514,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/514/pg514.txt",
+      "file": "00514.txt",
+      "bytes_raw": 1071398,
+      "sha256_raw": "36831477b339dbcd7e7206119d77e9e58b9727ef3c299d1a1dc4446e1db97850",
+      "bytes_clean": 1030871,
+      "sha256_clean": "c6308b76332136d22a5dfc45e7e4eb8aaa5a8d416ad032fd5544f96af46a0231",
+      "chars": 1007152,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 517,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/517/pg517.txt",
+      "file": "00517.txt",
+      "bytes_raw": 324979,
+      "sha256_raw": "15b6a0bc1a994f4ddb72326ac2900c4441192b15dd2e44145f3b7728bdb8a25c",
+      "bytes_clean": 298224,
+      "sha256_clean": "baf757d282bef28afc36c79134a22a3408b6ca538200e516423573af5f6fdc1e",
+      "chars": 298224,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 518,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/518/pg518.txt",
+      "file": "00518.txt",
+      "bytes_raw": 232043,
+      "sha256_raw": "726fa612d81c985848d6ee626c4525598c8f8bb2343ab301a46f27976ec7ca13",
+      "bytes_clean": 207508,
+      "sha256_clean": "4df79c8102c8edf17904c21e7b3eb1553c764bb0c0d2f298f335f1bb4e415d84",
+      "chars": 207508,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 519,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/519/pg519.txt",
+      "file": "00519.txt",
+      "bytes_raw": 41217,
+      "sha256_raw": "1f5a1e55c2f16c28d2c3ab9afbe858208e3899866edb216d986c9b4402f8f3de",
+      "bytes_clean": 20978,
+      "sha256_clean": "8c20dd6efd432fba0dbf9edb7e1c65475544151eaf390d2fa84f13bca4826c96",
+      "chars": 20978,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 520,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/520/pg520.txt",
+      "file": "00520.txt",
+      "bytes_raw": 188273,
+      "sha256_raw": "8e33fdafbae73db5586e4bb6ec40a082a0b33b744aed99bbd79cafab9935f677",
+      "bytes_clean": 164827,
+      "sha256_clean": "9a23dce205179a40fba8bf703d211b635b7c77b090e03d003851f4b5fba5f8f9",
+      "chars": 164827,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 540,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/540/pg540.txt",
+      "file": "00540.txt",
+      "bytes_raw": 696582,
+      "sha256_raw": "408fcb26a442a10bb6094dc453031a8b0a90ecbe8c3780c71097e14cca406199",
+      "bytes_clean": 662457,
+      "sha256_clean": "aa63ed5c8122ae46d71e2cbd2c1ccbf19e5e7e2c9c1a1a6326a020c6b482d717",
+      "chars": 651287,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 544,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/544/pg544.txt",
+      "file": "00544.txt",
+      "bytes_raw": 480661,
+      "sha256_raw": "f94dac73e9403da63f774c08378e3333f7c0f03415ca2c3311de5ba18ee2797f",
+      "bytes_clean": 451929,
+      "sha256_clean": "0be4271098926cb421c621cbb21299b25486eca456d04c800bf1949613d94ba1",
+      "chars": 439235,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 557,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/557/pg557.txt",
+      "file": "00557.txt",
+      "bytes_raw": 342741,
+      "sha256_raw": "5950276c6394c0603e783137e826b3c507c898b2170dbe1b729debacafecfd80",
+      "bytes_clean": 315965,
+      "sha256_clean": "7c30529e80a071558e3815ee432a3de178e273b1015aa3a0fcd4be91eb416abf",
+      "chars": 315965,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 640,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/640/pg640.txt",
+      "file": "00640.txt",
+      "bytes_raw": 623569,
+      "sha256_raw": "9798deb35b080878dd81fe7a030e1667f55abdadfb052e507439c9bae9881021",
+      "bytes_clean": 592418,
+      "sha256_clean": "022036675688576a2fa1ae28f25f5b657e1b8c962206e7745fc8bc0acdd78ba1",
+      "chars": 584906,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 641,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/641/pg641.txt",
+      "file": "00641.txt",
+      "bytes_raw": 572901,
+      "sha256_raw": "94c63661002e9ba5f5e4670e88e620c13313eec9b343e3b28d898a9978f489d9",
+      "bytes_clean": 541955,
+      "sha256_clean": "96d3cb055a4a18256c8cdab9821930a3c6d02715bde5322d01f8284ece444d01",
+      "chars": 533393,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 678,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/678/pg678.txt",
+      "file": "00678.txt",
+      "bytes_raw": 204855,
+      "sha256_raw": "bc7686dc0633b140425ef429ef5567633063889467b2f535bdb3bb06fc4fa4ce",
+      "bytes_clean": 181352,
+      "sha256_clean": "8fceb15db5394f2d8359cb95ba5dfd9067b0c44548013dd050a5b07656c27611",
+      "chars": 176724,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 697,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/697/pg697.txt",
+      "file": "00697.txt",
+      "bytes_raw": 104090,
+      "sha256_raw": "f2c2e93ffed9b7762111d6f727a4ffef641eafbd7453347f475d34d610da8567",
+      "bytes_clean": 82456,
+      "sha256_clean": "2e67f6eec5f4fce6411b7bfb03799544d81581bfac8d16b6b67a06370d28f1ee",
+      "chars": 82456,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 708,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/708/pg708.txt",
+      "file": "00708.txt",
+      "bytes_raw": 301182,
+      "sha256_raw": "43cc3c6340309250f6d06f634a6ae3b90e57bfc966065dee4d460fec5dd97f14",
+      "bytes_clean": 275288,
+      "sha256_clean": "948882c698a8f4c86d839507b4c56e17010ab08d27afd53bf0140a81ddd5654a",
+      "chars": 275288,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 709,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/709/pg709.txt",
+      "file": "00709.txt",
+      "bytes_raw": 325538,
+      "sha256_raw": "840a8d9c0e0ddc44d1407ca45785bea2d6e32b34f8803ee09585a73403d770f2",
+      "bytes_clean": 299706,
+      "sha256_clean": "638cb4f9b2988ecfd5dbfc54ad8041a67890e9b93227ea350f128183f6c402a1",
+      "chars": 299706,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 721,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/721/pg721.txt",
+      "file": "00721.txt",
+      "bytes_raw": 87662,
+      "sha256_raw": "c601303a57c13d005af336add638eca14c0a7c9fa854f725ea78b4cabfbb2fa8",
+      "bytes_clean": 66468,
+      "sha256_clean": "a8760e915154544d37d668871cd36f15bd6713b1dfdff584dde81964e6623d8c",
+      "chars": 66468,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 770,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/770/pg770.txt",
+      "file": "00770.txt",
+      "bytes_raw": 307842,
+      "sha256_raw": "94908f78c5f874bb89e8b669047efdba622f3bf05b2a389ecaec179cfa66d956",
+      "bytes_clean": 282173,
+      "sha256_clean": "92c47ccd77809ba5fee78473e61c1ece98473319b61e2c089093d1874cbd9756",
+      "chars": 275735,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 778,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/778/pg778.txt",
+      "file": "00778.txt",
+      "bytes_raw": 316178,
+      "sha256_raw": "82c1f2f98e03ece9aceb94aab5ed6e4cf17ac0c3b08d28e7f35efe66f0c9c651",
+      "bytes_clean": 289872,
+      "sha256_clean": "c66d3e6fe5f51e344b3be0d7b5216a123a791a72c1f0a6a0efa567587c76e345",
+      "chars": 289872,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 794,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/794/pg794.txt",
+      "file": "00794.txt",
+      "bytes_raw": 453562,
+      "sha256_raw": "f2318cac1c7484cb7c7bab5106f72d774175d7aa999f06fa3800358dd32b4fc3",
+      "bytes_clean": 424509,
+      "sha256_clean": "0d02183d0eab9a45c0bfd664ca4acf3429881e7c9ad26131b4e0bab756902892",
+      "chars": 415809,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 836,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/836/pg836.txt",
+      "file": "00836.txt",
+      "bytes_raw": 379171,
+      "sha256_raw": "49549efc66e6ad418f4dedc3477be3e934e27821927aa9a7a4ca91f10367e1fb",
+      "bytes_clean": 351577,
+      "sha256_clean": "5ad055a6aab6c43fcf6df00b17a8540c20f056c7977c2de9187deb6729165a42",
+      "chars": 339439,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 837,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/837/pg837.txt",
+      "file": "00837.txt",
+      "bytes_raw": 423751,
+      "sha256_raw": "b3b09e63c9c66ee2b7fbe740f4dac4b5047a5e85c75fa0124d271718b724d594",
+      "bytes_clean": 394874,
+      "sha256_clean": "e5348d2c3f5a0c16fbec6253a93d2c5dea1c732ad97394507ec299ad96634e02",
+      "chars": 379077,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 848,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/848/pg848.txt",
+      "file": "00848.txt",
+      "bytes_raw": 466508,
+      "sha256_raw": "881c0935b47f60acf0c576b56bfca4eb1a32f5ca50fad1c038a21fadecfe8564",
+      "bytes_clean": 437545,
+      "sha256_clean": "993a5b63396c0ee96f89baca415628cf27562fa5397b5cf420c309be0ccb6129",
+      "chars": 437545,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 902,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/902/pg902.txt",
+      "file": "00902.txt",
+      "bytes_raw": 112604,
+      "sha256_raw": "77ae1b3c7be77aea82b1f935e531e53f4df43db572cbc14af39d6cd0d5ba50da",
+      "bytes_clean": 90862,
+      "sha256_clean": "2d57e0e103654de30ae8d452994ff31a03f037860409ff79bbec74a2dec2b129",
+      "chars": 88420,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 928,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/928/pg928.txt",
+      "file": "00928.txt",
+      "bytes_raw": 167304,
+      "sha256_raw": "0d8471c29e1443ceb33c9cc1a71002f20c283bdad08fbb9916e61b3068d3175e",
+      "bytes_clean": 143917,
+      "sha256_clean": "9f0137dc90ff3b8ec994079302e94f269a9ef69afb09c9fd939dc8874bab37e1",
+      "chars": 143917,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 955,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/955/pg955.txt",
+      "file": "00955.txt",
+      "bytes_raw": 340089,
+      "sha256_raw": "3afbd3ebb7b210cd6ac54943dc3b3f31a35a876fd10dbf0eb4891ff19b35937d",
+      "bytes_clean": 312877,
+      "sha256_clean": "2b29443cf896064edb969b6c0faecf590753551faacb5f7beca2de08e29c1abb",
+      "chars": 312877,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 956,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/956/pg956.txt",
+      "file": "00956.txt",
+      "bytes_raw": 292933,
+      "sha256_raw": "7c1fb05dd99b686ccb48b22af0ac4f7f630a692c2f5a332b56bdaf00d54931fe",
+      "bytes_clean": 266899,
+      "sha256_clean": "b2f35aaf04984724d2b9fd31fa5c49702fdbaa92719a97cb0d976eba383bfe04",
+      "chars": 266899,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 957,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/957/pg957.txt",
+      "file": "00957.txt",
+      "bytes_raw": 274787,
+      "sha256_raw": "b74fa592636311c6e4aaf39b220e9125d953a5c67830db4117ea42e5dcaf3d24",
+      "bytes_clean": 249403,
+      "sha256_clean": "d1459ab04d24e75b33874277eedcb4cfb6e7fa4cc072aaa1ba4454b11b71fb66",
+      "chars": 249403,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 960,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/960/pg960.txt",
+      "file": "00960.txt",
+      "bytes_raw": 266524,
+      "sha256_raw": "ca314bbcaf8203380550b5231caf397d67b1416b4f1bd55f3988e473d4eaa042",
+      "bytes_clean": 241308,
+      "sha256_clean": "402afaae356a539eab69bb74f29fa5ebf674ce9b66c3c64c572e4540d98ebc36",
+      "chars": 241308,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 961,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/961/pg961.txt",
+      "file": "00961.txt",
+      "bytes_raw": 242710,
+      "sha256_raw": "3ef2e564fe4f859d37518b2d6c7cf721ca7c918a420b3d70d2b388c2aa81cbf9",
+      "bytes_clean": 218162,
+      "sha256_clean": "c8f8e27c1a5ad5f8504e46d2493a18d34cd1cbfd6db225abaf8e8cd317ab8876",
+      "chars": 218162,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 976,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/976/pg976.txt",
+      "file": "00976.txt",
+      "bytes_raw": 386286,
+      "sha256_raw": "c09ffa8e5f01ee199c3e1e4f88acf35b8a7edcac7c8ed203618a9225deeeed2f",
+      "bytes_clean": 360175,
+      "sha256_clean": "52fd0f16bccd46c76f701a3bb21287a7c26d4ff3b401b8be63c4b3681e05bbcf",
+      "chars": 360175,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 1033,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/1033/pg1033.txt",
+      "file": "01033.txt",
+      "bytes_raw": 178037,
+      "sha256_raw": "e150f1b73dcb8f6065ff288cdffd2e59086d81e695a5b5defed14a207ad4ce0d",
+      "bytes_clean": 155380,
+      "sha256_clean": "b9aa3cb53a11c87b6fe66ef74a8ee08d276c56ddf3f222f09f56a81da09b0248",
+      "chars": 155380,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 1154,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/1154/pg1154.txt",
+      "file": "01154.txt",
+      "bytes_raw": 440607,
+      "sha256_raw": "c1d6c1e67ab0e490efb1f499ce61964af43e25378a4fa0f083cf07c6acec0c15",
+      "bytes_clean": 411664,
+      "sha256_clean": "b4e876bfa6a1638f684c3789282a5afd74b7e80fab42cf4b3bcbd113badd4ae7",
+      "chars": 400917,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 1217,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/1217/pg1217.txt",
+      "file": "01217.txt",
+      "bytes_raw": 364037,
+      "sha256_raw": "f34602a003c3dce921a3d8311dae5dbbf5796be332ae6ca165426ffcc7179767",
+      "bytes_clean": 337506,
+      "sha256_clean": "f29bf9754f69fef75e013bfc35e98364651611c35a719566bf62456cb1bf790e",
+      "chars": 334546,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 1278,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/1278/pg1278.txt",
+      "file": "01278.txt",
+      "bytes_raw": 200027,
+      "sha256_raw": "d238bec33bcb0e3ea0a6eadf0bc04c7a78a8395201dc73ac8876e9168a761270",
+      "bytes_clean": 176808,
+      "sha256_clean": "96ca4bad2bff8bdc7a831a2981256bab264a305ec9a7c739a3f7b2787ccd7753",
+      "chars": 175822,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 1354,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/1354/pg1354.txt",
+      "file": "01354.txt",
+      "bytes_raw": 397788,
+      "sha256_raw": "0ad882a6789092d16023954e521314b7df2ca5ac11b9a1ccec8e71798a542f80",
+      "bytes_clean": 370778,
+      "sha256_clean": "2905628c1e0661bbce33f729642076510aef448fb29c0db7212a2a115651cdcb",
+      "chars": 363292,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 1375,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/1375/pg1375.txt",
+      "file": "01375.txt",
+      "bytes_raw": 372574,
+      "sha256_raw": "f932b976b6d215b30ecce349ecfc9f7a772296d16a3d94943ec9983c90c117a6",
+      "bytes_clean": 345920,
+      "sha256_clean": "2dac75919fb325a6f5317bc25b86f844b82db65bc5ecfd9c89253c14663c05ba",
+      "chars": 342388,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 1391,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/1391/pg1391.txt",
+      "file": "01391.txt",
+      "bytes_raw": 438050,
+      "sha256_raw": "dc165966b121835ee796b766d65ce9dbfaf72fade4fe27d08e9453f455fa6991",
+      "bytes_clean": 410752,
+      "sha256_clean": "cc535cc8333828ad5f7bd404769f30e34e42ee6364fe1309e1620915bd725b8d",
+      "chars": 408550,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 1430,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/1430/pg1430.txt",
+      "file": "01430.txt",
+      "bytes_raw": 307495,
+      "sha256_raw": "2ec7c551a9bbbb9264914cc4738559e2349d0e3f3631bdba3f0b0bc5d784e136",
+      "bytes_clean": 280570,
+      "sha256_clean": "c24371d279871b30fe3e000673c2e708e981f665828549b80ea3af7b5f1baa76",
+      "chars": 276230,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 1448,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/1448/pg1448.txt",
+      "file": "01448.txt",
+      "bytes_raw": 520156,
+      "sha256_raw": "25beec852bf3aafb21a16936c3587800547b295fb8f5602d0b6b4cba1529122e",
+      "bytes_clean": 490430,
+      "sha256_clean": "2c33eaa0030899b6861f38fbc923a5eee64e3b0689a530b28a506ac50bf8bb0b",
+      "chars": 490430,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 1825,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/1825/pg1825.txt",
+      "file": "01825.txt",
+      "bytes_raw": 101184,
+      "sha256_raw": "c540d0533fdd94a80464e46db66aaa224a311ed7e966e6a9a24338cb17eba54d",
+      "bytes_clean": 79592,
+      "sha256_clean": "8918c129cf83ee4bcf2ff3bcbd5c33bbb1ce4fe2995a56460bdefc211d676d71",
+      "chars": 78648,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 1867,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/1867/pg1867.txt",
+      "file": "01867.txt",
+      "bytes_raw": 128511,
+      "sha256_raw": "049479bd9c467ba23cc48c2e28c47f79d2a56a1513f98c82129b56394e04aeaa",
+      "bytes_clean": 106530,
+      "sha256_clean": "58735024c10791b15417567ece882969b5f3582bb01194af423ca9390c9cf96f",
+      "chars": 106530,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 1868,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/1868/pg1868.txt",
+      "file": "01868.txt",
+      "bytes_raw": 202853,
+      "sha256_raw": "98302190b805b7ac4b08afb55d2f1ee9c097c6bcc63981a996d28a63757da28e",
+      "bytes_clean": 179618,
+      "sha256_clean": "7ffeb08dcec400359dfbf51084cb9dd0694f0aec0ed6869df19e7c665d958f73",
+      "chars": 176415,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 1874,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/1874/pg1874.txt",
+      "file": "01874.txt",
+      "bytes_raw": 363344,
+      "sha256_raw": "8050f391661c1c45bd65c9584b4f93dec46cfc07cc7352e2169899f1e664b290",
+      "bytes_clean": 335654,
+      "sha256_clean": "aa1cdb4ff34e8e147f908610d788f176b8907cd75b8ba35d73c1e12543271403",
+      "chars": 326702,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 1937,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/1937/pg1937.txt",
+      "file": "01937.txt",
+      "bytes_raw": 379818,
+      "sha256_raw": "fddc656020bda8c32ec6e58ab95086bcf863c1d3ffe43a72ca9ed48a738e2ee7",
+      "bytes_clean": 353227,
+      "sha256_clean": "58692c164d847263aca458afa22273ade921caec9af171829ca0e923b5442de4",
+      "chars": 347659,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 2226,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/2226/pg2226.txt",
+      "file": "02226.txt",
+      "bytes_raw": 626851,
+      "sha256_raw": "5977aca9cd4cf48e9ab35d13e0241a40ab3c984ad1840d64cc210da63dfa56da",
+      "bytes_clean": 594923,
+      "sha256_clean": "2e2dfd35e0a8169115e1aef1b9ee8bf0c71dc9bdd19337502715c75c8dbf5595",
+      "chars": 577825,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 2306,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/2306/pg2306.txt",
+      "file": "02306.txt",
+      "bytes_raw": 306544,
+      "sha256_raw": "45860ead2ed0ae0fa22324497480f984efb51e3d792b3245c4d76f09f91ae60f",
+      "bytes_clean": 280245,
+      "sha256_clean": "e262c81bce1fd9a42f103a9cc3bbffaad3dd31712b7703dee1f8006c221e77e9",
+      "chars": 280245,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 2315,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/2315/pg2315.txt",
+      "file": "02315.txt",
+      "bytes_raw": 111126,
+      "sha256_raw": "14c1fd25515e7652c398304ae2fb93484319f9830f851d7a089c9f99f35bea70",
+      "bytes_clean": 89451,
+      "sha256_clean": "93de51b2219b933e9758fddf314e9b6f03404154431e0b29674dfd43d240f96a",
+      "chars": 89451,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 2435,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/2435/pg2435.txt",
+      "file": "02435.txt",
+      "bytes_raw": 545180,
+      "sha256_raw": "3240a7b006859011c9c4144704ae1ef708121866a4d071fc7b7152f93de6776f",
+      "bytes_clean": 515311,
+      "sha256_clean": "ff9b9ba13709b97b11a943c9d0947aa10fe0b88eab5047d7c0456d3d3a6622fa",
+      "chars": 507620,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 2493,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/2493/pg2493.txt",
+      "file": "02493.txt",
+      "bytes_raw": 104423,
+      "sha256_raw": "77ccf5a1616d2c4142779c984df6a7d9053fc0d2bb4114cd1690dde405beca66",
+      "bytes_clean": 82834,
+      "sha256_clean": "09b68c5b65416bfc418fd34214f4ca9104ad0b4b2cde91e24f589b04626d8bee",
+      "chars": 82834,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 2557,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/2557/pg2557.txt",
+      "file": "02557.txt",
+      "bytes_raw": 114538,
+      "sha256_raw": "bb67bed58efee7bf669326592b2b85ed9dd3c377baa4ae6cabbb7d19abf06c36",
+      "bytes_clean": 92721,
+      "sha256_clean": "25c470ff9057da1ab1a334e47faed160ccba6a9ab095ac2f2dafb6267cdd5cb8",
+      "chars": 91541,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 2726,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/2726/pg2726.txt",
+      "file": "02726.txt",
+      "bytes_raw": 425192,
+      "sha256_raw": "1dfc4c1c550538bc492176cf4935d5a56a57dfc6a118b5163a6ab66c963466fe",
+      "bytes_clean": 397126,
+      "sha256_clean": "a2aaaa4eaa2799079ab885b1ef53ebc17ea002ec4792c33f02f63762aa5a3784",
+      "chars": 391114,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 2770,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/2770/pg2770.txt",
+      "file": "02770.txt",
+      "bytes_raw": 433439,
+      "sha256_raw": "15c56071fc56990b2e44eb42b3ce94f1d1df84e4b8e5d015e0c01371505b7959",
+      "bytes_clean": 404321,
+      "sha256_clean": "ab266add38214efb6849be7bc0a7f4c2d22b6e7ebfa8be8f00f7cc01ee6e79d4",
+      "chars": 388817,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 2781,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/2781/pg2781.txt",
+      "file": "02781.txt",
+      "bytes_raw": 186062,
+      "sha256_raw": "92de2f58f18955871b7be4c162e17bf7724aeb42f3e995af1fdb0d19333a8744",
+      "bytes_clean": 162865,
+      "sha256_clean": "9446b2302e8ffe5fc76f6e24a2a7d087ae4508cb644d029ef815fd416d4c5c83",
+      "chars": 158273,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 2786,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/2786/pg2786.txt",
+      "file": "02786.txt",
+      "bytes_raw": 533425,
+      "sha256_raw": "2966f02e17fb1cf01c21f90b1b694ee4503a5434cf398ec1a24955d5ce6a3b73",
+      "bytes_clean": 503816,
+      "sha256_clean": "ecef19d44e7433093ba0dddddfe68a249f2f7212992ce29f44edbae93791baac",
+      "chars": 497875,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 2787,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/2787/pg2787.txt",
+      "file": "02787.txt",
+      "bytes_raw": 588929,
+      "sha256_raw": "4d49283af6ec3a896af22b8d9bc0b01e48651a6633e65d3df05dd2387748054d",
+      "bytes_clean": 557902,
+      "sha256_clean": "088f605765246c54d4664b0aa33f73e1675eedf270af139ff61341a280c720f5",
+      "chars": 548960,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 2788,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/2788/pg2788.txt",
+      "file": "02788.txt",
+      "bytes_raw": 599622,
+      "sha256_raw": "69485786336ba7f3ba75fecefeb6f1e1ef69eba433173b1f2e4bde8bfd0b4e11",
+      "bytes_clean": 568142,
+      "sha256_clean": "1343c2c00c079e73a9617bed557e61750345aed37ba0340567a0dbfbef51d3df",
+      "chars": 559726,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 2804,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/2804/pg2804.txt",
+      "file": "02804.txt",
+      "bytes_raw": 543463,
+      "sha256_raw": "ac6fa95008760c4a1d6e4a6492ae29927f9dfb07e8f81ae20d4dcfee3b4940fb",
+      "bytes_clean": 513612,
+      "sha256_clean": "c15c037b49c67013fc762421e8b439f217011a94a6ceee63360c68b9879df748",
+      "chars": 506526,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 3027,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/3027/pg3027.txt",
+      "file": "03027.txt",
+      "bytes_raw": 558596,
+      "sha256_raw": "79812eb94e6b76200e4ba86e41a2f968b46127908147334603ce069f3645388c",
+      "bytes_clean": 528127,
+      "sha256_clean": "acad10e64f9d7e15ba14427343782554863236fa4d17c2489677694c3ebe1177",
+      "chars": 519911,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 3149,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/3149/pg3149.txt",
+      "file": "03149.txt",
+      "bytes_raw": 244244,
+      "sha256_raw": "5629e879243dcab2b6b08c8417adbbcff8efc82777b7894009388662dad2e107",
+      "bytes_clean": 220575,
+      "sha256_clean": "5f9124c3bbed27a7db3aca590c2a1114132bcbd5e7326d3e6ef348b9067fd807",
+      "chars": 217395,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 3282,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/3282/pg3282.txt",
+      "file": "03282.txt",
+      "bytes_raw": 546615,
+      "sha256_raw": "81885df0cab4e3869ea289b91b2dc744b58e5ae2c1531c08a252ac39141768da",
+      "bytes_clean": 516753,
+      "sha256_clean": "d62bacdabefc0344e39909fddc2c85abbd03062886be48cf5248a89574ee4760",
+      "chars": 509143,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 3454,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/3454/pg3454.txt",
+      "file": "03454.txt",
+      "bytes_raw": 557970,
+      "sha256_raw": "9d8225ec1500dc805fccc6aaa4610d122b2e1d57067e54b25064304eb8352c31",
+      "bytes_clean": 527507,
+      "sha256_clean": "c288da77c217ab34d39b7156a20fa5510240c30091da493122de7dd7e08e8d2a",
+      "chars": 517695,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 3492,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/3492/pg3492.txt",
+      "file": "03492.txt",
+      "bytes_raw": 439814,
+      "sha256_raw": "ed8454757e870e3128865fa9f9ab2f32e9c4be56d525663dbaf5553ee0eb1751",
+      "bytes_clean": 412311,
+      "sha256_clean": "dd3a08dd8a1d0cad468d4f895f8e3552b8e67350969ee034e304a3bb49a929bf",
+      "chars": 408095,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 3499,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/3499/pg3499.txt",
+      "file": "03499.txt",
+      "bytes_raw": 572550,
+      "sha256_raw": "a57303a9203d7ff5b8b89d6fde7e700b221de5b926ed4226cb1bd31e5fd79649",
+      "bytes_clean": 542524,
+      "sha256_clean": "0e7c44b9a7a1e6fd5b6d643a4a46dfe94f877cfe9aa318ed46047829cda5ac0a",
+      "chars": 542104,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 3536,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/3536/pg3536.txt",
+      "file": "03536.txt",
+      "bytes_raw": 406733,
+      "sha256_raw": "3cbd06073622a0a5525dfccdcc6cc42692715754422288c165e2fd43523c98b5",
+      "bytes_clean": 378181,
+      "sha256_clean": "ea25c5308b75a06ae344f515f14d1be8ed362f51cba250c3c87518086c14d248",
+      "chars": 378181,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 3795,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/3795/pg3795.txt",
+      "file": "03795.txt",
+      "bytes_raw": 468698,
+      "sha256_raw": "d8e8e0d7facffc520690344ea4413dab0a9ed6c53c7e6f00a2029e0897fbade0",
+      "bytes_clean": 439838,
+      "sha256_clean": "928a93d183c1fee6a5dcc557538348b1f4038289af351140b604a5d4bcfa50f7",
+      "chars": 439838,
+      "boilerplate_stripped": true
+    },
+    {
+      "ebook_id": 3796,
+      "title": null,
+      "url": "https://www.gutenberg.org/cache/epub/3796/pg3796.txt",
+      "file": "03796.txt",
+      "bytes_raw": 597594,
+      "sha256_raw": "83d2784b2754d2548777c80e19be5382ab7044ad33997995635575df46b1975d",
+      "bytes_clean": 566855,
+      "sha256_clean": "83be18120e4d3f984640a12f7ba292aa4babfc7da52aadb9471f4eb5caaf6627",
+      "chars": 566855,
+      "boilerplate_stripped": true
+    }
+  ],
+  "tokenizer": {
+    "file": "tokenizer.json",
+    "sha256": "4e6abaa775edf70839cc6b0b881b7846e3e558c577c474fcaf22516426f6c647",
+    "library": "tokenizers",
+    "library_version": "0.23.3",
+    "model": "BPE",
+    "vocab_size": 5000,
+    "special_tokens": [
+      "<|endoftext|>"
+    ],
+    "normalizer": null,
+    "pre_tokenizer": "ByteLevel(add_prefix_space=False, use_regex=True)",
+    "decoder": "ByteLevel",
+    "trainer": "BpeTrainer(min_frequency=2, initial_alphabet=ByteLevel.alphabet())",
+    "trained_on": "pinned corpus snapshot (manifest books, manifest order)",
+    "seed": 0,
+    "document_separator": "<|endoftext|> appended after every book",
+    "built_utc": "2026-10-23T14:52:37+00:00"
+  },
+  "tokens": {
+    "file": "tokens.npy",
+    "sha256": "fbed5914a6a8b671d23c9552b6a0d0d99996484355fc7db815606dbdcdfec8bb",
+    "dtype": "uint16",
+    "count": 9514186,
+    "per_book": [
+      {
+        "ebook_id": 11,
+        "file": "00011.txt",
+        "n_tokens": 43306
+      },
+      {
+        "ebook_id": 12,
+        "file": "00012.txt",
+        "n_tokens": 50132
+      },
+      {
+        "ebook_id": 13,
+        "file": "00013.txt",
+        "n_tokens": 9155
+      },
+      {
+        "ebook_id": 16,
+        "file": "00016.txt",
+        "n_tokens": 75970
+      },
+      {
+        "ebook_id": 19,
+        "file": "00019.txt",
+        "n_tokens": 63826
+      },
+      {
+        "ebook_id": 41,
+        "file": "00041.txt",
+        "n_tokens": 20746
+      },
+      {
+        "ebook_id": 45,
+        "file": "00045.txt",
+        "n_tokens": 163974
+      },
+      {
+        "ebook_id": 46,
+        "file": "00046.txt",
+        "n_tokens": 47672
+      },
+      {
+        "ebook_id": 47,
+        "file": "00047.txt",
+        "n_tokens": 145277
+      },
+      {
+        "ebook_id": 51,
+        "file": "00051.txt",
+        "n_tokens": 129284
+      },
+      {
+        "ebook_id": 54,
+        "file": "00054.txt",
+        "n_tokens": 69629
+      },
+      {
+        "ebook_id": 55,
+        "file": "00055.txt",
+        "n_tokens": 57025
+      },
+      {
+        "ebook_id": 113,
+        "file": "00113.txt",
+        "n_tokens": 124216
+      },
+      {
+        "ebook_id": 120,
+        "file": "00120.txt",
+        "n_tokens": 110556
+      },
+      {
+        "ebook_id": 146,
+        "file": "00146.txt",
+        "n_tokens": 105181
+      },
+      {
+        "ebook_id": 163,
+        "file": "00163.txt",
+        "n_tokens": 52630
+      },
+      {
+        "ebook_id": 225,
+        "file": "00225.txt",
+        "n_tokens": 131200
+      },
+      {
+        "ebook_id": 236,
+        "file": "00236.txt",
+        "n_tokens": 82812
+      },
+      {
+        "ebook_id": 271,
+        "file": "00271.txt",
+        "n_tokens": 86074
+      },
+      {
+        "ebook_id": 289,
+        "file": "00289.txt",
+        "n_tokens": 96646
+      },
+      {
+        "ebook_id": 316,
+        "file": "00316.txt",
+        "n_tokens": 124818
+      },
+      {
+        "ebook_id": 384,
+        "file": "00384.txt",
+        "n_tokens": 150057
+      },
+      {
+        "ebook_id": 419,
+        "file": "00419.txt",
+        "n_tokens": 62402
+      },
+      {
+        "ebook_id": 420,
+        "file": "00420.txt",
+        "n_tokens": 66263
+      },
+      {
+        "ebook_id": 421,
+        "file": "00421.txt",
+        "n_tokens": 127554
+      },
+      {
+        "ebook_id": 436,
+        "file": "00436.txt",
+        "n_tokens": 57572
+      },
+      {
+        "ebook_id": 460,
+        "file": "00460.txt",
+        "n_tokens": 31815
+      },
+      {
+        "ebook_id": 479,
+        "file": "00479.txt",
+        "n_tokens": 89616
+      },
+      {
+        "ebook_id": 485,
+        "file": "00485.txt",
+        "n_tokens": 63296
+      },
+      {
+        "ebook_id": 486,
+        "file": "00486.txt",
+        "n_tokens": 62823
+      },
+      {
+        "ebook_id": 496,
+        "file": "00496.txt",
+        "n_tokens": 69296
+      },
+      {
+        "ebook_id": 498,
+        "file": "00498.txt",
+        "n_tokens": 119326
+      },
+      {
+        "ebook_id": 501,
+        "file": "00501.txt",
+        "n_tokens": 43807
+      },
+      {
+        "ebook_id": 503,
+        "file": "00503.txt",
+        "n_tokens": 203441
+      },
+      {
+        "ebook_id": 508,
+        "file": "00508.txt",
+        "n_tokens": 145139
+      },
+      {
+        "ebook_id": 514,
+        "file": "00514.txt",
+        "n_tokens": 296473
+      },
+      {
+        "ebook_id": 517,
+        "file": "00517.txt",
+        "n_tokens": 86613
+      },
+      {
+        "ebook_id": 518,
+        "file": "00518.txt",
+        "n_tokens": 59730
+      },
+      {
+        "ebook_id": 519,
+        "file": "00519.txt",
+        "n_tokens": 6063
+      },
+      {
+        "ebook_id": 520,
+        "file": "00520.txt",
+        "n_tokens": 47359
+      },
+      {
+        "ebook_id": 540,
+        "file": "00540.txt",
+        "n_tokens": 184555
+      },
+      {
+        "ebook_id": 544,
+        "file": "00544.txt",
+        "n_tokens": 133663
+      },
+      {
+        "ebook_id": 557,
+        "file": "00557.txt",
+        "n_tokens": 100814
+      },
+      {
+        "ebook_id": 640,
+        "file": "00640.txt",
+        "n_tokens": 161100
+      },
+      {
+        "ebook_id": 641,
+        "file": "00641.txt",
+        "n_tokens": 149384
+      },
+      {
+        "ebook_id": 678,
+        "file": "00678.txt",
+        "n_tokens": 54210
+      },
+      {
+        "ebook_id": 697,
+        "file": "00697.txt",
+        "n_tokens": 23797
+      },
+      {
+        "ebook_id": 708,
+        "file": "00708.txt",
+        "n_tokens": 77277
+      },
+      {
+        "ebook_id": 709,
+        "file": "00709.txt",
+        "n_tokens": 84168
+      },
+      {
+        "ebook_id": 721,
+        "file": "00721.txt",
+        "n_tokens": 20057
+      },
+      {
+        "ebook_id": 770,
+        "file": "00770.txt",
+        "n_tokens": 81431
+      },
+      {
+        "ebook_id": 778,
+        "file": "00778.txt",
+        "n_tokens": 85977
+      },
+      {
+        "ebook_id": 794,
+        "file": "00794.txt",
+        "n_tokens": 122729
+      },
+      {
+        "ebook_id": 836,
+        "file": "00836.txt",
+        "n_tokens": 101004
+      },
+      {
+        "ebook_id": 837,
+        "file": "00837.txt",
+        "n_tokens": 113972
+      },
+      {
+        "ebook_id": 848,
+        "file": "00848.txt",
+        "n_tokens": 133501
+      },
+      {
+        "ebook_id": 902,
+        "file": "00902.txt",
+        "n_tokens": 26223
+      },
+      {
+        "ebook_id": 928,
+        "file": "00928.txt",
+        "n_tokens": 42862
+      },
+      {
+        "ebook_id": 955,
+        "file": "00955.txt",
+        "n_tokens": 90680
+      },
+      {
+        "ebook_id": 956,
+        "file": "00956.txt",
+        "n_tokens": 78041
+      },
+      {
+        "ebook_id": 957,
+        "file": "00957.txt",
+        "n_tokens": 71533
+      },
+      {
+        "ebook_id": 960,
+        "file": "00960.txt",
+        "n_tokens": 69252
+      },
+      {
+        "ebook_id": 961,
+        "file": "00961.txt",
+        "n_tokens": 61914
+      },
+      {
+        "ebook_id": 976,
+        "file": "00976.txt",
+        "n_tokens": 102799
+      },
+      {
+        "ebook_id": 1033,
+        "file": "01033.txt",
+        "n_tokens": 46448
+      },
+      {
+        "ebook_id": 1154,
+        "file": "01154.txt",
+        "n_tokens": 118532
+      },
+      {
+        "ebook_id": 1217,
+        "file": "01217.txt",
+        "n_tokens": 102946
+      },
+      {
+        "ebook_id": 1278,
+        "file": "01278.txt",
+        "n_tokens": 52761
+      },
+      {
+        "ebook_id": 1354,
+        "file": "01354.txt",
+        "n_tokens": 109221
+      },
+      {
+        "ebook_id": 1375,
+        "file": "01375.txt",
+        "n_tokens": 100612
+      },
+      {
+        "ebook_id": 1391,
+        "file": "01391.txt",
+        "n_tokens": 122809
+      },
+      {
+        "ebook_id": 1430,
+        "file": "01430.txt",
+        "n_tokens": 88348
+      },
+      {
+        "ebook_id": 1448,
+        "file": "01448.txt",
+        "n_tokens": 132790
+      },
+      {
+        "ebook_id": 1825,
+        "file": "01825.txt",
+        "n_tokens": 22967
+      },
+      {
+        "ebook_id": 1867,
+        "file": "01867.txt",
+        "n_tokens": 33220
+      },
+      {
+        "ebook_id": 1868,
+        "file": "01868.txt",
+        "n_tokens": 55312
+      },
+      {
+        "ebook_id": 1874,
+        "file": "01874.txt",
+        "n_tokens": 95248
+      },
+      {
+        "ebook_id": 1937,
+        "file": "01937.txt",
+        "n_tokens": 103986
+      },
+      {
+        "ebook_id": 2226,
+        "file": "02226.txt",
+        "n_tokens": 183246
+      },
+      {
+        "ebook_id": 2306,
+        "file": "02306.txt",
+        "n_tokens": 102665
+      },
+      {
+        "ebook_id": 2315,
+        "file": "02315.txt",
+        "n_tokens": 26550
+      },
+      {
+        "ebook_id": 2435,
+        "file": "02435.txt",
+        "n_tokens": 140598
+      },
+      {
+        "ebook_id": 2493,
+        "file": "02493.txt",
+        "n_tokens": 23355
+      },
+      {
+        "ebook_id": 2557,
+        "file": "02557.txt",
+        "n_tokens": 26877
+      },
+      {
+        "ebook_id": 2726,
+        "file": "02726.txt",
+        "n_tokens": 113576
+      },
+      {
+        "ebook_id": 2770,
+        "file": "02770.txt",
+        "n_tokens": 116373
+      },
+      {
+        "ebook_id": 2781,
+        "file": "02781.txt",
+        "n_tokens": 51082
+      },
+      {
+        "ebook_id": 2786,
+        "file": "02786.txt",
+        "n_tokens": 143642
+      },
+      {
+        "ebook_id": 2787,
+        "file": "02787.txt",
+        "n_tokens": 159187
+      },
+      {
+        "ebook_id": 2788,
+        "file": "02788.txt",
+        "n_tokens": 162485
+      },
+      {
+        "ebook_id": 2804,
+        "file": "02804.txt",
+        "n_tokens": 143556
+      },
+      {
+        "ebook_id": 3027,
+        "file": "03027.txt",
+        "n_tokens": 147107
+      },
+      {
+        "ebook_id": 3149,
+        "file": "03149.txt",
+        "n_tokens": 65394
+      },
+      {
+        "ebook_id": 3282,
+        "file": "03282.txt",
+        "n_tokens": 142250
+      },
+      {
+        "ebook_id": 3454,
+        "file": "03454.txt",
+        "n_tokens": 147032
+      },
+      {
+        "ebook_id": 3492,
+        "file": "03492.txt",
+        "n_tokens": 120801
+      },
+      {
+        "ebook_id": 3499,
+        "file": "03499.txt",
+        "n_tokens": 156770
+      },
+      {
+        "ebook_id": 3536,
+        "file": "03536.txt",
+        "n_tokens": 110927
+      },
+      {
+        "ebook_id": 3795,
+        "file": "03795.txt",
+        "n_tokens": 129118
+      },
+      {
+        "ebook_id": 3796,
+        "file": "03796.txt",
+        "n_tokens": 166678
+      }
+    ]
+  },
+  "corpus_id": "fd567893d71494fdf5f733c13b4d4ac5e9ecf81c886ab298e1003d4103a5e2d7",
+  "environment": {
+    "python": "3.12.15",
+    "platform": "Linux-4.19.0-gvisor-x86_64-with-glibc2.36",
+    "numpy": "2.5.4",
+    "tokenizers": "0.23.3"
+  }
+}

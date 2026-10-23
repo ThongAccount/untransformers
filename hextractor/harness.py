@@ -170,3 +170,35 @@ def run_multi_seed(arm: str, cfg: TrainConfig, seeds: List[int], steps: int,
             for s in seeds]
     return {"arm": arm, "seeds": seeds, "runs": runs,
             "dispersion": dispersion(runs)}
+
+
+# --------------------------------------------------------------------------
+# Corpus-backed provider (T14). The synthetic stream above is retained for the
+# mechanics dry-run only (D-17); real runs use the pinned corpus snapshot.
+# --------------------------------------------------------------------------
+def corpus_stream_factory(bundle, cfg: TrainConfig, train_seed: int = 0,
+                          held_out: bool = False):
+    """BatchStream over the pinned corpus (deterministic, D-02 split).
+
+    The held-out factory always starts from the same seed, so every eval point
+    is measured on the SAME held-out batches (a fixed evaluation set) — and
+    those batches are never trained on.
+    """
+    def factory():
+        for x, y in bundle.stream(l=cfg.l, batch=cfg.batch_size,
+                                  train_seed=train_seed, held_out=held_out):
+            yield torch.from_numpy(x), torch.from_numpy(y)
+    return factory
+
+
+def run_multi_seed_corpus(arm: str, cfg: TrainConfig, seeds: List[int], steps: int,
+                           bundle, train_seed: int = 0,
+                           log_every: Optional[int] = None) -> Dict:
+    """Multi-seed protocol on the pinned corpus. Curves only — no verdicts."""
+    train_stream = corpus_stream_factory(bundle, cfg, train_seed=train_seed, held_out=False)
+    held_out_stream = corpus_stream_factory(bundle, cfg, train_seed=train_seed, held_out=True)
+    runs = [train_one_seed(arm, cfg, s, steps, train_stream, held_out_stream,
+                           log_every=log_every)
+            for s in seeds]
+    return {"arm": arm, "seeds": seeds, "train_seed": train_seed, "steps": steps,
+            "runs": runs, "dispersion": dispersion(runs)}

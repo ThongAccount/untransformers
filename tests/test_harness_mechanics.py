@@ -6,6 +6,7 @@ quality verdicts anywhere: gate 0's line holds (the harness returns curves,
 these tests assert the curves are correct data, not that any number is good).
 """
 
+import pytest
 import torch
 
 from hextractor.harness import (
@@ -127,3 +128,47 @@ def test_harness_returns_data_not_verdicts():
                          train_stream=lambda: synthetic_stream(cfg.vocab, cfg.l, cfg.batch_size, seed=0),
                          held_out_stream=lambda: synthetic_stream(cfg.vocab, cfg.l, cfg.batch_size, seed=0, held_out=True))
     assert set(run) == {"arm", "seed", "steps", "train_curve", "evals", "final_held_out_loss"}
+
+
+# --------------------------------------------------------------------------
+# Corpus-backed provider (T14). Skipped when the snapshot is not present.
+# --------------------------------------------------------------------------
+CORPUS_CFG = TrainConfig(d=16, l=16, n_layers=1, ffn_width=32, vocab=5000,
+                          batch_size=2, eval_every=2, eval_batches=1, n_heads=4)
+
+
+def _bundle():
+    from pathlib import Path
+
+    from hextractor.corpus import CorpusBundle
+
+    root = Path(__file__).resolve().parents[1]
+    if not (root / "data" / "manifest.json").exists():
+        pytest.skip("corpus snapshot not present")
+    return CorpusBundle.load(root=root, verify=True, load_tokens=True)
+
+
+def test_corpus_provider_is_arm_independent():
+    """Same batches, same order for every arm (paper: same batches, same order)."""
+    from hextractor.harness import corpus_stream_factory
+
+    bundle = _bundle()
+    cfg = CORPUS_CFG
+    a = next(corpus_stream_factory(bundle, cfg, train_seed=0)())[0]
+    b = next(corpus_stream_factory(bundle, cfg, train_seed=0)())[0]
+    assert torch.equal(a, b)
+
+
+def test_corpus_backed_multi_seed_run_mechanics():
+    from hextractor.harness import run_multi_seed_corpus
+
+    bundle = _bundle()
+    out = run_multi_seed_corpus("HE", CORPUS_CFG, seeds=[1, 2], steps=2,
+                                 bundle=bundle, train_seed=0)
+    assert out["arm"] == "HE" and len(out["runs"]) == 2
+    for run in out["runs"]:
+        assert len(run["train_curve"]) == 2
+        assert all(torch.isfinite(torch.tensor(v)) for v in run["train_curve"])
+        assert run["final_held_out_loss"] is not None
+    assert set(out["dispersion"]) == {2}
+    assert out["dispersion"][2]["n"] == 2
