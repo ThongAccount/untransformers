@@ -198,6 +198,20 @@ def test_the_bootstrap_note_is_rendered_and_never_the_word_none():
     assert "0.100000" in md2
 
 
+def test_the_memory_cell_reads_the_key_the_measurement_used():
+    """The GPU run records the CUDA counters, the CPU run the process RSS.
+
+    A renderer that reads only the CPU key prints "None" for every GPU row —
+    a Python object in the middle of a measurement table. The cell prints the
+    numbers that exist and an em dash when there are none.
+    """
+    assert rrt._memory_cell({"peak_allocated_bytes": 10,
+                             "peak_reserved_bytes": 20}) == "10 / 20"
+    assert rrt._memory_cell({"peak_rss_bytes": 30}) == "30"
+    assert rrt._memory_cell({}) == "—"
+    assert "None" not in rrt._memory_cell({})
+
+
 def test_the_conditions_table_carries_everything_protocol_rule_1_requires(tmp_path):
     """Protocol §7 rule 1: a headline number carries the seeds, the steps, the
     tokens processed, the nominal epochs, the corpus identity, the held-out

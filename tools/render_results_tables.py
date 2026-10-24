@@ -155,6 +155,27 @@ def render_quality(path: Path) -> str:
     return "\n".join(out)
 
 
+def _memory_cell(mem: dict) -> str:
+    """The peak memory of one row, under the key the measurement used.
+
+    On the GPU the runner records the CUDA counters
+    (`peak_allocated_bytes` and `peak_reserved_bytes`); on the CPU it records
+    the process high-water mark (`peak_rss_bytes`). The cell prints the
+    numbers that exist — and an em dash when there are none, never the word
+    "None".
+    """
+    alloc = mem.get("peak_allocated_bytes")
+    reserved = mem.get("peak_reserved_bytes")
+    rss = mem.get("peak_rss_bytes")
+    if alloc is not None or reserved is not None:
+        a = _fmt(alloc, 0) if alloc is not None else "—"
+        r = _fmt(reserved, 0) if reserved is not None else "—"
+        return f"{a} / {r}"
+    if rss is not None:
+        return _fmt(rss, 0)
+    return "—"
+
+
 def _quality_cell(q: dict) -> str:
     """The quality level of a timed row, in one cell."""
     if not q:
@@ -391,8 +412,9 @@ def render_systems(path: Path) -> str:
 
     out.append("### Training step (forward + backward + optimizer step)\n")
     out.append("| arm | median s/step | mean | p10 | p90 | min | n | tok/s | params | "
-               "peak memory bytes | memory scope | quality level |")
-    out.append("|---|---|---|---|---|---|---|---|---|---|---|---|")
+               "peak memory bytes (GPU: allocated / reserved; CPU: process RSS) | "
+               "memory scope | quality level |")
+    out.append("|---|---|---|---|---|---|---|---|---|---|---|---|---|")
     for r in d.get("training_step", []):
         s = r.get("step_seconds", {})
         mem = r.get("memory") or {}
@@ -400,7 +422,7 @@ def render_systems(path: Path) -> str:
                    f"{_fmt(s.get('p10'), 4)} | {_fmt(s.get('p90'), 4)} | "
                    f"{_fmt(s.get('min'), 4)} | {s.get('n')} | "
                    f"{_fmt(r.get('tokens_per_second'), 1)} | {r.get('n_params')} | "
-                   f"{mem.get('peak_rss_bytes')} | {mem.get('scope', '—')} | "
+                   f"{_memory_cell(mem)} | {mem.get('scope', '—')} | "
                    f"{_quality_cell(r.get('quality'))} |")
     out.append("")
     seen_caveats = []
@@ -414,7 +436,8 @@ def render_systems(path: Path) -> str:
 
     out.append("### Prefill latency (one full forward over the prompt)\n")
     out.append("| arm | context | median s | p10 | p90 | min | n | tok/s | "
-               "peak memory bytes | quality level |")
+               "peak memory bytes (GPU: allocated / reserved; CPU: process RSS) | "
+               "quality level |")
     out.append("|---|---|---|---|---|---|---|---|---|---|")
     for r in d.get("prefill", []):
         lat = r.get("latency") or {}
@@ -423,7 +446,7 @@ def render_systems(path: Path) -> str:
                    f"{_fmt(lat.get('median'), 5)} | {_fmt(lat.get('p10'), 5)} | "
                    f"{_fmt(lat.get('p90'), 5)} | {_fmt(lat.get('min'), 5)} | "
                    f"{lat.get('n')} | {_fmt(r.get('tokens_per_second'), 2)} | "
-                   f"{mem.get('peak_rss_bytes')} | {_quality_cell(r.get('quality'))} |")
+                   f"{_memory_cell(mem)} | {_quality_cell(r.get('quality'))} |")
     out.append("")
 
     out.append("### Incremental decoding (per generated token)\n")
