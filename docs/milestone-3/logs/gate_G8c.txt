@@ -2,7 +2,7 @@
 # command: /home/node/.venv/bin/python tools/verify/check_doc_numbers.py --doc docs/milestone-2/QUALITY.md --results results/quality_gpu_full.json --eval-windows results/eval_windows.json --manifest data/manifest.json --summary results/quality_summary.json
 # exit: 0
 # wall: 0.06 s
-# utc: 2026-10-24T08:24:17+00:00
+# utc: 2026-10-24T08:25:08+00:00
 
 [info] the tokens processed per run: the document must state 16,384,000
 [info] the nominal epochs of the train region: the document must state 1.813

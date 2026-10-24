@@ -20,7 +20,7 @@ somebody else's number: each row is the output of the command in that row.
 | python | `/home/node/.venv/bin/python` (CPython 3.12.15) |
 | torch | 2.14.1+cpu (local host) |
 | threads | 1 (`torch.set_num_threads(1)` in the drivers) |
-| git | `0ca1014` (the commit each row was executed at, unless stated) |
+| git | `6fbdd3c` (the commit each row was executed at, unless stated) |
 | date | 2026-10-24 (UTC) |
 
 The Colab runs carry their own conditions in the artefacts themselves
@@ -34,18 +34,18 @@ alongside them.
 | gate | status | command | exit | matched token | wall |
 |---|---|---|---|---|---|
 | G1 | MET | `/home/node/.venv/bin/python -m pytest tests/test_t14_data_pipeline.py -q` | 0 | `12 passed` | 3.33 s |
-| G2 | MET | `/home/node/.venv/bin/python -m pytest -q` | 0 | `154 passed, 1 skipped` | 18.27 s |
+| G2 | MET | `/home/node/.venv/bin/python -m pytest -q` | 0 | `154 passed, 1 skipped` | 15.81 s |
 | G3 | MET | `… check_quality_results.py --file results/quality_pilot.json --label pilot --arms HE attention-32h --seeds 1 2` | 0 | `PILOT_OK` | 2026-10-24 02:24 UTC (pilot artefact from session `he-pilot-cpu2`) |
 | G3a | MET | `… verify_pairing_evidence.py --results results/quality_pilot.json --out results/pairing_evidence_pilot.json --merge-into results/quality_pilot.json` | 0 | `verified=True` (both claims) | 2026-10-24 02:24 UTC |
 | G4 | MET | `… check_quality_results.py --file results/quality_gpu_full.json --label full --arms HE attention-32h --seeds 1 2 3` | 0 | `FULL_OK` | 0.06 s |
-| G4a | MET | `… verify_pairing_evidence.py --results results/quality_gpu_full.json --checkpoint-dir results/checkpoints --out results/pairing_evidence_gpu_full.json --merge-into results/quality_gpu_full.json` | 0 | `verified=True` (both claims) | 2.25 s |
-| G4b | MET | `… summarise_quality.py --file results/quality_gpu_full.json --eval-windows results/eval_windows.json --out results/quality_summary.json` | 0 | `written: results/quality_summary.json` | 0.22 s |
+| G4a | MET | `… verify_pairing_evidence.py --results results/quality_gpu_full.json --checkpoint-dir results/checkpoints --out results/pairing_evidence_gpu_full.json --merge-into results/quality_gpu_full.json` | 0 | `verified=True` (both claims) | 2.16 s |
+| G4b | MET | `… summarise_quality.py --file results/quality_gpu_full.json --eval-windows results/eval_windows.json --out results/quality_summary.json` | 0 | `written: results/quality_summary.json` | 0.17 s |
 | G5 | MET | `/home/node/.venv/bin/python -m pytest tests/test_m3_incremental.py -q` | 0 | `11 passed` | 0.13 s |
-| G6 | MET | `… check_systems_results.py --file results/systems.json` | 0 | `SYSTEMS_OK` | 0.08 s |
-| G7 | MET | `… check_systems_results.py --file results/systems.json --require-paired-quality` | 0 | `PAIRED_QUALITY_OK` + `SYSTEMS_OK` | 0.06 s |
+| G6 | MET | `… check_systems_results.py --file results/systems.json` | 0 | `SYSTEMS_OK` | 0.07 s |
+| G7 | MET | `… check_systems_results.py --file results/systems.json --require-paired-quality` | 0 | `PAIRED_QUALITY_OK` + `SYSTEMS_OK` | 0.07 s |
 | G8 | PENDING | `… check_docs.py --systems docs/milestone-3/SYSTEMS.md --scope docs/milestone-3/SCOPE.md` | 1 | — | the scope decision is the reviewer's (H2); the checker **fails** until it exists, which is the correct behaviour |
 | G8b | PENDING | `… check_docs.py --systems … --scope … --quality docs/milestone-2/QUALITY.md` | 1 | — | the same five failures, all in `SCOPE.md` §4 |
-| G8c | MET | `… check_doc_numbers.py --doc docs/milestone-2/QUALITY.md --results results/quality_gpu_full.json --eval-windows results/eval_windows.json --manifest data/manifest.json --summary results/quality_summary.json` | 0 | `DOC_NUMBERS_OK` (12 constants) | 0.08 s |
+| G8c | MET | `… check_doc_numbers.py --doc docs/milestone-2/QUALITY.md --results results/quality_gpu_full.json --eval-windows results/eval_windows.json --manifest data/manifest.json --summary results/quality_summary.json` | 0 | `DOC_NUMBERS_OK` (12 constants) | 0.06 s |
 | G9 | PENDING | `test "$(git rev-parse HEAD)" = "$(git rev-parse origin/research/milestone-1-extractor)" && test -z "$(git status --porcelain)" && echo PUSHED` | — | — | final push (the command was repaired — see below) |
 
 The full output of every gate — the command, the exit code, the wall time and

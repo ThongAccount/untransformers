@@ -1,11 +1,11 @@
 {
   "schema": "untransformers-pairing-evidence/1",
-  "created_utc": "2026-10-24T08:24:16+00:00",
+  "created_utc": "2026-10-24T08:25:06+00:00",
   "verifier": {
     "tool": "tools/verify/verify_pairing_evidence.py",
     "module": "hextractor/pairing.py",
     "version": "1",
-    "git_commit": "0ca1014e20f8e1b87dff5c1f934a40e6e3140d49",
+    "git_commit": "6fbdd3cc4dab6b7dd15f76d5706b1d11b2def639",
     "git_branch": "research/milestone-1-extractor",
     "git_dirty": true
   },
@@ -248,6 +248,6 @@
   },
   "results_file": {
     "path": "results/quality_gpu_full.json",
-    "sha256_before_merge": "b2496ac29c0811a7b6f57708db2b7be341c1a32a7d3a3165cd6c7195f22aead3"
+    "sha256_before_merge": "e0f267fd86cbf8ae0b7b5f193dab0dae3d9ef8b62e4bdf358d13bbce890603f5"
   }
 }

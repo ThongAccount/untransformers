@@ -1,8 +1,8 @@
 # gate: G4
 # command: /home/node/.venv/bin/python tools/verify/check_quality_results.py --file results/quality_gpu_full.json --label full --arms HE attention-32h --seeds 1 2 3
 # exit: 0
-# wall: 0.07 s
-# utc: 2026-10-24T08:24:14+00:00
+# wall: 0.06 s
+# utc: 2026-10-24T08:25:05+00:00
 
 [info] device=cuda torch=2.11.0+cu130 python=3.13.16
 [info] HE: seeds=[1, 2, 3] steps=2000 wall=None
