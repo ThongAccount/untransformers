@@ -18,7 +18,8 @@ Usage:
         --doc docs/milestone-2/QUALITY.md \
         --results results/quality_gpu_full.json \
         --eval-windows results/eval_windows.json \
-        --manifest data/manifest.json
+        --manifest data/manifest.json \
+        --summary results/quality_summary.json
 
 Exit 0 prints DOC_NUMBERS_OK.
 """
@@ -44,7 +45,7 @@ def _fmt_pct(x: float) -> str:
 
 
 def check(results: dict, eval_windows: dict | None,
-          manifest: dict | None) -> list[tuple[str, str]]:
+          manifest: dict | None, summary: dict | None = None) -> list[tuple[str, str]]:
     """The constants the prose is allowed to state, with the value it must be.
 
     Each entry is (what it is, the string the document must contain). A
@@ -107,6 +108,23 @@ def check(results: dict, eval_windows: dict | None,
             checks.append(("the share of the held-out tokens from unseen books",
                            f"{unseen / held_out * 100:.1f}"))
 
+    # the two numbers the eval-set-noise sentence compares: the bootstrap SE of
+    # the paired difference (the largest over the seeds) and the training-noise
+    # CI half-width. Both come from the summary artefact, so a sentence that
+    # states them cannot drift from them.
+    if summary:
+        per_seed = ((summary.get("eval_set_bootstrap") or {}).get("per_seed") or {})
+        ses = [float(v["bootstrap_se_paired_difference"])
+               for v in per_seed.values()
+               if v.get("bootstrap_se_paired_difference") is not None]
+        if ses:
+            checks.append(("the largest bootstrap SE of the paired difference",
+                           f"{max(ses):.6f}"))
+        ci = ((summary.get("endpoints") or {}).get("final") or {}).get("ci95") or []
+        if len(ci) == 2 and ci[0] is not None and ci[1] is not None:
+            half = (float(ci[1]) - float(ci[0])) / 2.0
+            checks.append(("the training-noise CI half-width", f"{half:.6f}"))
+
     return checks
 
 
@@ -116,6 +134,9 @@ def main() -> int:
     ap.add_argument("--results", required=True)
     ap.add_argument("--eval-windows", default="")
     ap.add_argument("--manifest", default="")
+    ap.add_argument("--summary", default="",
+                    help="the quality-summary JSON (the two noise numbers the "
+                         "eval-set-noise sentence compares)")
     args = ap.parse_args()
 
     doc_path = Path(args.doc)
@@ -133,8 +154,12 @@ def main() -> int:
     if args.manifest:
         p = Path(args.manifest)
         manifest = json.loads(p.read_text(encoding="utf-8")) if p.exists() else None
+    summary = None
+    if args.summary:
+        p = Path(args.summary)
+        summary = json.loads(p.read_text(encoding="utf-8")) if p.exists() else None
 
-    checks = check(results, eval_windows, manifest)
+    checks = check(results, eval_windows, manifest, summary)
 
     failures: list[str] = []
     for label, value in checks:

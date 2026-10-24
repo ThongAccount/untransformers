@@ -603,6 +603,58 @@ def test_doc_number_checker_passes_on_the_artefacts_numbers_and_fails_on_a_stale
     assert "tokens processed per run" in (r.stdout + r.stderr)
 
 
+def test_doc_number_checker_checks_the_two_noise_numbers_the_prose_compares(tmp_path):
+    """The eval-set-noise sentence states two numbers; both are gated.
+
+    The sentence compares the bootstrap SE of the paired difference with the
+    training-noise CI half-width. Both are typed by hand in the prose, so the
+    checker recomputes them from the summary artefact and refuses the document
+    if either is missing or stale.
+    """
+    results = {
+        "protocol": {"tokens_processed_per_run": 16_384_000,
+                     "epochs_of_our_corpus": 1.8127,
+                     "corpus_tokens_train_region": 9_038_476,
+                     "corpus_tokens_heldout_region": 475_710,
+                     "eval_batches": 8},
+        "config": {"batch_size": 64, "l": 128},
+    }
+    rpath = tmp_path / "results.json"
+    rpath.write_text(json.dumps(results), encoding="utf-8")
+    summary = {
+        "eval_set_bootstrap": {"per_seed": {
+            "1": {"bootstrap_se_paired_difference": 0.001234},
+            "2": {"bootstrap_se_paired_difference": 0.005678},
+            "3": {"bootstrap_se_paired_difference": 0.003210}}},
+        "endpoints": {"final": {"ci95": [0.100000, 0.200000]}},
+    }
+    spath = tmp_path / "summary.json"
+    spath.write_text(json.dumps(summary), encoding="utf-8")
+
+    good = tmp_path / "GOOD.md"
+    good.write_text(
+        "16,384,000 tokens; 1.813 nominal epochs; 3.333% of the paper; "
+        "475,710 held-out tokens; 512 windows; 65,536 target tokens.\n"
+        "The bootstrap SE of the paired difference is at most 0.005678, against "
+        "a training-noise CI half-width of 0.050000.\n",
+        encoding="utf-8")
+    r = subprocess.run([PY, str(REPO / "tools/verify/check_doc_numbers.py"),
+                        "--doc", str(good), "--results", str(rpath),
+                        "--summary", str(spath)], text=True, capture_output=True)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "DOC_NUMBERS_OK" in r.stdout
+
+    # a stale bootstrap SE must be caught
+    stale = tmp_path / "STALE.md"
+    stale.write_text(good.read_text(encoding="utf-8").replace("0.005678", "0.000001"),
+                     encoding="utf-8")
+    r = subprocess.run([PY, str(REPO / "tools/verify/check_doc_numbers.py"),
+                        "--doc", str(stale), "--results", str(rpath),
+                        "--summary", str(spath)], text=True, capture_output=True)
+    assert r.returncode != 0
+    assert "bootstrap SE" in (r.stdout + r.stderr)
+
+
 def test_doc_number_checker_recomputes_the_unseen_book_share_from_the_manifest(tmp_path):
     """The 85.5% figure is a property of the corpus and the split, not of a
     run: the checker recomputes it from the manifest and the cut."""

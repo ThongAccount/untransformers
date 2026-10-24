@@ -54,6 +54,9 @@ ARM_A = "HE"
 ARM_B = "attention-32h"
 ARM_C = "attention-32h-sdpa"
 
+# the repository root, for the source-level checks (which key the renderer reads)
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
 
 # ---------------------------------------------------------------------------
 # Student-t quantiles, computed here rather than taken from a table
@@ -420,16 +423,28 @@ def main() -> int:
     # the artefact's own paired_final block
     paired = data.get("paired_final") or {}
     if paired:
-        # The renderer reads `differences_arm_a_minus_b`; the merge writes
-        # `differences_arm_a_minus_arm_b`. Check the key the renderer depends on.
+        # The merge writes `differences_arm_a_minus_arm_b` and the renderer reads
+        # that key. The reviewer's second pass found the renderer reading a key
+        # the merge never writes, which emptied the per-seed difference column
+        # of QUALITY.md; it was fixed before any measured number existed. Check
+        # the key the renderer depends on, and that no cell would be empty.
+        diffs = paired.get("differences_arm_a_minus_arm_b") or {}
         checks.add("the artefact carries the key the renderer reads "
-                   "('differences_arm_a_minus_b')",
-                   "differences_arm_a_minus_b" in paired,
-                   "render_results_tables.py reads 'differences_arm_a_minus_b'; the artefact "
-                   "writes 'differences_arm_a_minus_arm_b' — the rendered per-seed "
-                   "difference column would be empty")
-        diffs = (paired.get("differences_arm_a_minus_arm_b")
-                 or paired.get("differences_arm_a_minus_b") or {})
+                   "('differences_arm_a_minus_arm_b')",
+                   bool(diffs),
+                   "the merge writes 'differences_arm_a_minus_arm_b' and the renderer "
+                   "reads it; without it the rendered per-seed difference column is empty")
+        for s in seeds:
+            checks.add(f"paired_final carries a difference for seed {s}",
+                       diffs.get(str(s)) is not None,
+                       f"difference={diffs.get(str(s))!r}")
+        renderer = REPO_ROOT / "tools" / "render_results_tables.py"
+        renderer_src = renderer.read_text(encoding="utf-8") if renderer.exists() else ""
+        checks.add("the renderer reads the key the merge writes",
+                   "differences_arm_a_minus_arm_b" in renderer_src,
+                   "tools/render_results_tables.py must read "
+                   "'differences_arm_a_minus_arm_b', or the per-seed difference "
+                   "column of QUALITY.md renders empty")
         for s in seeds:
             mine = recomputed["final"]["differences"].get(str(s))
             theirs = diffs.get(str(s))

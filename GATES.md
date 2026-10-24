@@ -99,7 +99,7 @@ All commands run with `CWD: /workspace/untransformers` and
 
 ## G8c — the prose numbers are the artefacts' numbers
 
-  CHECK: /home/node/.venv/bin/python tools/verify/check_doc_numbers.py --doc docs/milestone-2/QUALITY.md --results results/quality_gpu_full.json --eval-windows results/eval_windows.json --manifest data/manifest.json
+  CHECK: /home/node/.venv/bin/python tools/verify/check_doc_numbers.py --doc docs/milestone-2/QUALITY.md --results results/quality_gpu_full.json --eval-windows results/eval_windows.json --manifest data/manifest.json --summary results/quality_summary.json
   EXPECT: DOC_NUMBERS_OK
 
   (The tables in the write-ups are rendered from the artefacts, so they cannot
@@ -107,10 +107,12 @@ All commands run with `CWD: /workspace/untransformers` and
   a stale figure hides. This gate recomputes the constants the prose is allowed
   to state — the tokens processed per run, the nominal epochs, the share of the
   paper's token budget, the held-out region's token count, the eval window
-  count and target tokens, the three unseen books' token count, and the share
+  count and target tokens, the three unseen books' token count, the share
   of the held-out tokens that come from books never seen in training (recomputed
-  from the manifest and the cut) — and refuses the document if any of them is
-  missing or contradicts the artefact.)
+  from the manifest and the cut), and the two numbers the eval-set-noise
+  sentence compares (the largest bootstrap SE of the paired difference and the
+  training-noise CI half-width, both from the summary artefact) — and refuses the
+  document if any of them is missing or contradicts the artefact.)
 
 ## G9 — everything is committed and on the Hub
 
