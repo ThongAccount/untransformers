@@ -193,3 +193,32 @@ def test_the_conditions_table_carries_everything_protocol_rule_1_requires(tmp_pa
     # the token budget is stated as a share of the paper's, with the paper's own
     # budget printed so the ratio can be checked
     assert "491,520,000" in md
+
+
+def test_no_rendered_table_leaks_none_or_nan():
+    """A table cell must never contain the literal "None" or "nan".
+
+    Both are Python objects leaking into prose: "None" means a field the
+    renderer forgot, "nan" means an arithmetic bug upstream. The committed
+    artefacts are rendered here and every cell is checked.
+    """
+    import re
+
+    results = Path(__file__).resolve().parents[1] / "results"
+    files = sorted(results.glob("*.json"))
+    assert files, "there must be at least one artefact to render"
+    for f in files:
+        try:
+            md = rrt.render_quality(f)
+        except Exception:
+            md = ""
+        try:
+            md += rrt.render_systems(f)
+        except Exception:
+            pass
+        if not md:
+            continue
+        for cell in re.findall(r"\|([^|\n]*)\|", md):
+            cell = cell.strip()
+            assert cell not in ("None", "nan", "NaN", "null"), \
+                f"{f.name}: the cell {cell!r} is not a measurement"

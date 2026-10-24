@@ -304,10 +304,18 @@ def render_systems(path: Path) -> str:
                "grows with context |")
     out.append("|---|---|---|---|---|")
     for arm, r in st.items():
-        out.append(f"| {arm} | {r.get('state_bytes_per_layer_per_token')} | "
-                   f"{r.get('state_bytes_all_layers_per_token')} | "
-                   f"`{r.get('state_bytes_per_layer_formula')}` | "
-                   f"{r.get('grows_with_context')} |")
+        grows = r.get("grows_with_context")
+        per_layer = r.get("state_bytes_per_layer_per_token")
+        all_layers = r.get("state_bytes_all_layers_per_token")
+        if per_layer is None and grows:
+            # the attention state depends on the context length: one number
+            # would be wrong, and "None" would leak Python into the table
+            per_layer = "context-dependent (see the sublayer-1 table)"
+            all_layers = "context-dependent (see the sublayer-1 table)"
+        out.append(f"| {arm} | {_fmt(per_layer)} | "
+                   f"{_fmt(all_layers)} | "
+                   f"`{_fmt(r.get('state_bytes_per_layer_formula'))}` | "
+                   f"{grows} |")
     out.append("")
     for arm, r in st.items():
         if r.get("note"):
