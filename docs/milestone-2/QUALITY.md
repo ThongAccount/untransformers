@@ -24,7 +24,32 @@ reports, it does not re-decide.
 
 ## 1. The conditions of the comparison
 
-<!-- TABLES:quality-conditions -->
+### Conditions
+
+| field | value |
+|---|---|
+| label | full |
+| commit | 5b296cad33e8e9911bcb5da0336f52b173054e37 |
+| corpus_id | `fd567893d71494fdf5f733c13b4d4ac5e9ecf81c886ab298e1003d4103a5e2d7` |
+| tokenizer sha256 | `4e6abaa775edf70839cc6b0b881b7846e3e558c577c474fcaf22516426f6c647` |
+| books | 100 |
+| tokens: total / train region / held-out region | 9514186 / 9038476 / 475710 |
+| held-out definition | the last 5% of the frozen token array (475710 tokens); never trained on, never used for selection |
+| model shape | d=128 l=128 layers=18 ffn=512 vocab=5000 heads=32 |
+| steps | 2000 |
+| tokens per step | 8192 |
+| tokens processed per run | 16384000 |
+| nominal epochs of the train region | 1.813 (windows are sampled with replacement: repeats included) |
+| token budget vs the paper | 3.333% of the paper's 491,520,000 tokens (60,000 batches x 8,192) |
+| seeds | [1, 2, 3] |
+| eval every / eval batches | 250 / 8 |
+| eval windows / target tokens per eval point | 512 windows / 65536 target tokens |
+| train seed | 0 |
+| device | cuda |
+| hardware | Tesla T4 |
+| torch | 2.11.0+cu130 |
+| python | 3.13.16 |
+| threads | 1 |
 
 Every row above is the runner's own record of the run that produced
 `results/quality_gpu_full.json`; nothing in it is retyped by hand.
@@ -100,7 +125,51 @@ table.
   ddof = 0, and per-arm rather than paired) is descriptive only and is never
   quoted as the dispersion.
 
-<!-- TABLES:quality-summary -->
+### Endpoint: primary: held-out loss at the final step
+
+Sign convention: d_s = L_HE(s) - L_attn(s); positive means HE's loss is HIGHER (worse)
+
+| seed | HE | attention-32h | d = HE - attention |
+|---|---|---|---|
+| 1 | 4.138239 | 4.243823 | -0.105584 |
+| 2 | 4.149547 | 4.256581 | -0.107034 |
+| 3 | 4.151253 | 4.250221 | -0.098967 |
+| **mean** | 4.146346 | 4.250208 | -0.103862 |
+| **sample SD (ddof=1)** | 0.007073 | 0.006379 | 0.004300 |
+
+| statistic | value |
+|---|---|
+| standard error | 0.002483 |
+| 95% CI for d-bar | [-0.114544, -0.093180] |
+| CI excludes 0 | True |
+| MDD at 80% power | 0.013315 |
+| perplexity ratio exp(d-bar) | 0.901350 |
+| perplexity ratio, 95% CI | [0.891773, 0.911030] |
+| verdict | resolved (the 95% CI for d̄ excludes 0) |
+| seeds needed for 80% power at the observed effect | 3 |
+
+### Endpoint: secondary: mean of the last four eval points
+
+Sign convention: d_s = L_HE(s) - L_attn(s); positive means HE's loss is HIGHER (worse)
+
+| seed | HE | attention-32h | d = HE - attention |
+|---|---|---|---|
+| 1 | 4.201763 | 4.310400 | -0.108637 |
+| 2 | 4.213751 | 4.321823 | -0.108072 |
+| 3 | 4.211961 | 4.322089 | -0.110129 |
+| **mean** | 4.209158 | 4.318104 | -0.108946 |
+| **sample SD (ddof=1)** | 0.006467 | 0.006673 | 0.001062 |
+
+| statistic | value |
+|---|---|
+| standard error | 0.000613 |
+| 95% CI for d-bar | [-0.111585, -0.106307] |
+| CI excludes 0 | True |
+| MDD at 80% power | 0.003290 |
+| perplexity ratio exp(d-bar) | 0.896779 |
+| perplexity ratio, 95% CI | [0.894415, 0.899149] |
+| verdict | resolved (the 95% CI for d̄ excludes 0) |
+| seeds needed for 80% power at the observed effect | 3 |
 
 ## 5. The eval-set bootstrap (a different kind of noise)
 
@@ -113,29 +182,61 @@ arms, and the bootstrap SE of each arm's mean loss and of the paired
 difference is printed. This SE is **not** included in the training-noise CI
 above, and the two are not simply additive.
 
-<!-- TABLES:quality-bootstrap -->
+**How large is the eval-set noise?** The largest bootstrap SE of the paired
+difference over the three seeds is **0.003848**, against a training-noise CI
+half-width of **0.010682** — the eval-set noise is the smaller of the two, so
+the interval above is dominated by the run-to-run variance of the training
+runs and not by the sampling of the eval windows.
 
-## 6. The book-aligned sensitivity analysis (post-hoc, three unseen books)
+**The conditions of the eval-set re-scoring.** The 512 windows were re-scored
+from the six checkpoints on the 1-core CPU host (float32, torch 2.14.1+cpu),
+while the training runs themselves were on a Tesla T4 (cuda, torch
+2.11.0+cu130): Colab's T4 pool was saturated for the whole window this was
+attempted in, so this half was measured on the CPU and the book-aligned half
+was not run at all (§6). The re-scoring is a cross-check as well as an input:
+each checkpoint's recomputed eval-set mean reproduces the final held-out loss
+that its run reported, to within 3 × 10⁻⁷ — the float32 CPU-vs-GPU difference,
+not a modelling difference.
 
-Every checkpoint is re-scored, without any retraining, on a **book-aligned**
-set: the three fully unseen books (ebooks 3536, 3795, 3796), swept
-exhaustively with stride 1 (a window start at every token position inside each
-book), so this metric carries no window-sampling noise at all.
+### Eval-set bootstrap (1,000 resamples of the 512 eval windows)
 
-**What the coverage is, precisely.** The windows overlap: each window scores
-`l` target positions, and consecutive windows share all but one of them. The
-count of scored positions is therefore a count of **token-predictions**, not of
-distinct tokens, and the first token of each book is never a target (a window
-needs `l + 1` tokens to predict its last one). The coverage table below prints
-the books' token counts, the window counts, the stride and the token-prediction
-counts, so the coverage cannot be read as larger than it is.
+| seed | bootstrap SE, HE | bootstrap SE, attention-32h | bootstrap SE, paired difference |
+|---|---|---|---|
+| 1 | 0.013329 | 0.013799 | 0.003848 |
+| 2 | 0.013464 | 0.013600 | 0.003675 |
+| 3 | 0.013471 | 0.013825 | 0.003564 |
 
-This is a **post-hoc sensitivity analysis**. The primary endpoint stays the
-run's own metric; this number is reported *alongside* it and may not replace
-it. If the two orderings disagree, the disagreement is the finding — the
-favourable one is not picked.
+_this SE describes the sampling of the eval windows only; it is NOT included in the training-noise CI (2.484·s_d) and the two are not simply additive_
 
-<!-- TABLES:quality-sensitivity -->
+## 6. The book-aligned sensitivity analysis (post-hoc, three unseen books) — not run
+
+The sensitivity analysis pre-registered in `docs/milestone-3/PROTOCOL.md` §2.3
+was **not run**, and this write-up makes **no** sensitivity claim. The three
+fully unseen books (ebooks 3536, 3795, 3796) hold **406,723 tokens**; the
+stride-1 sweep would score **406,339 windows** per checkpoint (a window start
+at every token position inside each book), each scoring 128 target positions —
+**52,011,392 token-predictions** per checkpoint, which is a count of
+token-predictions and not of distinct tokens (the windows overlap, and the
+first token of each book is never a target).
+
+It was not run because the measurement needs a GPU and none was available: the
+re-scoring leg was queued on a Colab Tesla T4 from 2026-10-24 07:10 UTC, the
+allocation endpoint kept answering `Service Unavailable`, and the leg was
+stopped rather than polled (the user's instruction, on cost grounds). The CPU
+fallback was measured rather than assumed — the book-aligned path costs
+**19.8 ms per window** for the HE arm and **65.3 ms per window** for the
+attention arm on this 1-core host, i.e. **2.23 h** and **7.37 h** per
+checkpoint and ≈ 29 h for the six — and was rejected. The eval-set half of the
+same re-scoring *was* run, on the CPU (§5).
+
+What that leaves: the primary endpoint stands on its own, and the **absence**
+of the sensitivity analysis is a limit on what may be claimed from it, not a
+neutral detail. The protocol's rule for this metric — that it is reported
+*alongside* the primary endpoint and may not replace it, and that a
+disagreement between the two orderings would be reported as the finding —
+could not be exercised, so this write-up says nothing about whether the arm
+ordering on the three unseen books agrees with the ordering on the run's own
+metric. Recorded as deviation **D-27**.
 
 ## 7. What this comparison establishes, and what it does not
 
@@ -150,13 +251,20 @@ favourable one is not picked.
   covers initialisation and dropout variance only and is a **lower bound** on
   run-to-run variance; the MDD derived from it is therefore optimistic
   (protocol §3.4, limitation L-01 in `docs/milestone-3/SCOPE.md`);
+* anything about the arm ordering on the three unseen books: the
+  pre-registered book-aligned sensitivity analysis was **not run** (§6,
+  deviation D-27), so the protocol's rule for it — report it alongside the
+  primary endpoint, and report a disagreement between the two orderings as the
+  finding — could not be exercised;
 * anything about the tokenizer's generalisation (D-C).
 
 **Does establish, within this protocol:**
 
-* the paired per-seed difference between the two arms, with its uncertainty
-  and its resolution status;
-* the same comparison restricted to the three unseen books;
+* that the paired difference between the two arms is **resolved at n = 3**
+  under this protocol: the 95% CI for d̄ [-0.114544, -0.093180] excludes 0, and
+  on this corpus at this budget the HE Extractor's held-out loss is the lower
+  one (d̄ = -0.103862, a perplexity ratio of 0.901350, an MDD of 0.013315 at
+  80% power);
 * the size of the eval-set noise separately from the training-run noise.
 
 ## 8. The CPU pilot is a protocol smoke test, not a result
@@ -182,10 +290,19 @@ python tools/verify/verify_pairing_evidence.py --results results/quality_gpu_ful
     --checkpoint-dir checkpoints --out results/pairing_evidence_gpu_full.json \
     --merge-into results/quality_gpu_full.json
 python experiments/eval_checkpoints.py --checkpoint-dir checkpoints \
-    --arms HE attention-32h --seeds 1 2 3 --out results/eval_windows.json --device cuda
+    --arms HE attention-32h --seeds 1 2 3 --out results/eval_windows.json \
+    --device cpu --skip-book-aligned --note "<what this run is>"
 python tools/summarise_quality.py --file results/quality_gpu_full.json \
     --eval-windows results/eval_windows.json --out results/quality_summary.json
 ```
+
+The committed `results/eval_windows.json` is the output of exactly that
+command: the eval-set half, scored on the CPU, **without** the book-aligned
+sweep. The sweep is the same script without `--skip-book-aligned` (and on a
+GPU) — that is the command the protocol asks for, and it was **not run**,
+because no GPU was available (§6, deviation D-27). `--skip-book-aligned`
+makes the artefact record the book-aligned block as `not run` with the reason,
+so a missing sensitivity analysis can never be read as a measured one.
 
 The gates that certify this document are `G3`, `G3a`, `G4`, `G4a`, `G4b` and
 `G8b` in `GATES.md`; their evidence is recorded in

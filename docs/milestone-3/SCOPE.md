@@ -23,7 +23,13 @@ The evidence is in `results/` and the gate ledger is in
   protocol, on the pinned substitute corpus, at 3.333% of the paper's token
   budget, with the statistics pre-registered in
   `docs/milestone-3/PROTOCOL.md` §3.2 and the disclosures D-A, D-B and D-C
-  attached. The write-up is `docs/milestone-2/QUALITY.md`.
+  attached. Under the pre-registered rule the comparison is **resolved at
+  n = 3** — the 95% CI for the paired difference excludes 0 — so this round
+  settles the quality question *within this protocol*, and not beyond it. The
+  pre-registered book-aligned sensitivity analysis was **not run** (no GPU was
+  available; deviation D-27), so the round makes no sensitivity claim and the
+  primary endpoint stands alone. The write-up is
+  `docs/milestone-2/QUALITY.md`.
 * **Systems (Milestone 3)** — the same three implementations timed on one
   accelerator with the optimized SDPA baseline included in every block, an
   A/A run-order null as the drift floor, the numerics settings pinned and
