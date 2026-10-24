@@ -40,6 +40,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import subprocess
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Tuple
@@ -361,6 +362,45 @@ def systems_verdicts(systems: Dict, nulls: Dict) -> List[Dict]:
     return rows
 
 
+def systems_measured_commit(systems: Dict) -> Dict:
+    """Which commit does the systems artefact say it was measured at, and does
+    that commit's `run_systems.py` carry the same-context null?
+
+    The artefact must record the commit whose code produced it. If the
+    artefact carries a same-context null but the commit it records does not
+    have one in its source, then the file that ran was not the file of the
+    recorded commit — the record and the measurement disagree, and that has
+    to be reported rather than glossed over.
+    """
+    out: Dict = {"commit": None, "resolved": False,
+                 "source_has_same_context_null": None,
+                 "source_has_legacy_cross_context_null": None}
+    commit = (systems.get("commit")
+              or (systems.get("environment") or {}).get("commit"))
+    out["commit"] = commit
+    if not commit:
+        out["note"] = "the artefact does not record the commit it was measured at"
+        return out
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(REPO_ROOT), "show",
+             f"{commit}:experiments/run_systems.py"],
+            capture_output=True, text=True, timeout=60)
+    except (OSError, subprocess.SubprocessError) as exc:
+        out["note"] = f"git could not be run: {exc!r}"
+        return out
+    if proc.returncode != 0:
+        detail = proc.stderr.strip().splitlines()
+        out["note"] = (f"the commit {commit} is not in the local clone"
+                       + (f" ({detail[-1]})" if detail else ""))
+        return out
+    out["resolved"] = True
+    src = proc.stdout
+    out["source_has_same_context_null"] = "aa_null_by_context" in src
+    out["source_has_legacy_cross_context_null"] = '"aa_null":' in src
+    return out
+
+
 def _pooled_by_arm_context(rows: Sequence[Dict]) -> Dict:
     """(arm, context) -> the pooled median of one systems artefact's rows."""
     out: Dict = {}
@@ -650,6 +690,28 @@ def main() -> int:
         review["systems_null_recomputed"] = nulls
         review["systems_verdicts"] = verdicts
         order_effect = systems.get("order_effect") or {}
+
+        # which commit produced the systems artefact, and does that commit's
+        # source carry the same-context null?
+        measured = systems_measured_commit(systems)
+        review["systems_measured_commit"] = measured
+        artefact_has_null = any(
+            bool((order_effect.get(b) or {}).get("aa_null_by_context"))
+            for b in ("training_step", "prefill", "incremental_decode"))
+        if measured.get("resolved"):
+            checks.add("the systems artefact's recorded commit carries the "
+                       "same-context null",
+                       measured.get("source_has_same_context_null") == artefact_has_null,
+                       f"the artefact records commit {measured.get('commit')!r}; that "
+                       f"commit's run_systems.py has the same-context null: "
+                       f"{measured.get('source_has_same_context_null')!r}; the artefact "
+                       f"itself has one: {artefact_has_null!r} — a mismatch means the "
+                       f"file that ran was not the file of the recorded commit")
+        else:
+            checks.add("the systems artefact's recorded commit is verifiable here",
+                       False,
+                       f"{measured.get('note')!r} — the commit the artefact names must "
+                       f"be in the clone for the measurement to be checkable")
         for block, entry in nulls.items():
             artefact_floor = entry.get("artefact_block_floor_seconds")
             same_max = entry.get("reviewer_max_same_context_floor_seconds")

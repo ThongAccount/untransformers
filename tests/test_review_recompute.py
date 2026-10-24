@@ -154,6 +154,31 @@ def test_two_systems_legs_are_compared_against_the_drift_floor():
     assert comparison["max_difference_seconds"] == pytest.approx(0.030)
 
 
+def test_the_systems_artefact_must_name_a_commit_whose_source_has_the_null():
+    """The commit the artefact records must be the commit whose code ran."""
+    import subprocess
+
+    commit = "a754578"  # the commit that introduced the same-context null
+    rev = subprocess.run(["git", "-C", str(REPO), "rev-parse", "--verify", commit],
+                         capture_output=True, text=True)
+    if rev.returncode != 0:
+        pytest.skip(f"{commit} is not in this clone")
+    out = rr.systems_measured_commit({"commit": rev.stdout.strip()})
+    assert out["resolved"] is True
+    assert out["source_has_same_context_null"] is True
+    assert out["source_has_legacy_cross_context_null"] is False
+
+
+def test_a_systems_artefact_without_a_verifiable_commit_is_reported():
+    out = rr.systems_measured_commit({"commit": "0" * 40})
+    assert out["resolved"] is False
+    assert "not in the local clone" in out["note"]
+    # an artefact that names no commit at all is reported too
+    out2 = rr.systems_measured_commit({})
+    assert out2["resolved"] is False
+    assert "does not record the commit" in out2["note"]
+
+
 # ---------------------------------------------------------------------------
 # the renderer-key invariant
 # ---------------------------------------------------------------------------
