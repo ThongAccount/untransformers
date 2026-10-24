@@ -1,0 +1,504 @@
+{
+  "schema": "untransformers-quality-run/1",
+  "label": "pilot",
+  "created_utc": "2026-10-23T15:48:41+00:00",
+  "protocol": {
+    "arms": [
+      "HE",
+      "attention-32h"
+    ],
+    "seeds": [
+      1,
+      2
+    ],
+    "train_seed": 0,
+    "steps": 50,
+    "eval_every": 25,
+    "eval_batches": 4,
+    "tokens_per_step": 8192,
+    "tokens_processed_per_run": 409600,
+    "epochs_of_our_corpus": 0.045317374300711755,
+    "corpus_tokens_total": 9514186,
+    "corpus_tokens_train_region": 9038476,
+    "corpus_tokens_heldout_region": 475710,
+    "same_batches_same_order": true,
+    "paired_init_seeds": true
+  },
+  "config": {
+    "d": 128,
+    "l": 128,
+    "n_layers": 18,
+    "ffn_width": 512,
+    "vocab": 5000,
+    "batch_size": 64,
+    "lr": 0.001,
+    "betas": [
+      0.9,
+      0.999
+    ],
+    "weight_decay": 0.001,
+    "dropout": 0.1,
+    "eval_every": 25,
+    "eval_batches": 4,
+    "clip_grad": null,
+    "weight_decay_no_norm": true
+  },
+  "corpus": {
+    "corpus_id": "fd567893d71494fdf5f733c13b4d4ac5e9ecf81c886ab298e1003d4103a5e2d7",
+    "tokenizer_sha256": "4e6abaa775edf70839cc6b0b881b7846e3e558c577c474fcaf22516426f6c647",
+    "manifest_sha256": null,
+    "n_tokens": 9514186,
+    "books": 100
+  },
+  "environment": {
+    "python": "3.13.16",
+    "platform": "Linux-6.6.122+-x86_64-with-glibc2.39",
+    "torch": "2.11.0+cpu",
+    "torch_threads": 1,
+    "device": "cpu"
+  },
+  "results": {
+    "HE": {
+      "arm": "HE",
+      "seeds": [
+        1,
+        2
+      ],
+      "train_seed": 0,
+      "steps": 50,
+      "runs": [
+        {
+          "arm": "HE",
+          "seed": 1,
+          "steps": 50,
+          "train_curve": [
+            8.525349617004395,
+            8.48077392578125,
+            8.411803245544434,
+            8.30433464050293,
+            8.160554885864258,
+            8.032121658325195,
+            7.931355953216553,
+            7.820210933685303,
+            7.703887939453125,
+            7.620830535888672,
+            7.5292463302612305,
+            7.4441375732421875,
+            7.3362932205200195,
+            7.271205425262451,
+            7.175334453582764,
+            7.125476360321045,
+            7.025557518005371,
+            7.013273239135742,
+            6.9464263916015625,
+            6.903996467590332,
+            6.874431133270264,
+            6.818156719207764,
+            6.804041385650635,
+            6.693366050720215,
+            6.733567714691162,
+            6.703675270080566,
+            6.644805908203125,
+            6.711758136749268,
+            6.6306257247924805,
+            6.623663902282715,
+            6.68851375579834,
+            6.630819320678711,
+            6.645940780639648,
+            6.627110004425049,
+            6.60122537612915,
+            6.595050811767578,
+            6.5940375328063965,
+            6.595701217651367,
+            6.54437780380249,
+            6.609496593475342,
+            6.583482265472412,
+            6.5930328369140625,
+            6.611955642700195,
+            6.586645603179932,
+            6.594155311584473,
+            6.588346004486084,
+            6.563898086547852,
+            6.561642169952393,
+            6.499356269836426,
+            6.540945053100586
+          ],
+          "evals": [
+            {
+              "step": 25,
+              "held_out_loss": 6.7783719301223755
+            },
+            {
+              "step": 50,
+              "held_out_loss": 6.632957458496094
+            }
+          ],
+          "final_held_out_loss": 6.632957458496094
+        },
+        {
+          "arm": "HE",
+          "seed": 2,
+          "steps": 50,
+          "train_curve": [
+            8.52333927154541,
+            8.478411674499512,
+            8.414399147033691,
+            8.30809211730957,
+            8.168623924255371,
+            8.037013053894043,
+            7.935257434844971,
+            7.825332164764404,
+            7.709169387817383,
+            7.625776290893555,
+            7.533980369567871,
+            7.447620868682861,
+            7.341220378875732,
+            7.272123336791992,
+            7.177049160003662,
+            7.125046730041504,
+            7.023561477661133,
+            7.0098419189453125,
+            6.940150737762451,
+            6.898036003112793,
+            6.867688179016113,
+            6.811195373535156,
+            6.80011510848999,
+            6.6882781982421875,
+            6.72825288772583,
+            6.6989216804504395,
+            6.639317035675049,
+            6.707007884979248,
+            6.626431941986084,
+            6.619911193847656,
+            6.684837818145752,
+            6.627912521362305,
+            6.64048957824707,
+            6.6192097663879395,
+            6.589739799499512,
+            6.582732677459717,
+            6.580747604370117,
+            6.579622268676758,
+            6.523326396942139,
+            6.5846333503723145,
+            6.561848163604736,
+            6.563055515289307,
+            6.5757527351379395,
+            6.556083679199219,
+            6.561526775360107,
+            6.555002689361572,
+            6.526511192321777,
+            6.522671699523926,
+            6.45984411239624,
+            6.503094673156738
+          ],
+          "evals": [
+            {
+              "step": 25,
+              "held_out_loss": 6.774809122085571
+            },
+            {
+              "step": 50,
+              "held_out_loss": 6.596700310707092
+            }
+          ],
+          "final_held_out_loss": 6.596700310707092
+        }
+      ],
+      "dispersion": {
+        "25": {
+          "n": 2,
+          "mean": 6.776590526103973,
+          "std": 0.0017814040184020996
+        },
+        "50": {
+          "n": 2,
+          "mean": 6.614828884601593,
+          "std": 0.018128573894500732
+        }
+      },
+      "wall_seconds": 1000.6126749515533
+    },
+    "attention-32h": {
+      "arm": "attention-32h",
+      "seeds": [
+        1,
+        2
+      ],
+      "train_seed": 0,
+      "steps": 50,
+      "runs": [
+        {
+          "arm": "attention-32h",
+          "seed": 1,
+          "steps": 50,
+          "train_curve": [
+            8.525410652160645,
+            8.478529930114746,
+            8.399924278259277,
+            8.276458740234375,
+            8.137645721435547,
+            8.019227027893066,
+            7.921420097351074,
+            7.811697959899902,
+            7.695108890533447,
+            7.612553596496582,
+            7.520636081695557,
+            7.436390399932861,
+            7.328491687774658,
+            7.26436710357666,
+            7.1694416999816895,
+            7.119709014892578,
+            7.020200252532959,
+            7.00893497467041,
+            6.9420671463012695,
+            6.899725437164307,
+            6.870940208435059,
+            6.814543724060059,
+            6.801133155822754,
+            6.690104007720947,
+            6.730802059173584,
+            6.701807975769043,
+            6.643300533294678,
+            6.710859775543213,
+            6.630039691925049,
+            6.624009609222412,
+            6.6904683113098145,
+            6.633581638336182,
+            6.6500630378723145,
+            6.630381107330322,
+            6.604320526123047,
+            6.5982747077941895,
+            6.596776962280273,
+            6.598848819732666,
+            6.547204494476318,
+            6.615409851074219,
+            6.591578483581543,
+            6.6022562980651855,
+            6.624874591827393,
+            6.606663703918457,
+            6.616823673248291,
+            6.617475509643555,
+            6.596665382385254,
+            6.596109390258789,
+            6.539389133453369,
+            6.589438438415527
+          ],
+          "evals": [
+            {
+              "step": 25,
+              "held_out_loss": 6.776986360549927
+            },
+            {
+              "step": 50,
+              "held_out_loss": 6.684194803237915
+            }
+          ],
+          "final_held_out_loss": 6.684194803237915
+        },
+        {
+          "arm": "attention-32h",
+          "seed": 2,
+          "steps": 50,
+          "train_curve": [
+            8.523324966430664,
+            8.476045608520508,
+            8.402484893798828,
+            8.280378341674805,
+            8.143790245056152,
+            8.023003578186035,
+            7.9255146980285645,
+            7.817963123321533,
+            7.7022223472595215,
+            7.619751453399658,
+            7.528111457824707,
+            7.442824363708496,
+            7.337268829345703,
+            7.269705772399902,
+            7.175779342651367,
+            7.12453556060791,
+            7.023674488067627,
+            7.010961532592773,
+            6.941730976104736,
+            6.9001007080078125,
+            6.870631694793701,
+            6.813503742218018,
+            6.802692413330078,
+            6.691013813018799,
+            6.730618000030518,
+            6.701898097991943,
+            6.642173767089844,
+            6.709712028503418,
+            6.629409313201904,
+            6.623495578765869,
+            6.6884050369262695,
+            6.633177757263184,
+            6.647607326507568,
+            6.627091884613037,
+            6.600183486938477,
+            6.594823360443115,
+            6.594970703125,
+            6.594295978546143,
+            6.545138359069824,
+            6.6123175621032715,
+            6.589803695678711,
+            6.596798896789551,
+            6.618434906005859,
+            6.598245620727539,
+            6.607397556304932,
+            6.605008602142334,
+            6.581866264343262,
+            6.576526165008545,
+            6.517643928527832,
+            6.560498237609863
+          ],
+          "evals": [
+            {
+              "step": 25,
+              "held_out_loss": 6.777390718460083
+            },
+            {
+              "step": 50,
+              "held_out_loss": 6.651207327842712
+            }
+          ],
+          "final_held_out_loss": 6.651207327842712
+        }
+      ],
+      "dispersion": {
+        "25": {
+          "n": 2,
+          "mean": 6.777188539505005,
+          "std": 0.000202178955078125
+        },
+        "50": {
+          "n": 2,
+          "mean": 6.667701065540314,
+          "std": 0.01649373769760132
+        }
+      },
+      "wall_seconds": 1663.8901164531708
+    }
+  },
+  "updated_utc": "2026-10-23T16:33:05+00:00",
+  "paired_final": {
+    "seeds": [
+      1,
+      2
+    ],
+    "arm_a_final_held_out_loss": {
+      "1": 6.632957458496094,
+      "2": 6.596700310707092
+    },
+    "arm_b_final_held_out_loss": {
+      "1": 6.684194803237915,
+      "2": 6.651207327842712
+    },
+    "differences_arm_a_minus_arm_b": {
+      "1": -0.05123734474182129,
+      "2": -0.05450701713562012
+    },
+    "mean_difference": -0.0528721809387207,
+    "std_difference": 0.001634836196899414,
+    "n": 2
+  },
+  "pairing_evidence": {
+    "schema": "untransformers-pairing-evidence/1",
+    "created_utc": "2026-10-24T02:51:18+00:00",
+    "verifier": {
+      "tool": "tools/verify/verify_pairing_evidence.py",
+      "module": "hextractor/pairing.py",
+      "version": "1",
+      "git_commit": "5b296cad33e8e9911bcb5da0336f52b173054e37",
+      "git_branch": "research/milestone-1-extractor",
+      "git_dirty": true
+    },
+    "corpus": {
+      "corpus_id": "fd567893d71494fdf5f733c13b4d4ac5e9ecf81c886ab298e1003d4103a5e2d7",
+      "tokenizer_sha256": "4e6abaa775edf70839cc6b0b881b7846e3e558c577c474fcaf22516426f6c647",
+      "n_tokens": 9514186
+    },
+    "protocol": {
+      "arms": [
+        "HE",
+        "attention-32h"
+      ],
+      "seeds": [
+        1,
+        2
+      ],
+      "train_seed": 0,
+      "steps": 50,
+      "l": 128,
+      "batch_size": 64,
+      "d": 128,
+      "n_layers": 18,
+      "vocab": 5000
+    },
+    "claims": {
+      "same_batches_same_order": {
+        "verified": true,
+        "n_batches_hashed": 100,
+        "train_stream_sha256": "db8d8cc49bd6c82049041074fba4e9b8212abbe67c6ecfb9b0b1f59cf1f1b40a",
+        "held_out_stream_sha256": "5612edee47654562007a70327cf08281352d1ae9530327d4183bd6a0faf986ab",
+        "method": "the train and held-out streams are pure functions of (train_seed, split, corpus_id, tokenizer_sha256, l, batch) and take no arm and no seed argument, so every arm and every seed consumes the same windows in the same order; the first N windows of each stream are hashed here and the corpus/config identity they were derived from is recorded",
+        "scope": "certifies that the data pipeline is arm-independent and seed-independent for the recorded corpus/config; it is not an observation of the finished training loop"
+      },
+      "paired_init_seeds": {
+        "verified": true,
+        "per_seed": {
+          "1": {
+            "bitwise_equal": true,
+            "n_generator_drawn": 39,
+            "n_generator_drawn_bitwise_equal": 39,
+            "n_shared_parameters": 150,
+            "per_arm": {
+              "attention-32h": {
+                "compared_against": "HE",
+                "n_shared_parameters": 150,
+                "n_only_in_first_arm": [],
+                "n_only_in_this_arm": [],
+                "n_generator_drawn": 39,
+                "n_generator_drawn_bitwise_equal": 39,
+                "differing_parameters": [],
+                "bitwise_equal": true,
+                "shared_parameter_names_sha256": "78dd6585742d68bea870bf9d0af4437e5c4fd3300636226aad88512d88dab8c2"
+              }
+            }
+          },
+          "2": {
+            "bitwise_equal": true,
+            "n_generator_drawn": 39,
+            "n_generator_drawn_bitwise_equal": 39,
+            "n_shared_parameters": 150,
+            "per_arm": {
+              "attention-32h": {
+                "compared_against": "HE",
+                "n_shared_parameters": 150,
+                "n_only_in_first_arm": [],
+                "n_only_in_this_arm": [],
+                "n_generator_drawn": 39,
+                "n_generator_drawn_bitwise_equal": 39,
+                "differing_parameters": [],
+                "bitwise_equal": true,
+                "shared_parameter_names_sha256": "78dd6585742d68bea870bf9d0af4437e5c4fd3300636226aad88512d88dab8c2"
+              }
+            }
+          }
+        },
+        "method": "both arms are rebuilt with the same seed through the runner's own `apply_init_policy` and their shared (non-sublayer-1) parameters are compared bitwise; the generator-drawn tensors are counted separately from the constant-filled ones (LayerNorm gains/biases)",
+        "scope": "certifies the initialisation of the shared parameters; sublayer-1 is arm-specific by construction and is not expected to match"
+      }
+    },
+    "checkpoints": {},
+    "results_cross_check": {
+      "method": "each checkpoint's own metadata (arm, seed, steps, final held-out loss) is compared with the number the results file reports for the same (arm, seed)",
+      "per_checkpoint": {},
+      "mismatches": []
+    },
+    "results_file": {
+      "path": "results/quality_pilot.json",
+      "sha256_before_merge": "dd2612ff3ee81c29b185fa4641d817593a7c856859da5462db1dc81cf2561d1d"
+    }
+  },
+  "pairing_evidence_added_utc": "2026-10-24T02:51:18+00:00"
+}

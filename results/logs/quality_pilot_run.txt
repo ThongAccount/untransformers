@@ -1,0 +1,40 @@
+[env] python=3.13.16 platform=Linux-6.6.122+-x86_64-with-glibc2.39
+[clone] rc=0  Cloning into '/content/repo'...
+
+[clone] HEAD=1693df58d373eb926dbaa4de29ce32a4d31b84a7
+[pip] all deps present; nothing installed
+[env] torch=2.11.0+cpu cuda=None cuda_available=False threads=1
+[suite] pytest_rc=0
+........................................................................ [ 76%]
+......................                                                   [100%]
+94 passed, 1 skipped in 10.29s
+
+[sweep] rc=0 wall=2666.4s
+[HE] starting, seeds=[1, 2], steps=50
+[HE] done in 1000.6s; final held-out loss per seed: {1: 6.632957458496094, 2: 6.596700310707092}
+[attention-32h] starting, seeds=[1, 2], steps=50
+[attention-32h] done in 1663.9s; final held-out loss per seed: {1: 6.684194803237915, 2: 6.651207327842712}
+[paired] {
+  "seeds": [
+    1,
+    2
+  ],
+  "arm_a_final_held_out_loss": {
+    "1": 6.632957458496094,
+    "2": 6.596700310707092
+  },
+  "arm_b_final_held_out_loss": {
+    "1": 6.684194803237915,
+    "2": 6.651207327842712
+  },
+  "differences_arm_a_minus_arm_b": {
+    "1": -0.05123734474182129,
+    "2": -0.05450701713562012
+  },
+  "mean_difference": -0.0528721809387207,
+  "std_difference": 0.001634836196899414,
+  "n": 2
+}
+results written: /content/results.json
+
+[done] total wall 2685.0s
