@@ -565,12 +565,12 @@ def summary_endpoints(d: dict) -> str:
         out.append(f"| standard error | {_fmt(block.get('standard_error'), 6)} |")
         ci = block.get("ci95") or [None, None]
         out.append(f"| 95% CI for d-bar | [{_fmt(ci[0], 6)}, {_fmt(ci[1], 6)}] |")
-        out.append(f"| CI excludes 0 | {block.get('ci95_excludes_zero')} |")
+        out.append(f"| CI excludes 0 | {_fmt(block.get('ci95_excludes_zero'))} |")
         out.append(f"| MDD at 80% power | {_fmt(block.get('mdd_80_power'), 6)} |")
         out.append(f"| perplexity ratio exp(d-bar) | {_fmt(block.get('perplexity_ratio'), 6)} |")
         pr = block.get("perplexity_ratio_ci95") or [None, None]
         out.append(f"| perplexity ratio, 95% CI | [{_fmt(pr[0], 6)}, {_fmt(pr[1], 6)}] |")
-        out.append(f"| verdict | {block.get('verdict')} |")
+        out.append(f"| verdict | {_fmt(block.get('verdict'))} |")
         needed = block.get("seeds_needed_for_80_power_at_observed_effect")
         if needed is not None:
             out.append(f"| seeds needed for 80% power at the observed effect | {needed} |")
@@ -584,7 +584,16 @@ def summary_bootstrap(d: dict) -> str:
     if not per_seed:
         return ""
     out: list[str] = []
-    out.append("### Eval-set bootstrap (1,000 resamples of the 512 eval windows)\n")
+    # the resample count and the window count are the artefact's, not literals:
+    # a header that says "1,000 resamples of the 512 eval windows" while the
+    # artefact says otherwise is a drift the reader cannot see.
+    first = next(iter(per_seed.values()), {}) or {}
+    n_resamples = first.get("n_resamples")
+    n_windows = first.get("n_windows")
+    header = "### Eval-set bootstrap"
+    if n_resamples is not None and n_windows is not None:
+        header += f" ({int(n_resamples):,} resamples of the {int(n_windows):,} eval windows)"
+    out.append(header + "\n")
     out.append("| seed | bootstrap SE, HE | bootstrap SE, attention-32h | "
                "bootstrap SE, paired difference |\n|---|---|---|---|")
     for s, b in sorted(per_seed.items()):
@@ -592,7 +601,20 @@ def summary_bootstrap(d: dict) -> str:
                    f"{_fmt(b.get('bootstrap_se_arm_b'), 6)} | "
                    f"{_fmt(b.get('bootstrap_se_paired_difference'), 6)} |")
     out.append("")
-    out.append(f"_{boot.get('note')}_\n")
+    # the note lives on the per-seed entries (it is the per-seed statement that
+    # the SE is not part of the training-noise CI); the block carries the
+    # definition of the resampling. Either is fine, but the renderer must
+    # never print the word "None" into a committed write-up.
+    note = boot.get("note")
+    if not note:
+        for b in per_seed.values():
+            note = (b or {}).get("note")
+            if note:
+                break
+    if not note:
+        note = boot.get("definition")
+    if note:
+        out.append(f"_{note}_\n")
     return "\n".join(out)
 
 
@@ -602,7 +624,8 @@ def summary_sensitivity(d: dict) -> str:
         return ""
     out: list[str] = []
     out.append("### Book-aligned sensitivity analysis (post-hoc, 3 unseen books)\n")
-    out.append(f"_{sens.get('definition')}_\n")
+    if sens.get("definition"):
+        out.append(f"_{sens['definition']}_\n")
     out.append("| seed | HE | attention-32h | d = HE - attention |\n|---|---|---|---|")
     fa = sens.get("per_seed_arm_a") or {}
     fb = sens.get("per_seed_arm_b") or {}

@@ -168,6 +168,36 @@ def test_a_nan_is_printed_as_a_dash_and_never_as_the_word_nan():
     assert "nan" not in md.lower()
 
 
+def test_the_bootstrap_note_is_rendered_and_never_the_word_none():
+    """The bootstrap block's note must reach the write-up, and it must never be
+    the literal "None".
+
+    The note lives on the per-seed entries of the summary artefact (it is the
+    per-seed statement that the eval-set SE is NOT part of the training-noise
+    CI), while the block carries the definition of the resampling. A renderer
+    that looks for the note in the wrong place writes "_None_" into a committed
+    write-up — a Python object in the middle of a measurement table.
+    """
+    d = {"eval_set_bootstrap": {
+            "per_seed": {"1": {"bootstrap_se_arm_a": 0.002811,
+                               "bootstrap_se_arm_b": 0.002811,
+                               "bootstrap_se_paired_difference": 0.000010,
+                               "note": "this SE is NOT included in the training-noise CI"}},
+            "definition": "the eval windows are resampled with replacement"}}
+    md = rrt.summary_bootstrap(d)
+    assert "this SE is NOT included in the training-noise CI" in md
+    assert "None" not in md
+
+    # a block with neither a note nor a definition renders the table and
+    # nothing else: no "_None_" line, and no crash.
+    d2 = {"eval_set_bootstrap": {"per_seed": {"1": {"bootstrap_se_arm_a": 0.1,
+                                                    "bootstrap_se_arm_b": 0.1,
+                                                    "bootstrap_se_paired_difference": 0.0}}}}
+    md2 = rrt.summary_bootstrap(d2)
+    assert "None" not in md2
+    assert "0.100000" in md2
+
+
 def test_the_conditions_table_carries_everything_protocol_rule_1_requires(tmp_path):
     """Protocol §7 rule 1: a headline number carries the seeds, the steps, the
     tokens processed, the nominal epochs, the corpus identity, the held-out
@@ -222,6 +252,10 @@ def test_no_rendered_table_leaks_none_or_nan():
             cell = cell.strip()
             assert cell not in ("None", "nan", "NaN", "null"), \
                 f"{f.name}: the cell {cell!r} is not a measurement"
+        # the italic notes under a table are prose, not cells, but they are
+        # still rendered from the artefact: a missing note must not become the
+        # word "None" there either.
+        assert "_None_" not in md, f"{f.name}: a note rendered as the word None"
 
 
 def _slot(arm, order_index, median, lo, hi):
