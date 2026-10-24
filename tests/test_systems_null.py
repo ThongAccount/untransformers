@@ -70,3 +70,33 @@ def test_an_arm_measured_once_has_no_null():
     out = rs._order_effect(slots, "prefill")
     assert out["aa_null_by_context"] == {}
     assert out["drift_floor_seconds"] == 0.0
+
+
+def test_the_pooled_decode_row_carries_the_pooled_statistic():
+    """`latency_stats` on a pooled decode row is the POOLED value.
+
+    A consumer that reads `latency_stats` (the reviewer's independent
+    recomputation reads it first) must see the same number as the one in
+    `steady_state_per_token_seconds` — not the last slot's copy.
+    """
+    def _dec_slot(arm, order_index, ctx, steady, first, per_token):
+        return {"arm": arm, "order_index": order_index, "context_tokens": ctx,
+                "latency_stats": {"median": steady, "n": 5},
+                "steady_state_per_token_seconds": {"median": steady, "n": 5},
+                "first_token_seconds": {"median": first, "n": 5},
+                "per_token_seconds": {"median": per_token, "n": 5},
+                "_times": {"steady_state": [steady - 0.001, steady, steady + 0.001],
+                           "first_token": [first],
+                           "per_token": [per_token - 0.001, per_token, per_token + 0.001]},
+                "memory": {"scope": "process-level", "peak_rss_bytes": 1}}
+
+    slots = [_dec_slot("HE", 0, 8, 0.010, 0.020, 0.011),
+             _dec_slot("HE", 3, 8, 0.014, 0.021, 0.015)]
+    pooled = rs._pool_decode_slots(slots)
+    assert len(pooled) == 1
+    row = pooled[0]
+    assert row["latency_stats"]["median"] == row["steady_state_per_token_seconds"]["median"]
+    assert row["slots"] == 2
+    # the pooled median is over both slots' samples, not the last slot's copy
+    assert row["steady_state_per_token_seconds"]["median"] == 0.012
+    assert row["latency_stats"]["median"] == 0.012
