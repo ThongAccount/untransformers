@@ -55,7 +55,7 @@ alongside them.
 took it to `91 passed, 1 skipped`. The skip is T15, which requires CUDA; it
 runs on the GPU session instead (see below).
 
-At the end of the write-up pass the suite is **126 passed, 1 skipped**: the
+At the end of the write-up pass the suite is **136 passed, 1 skipped**: the
 gate-hygiene self-tests below, the renderer self-tests and the doc-number
 checker's self-tests are part of that count.
 
@@ -74,6 +74,19 @@ quality number existed — so nothing here was adjusted after seeing a result.
 | 2 | **G9 could never be MET.** The command ended in `\|\| true`, so it exited 0 with a dirty tree and exited 0 with an unpushed commit, and it printed nothing — under the rule "exits zero AND the EXPECT matches", it could not pass | run with a dirty tree (exit 0) and with an unpushed commit (exit 0) | `GATES.md` now uses `test … = … && test -z "$(git status --porcelain)" && echo PUSHED` | the command itself (it now prints the token and fails in both directions) |
 | 3 | **The limitation IDs collided.** `SCOPE.md` §5 called its limitations D-16…D-20, and the deviation ledger already used those numbers for other things — D-19 meant two different things in two documents | read both ledgers side by side | the scope limitations are **L-01…L-05**, each naming the `PROTOCOL.md` §8.D item it comes from; the cross-references in `QUALITY.md` and `SYSTEMS.md` follow | the doc checker (the ids are now unique across the repository) |
 | 4 | **The drift-floor rule was not operationalised.** "Above the drift floor" had no definition, so it could have been defined after seeing the numbers | — | the reviewer pre-registered it and it is implemented in the renderer: the floor for a block and a context is the **max−min spread across the A/A null's repetitions**, the **largest** such spread over the arms at that context; a difference is **resolvable** iff `\|difference\|` exceeds it, and below it it is **not resolvable, whatever its sign**. The rule and the floor are printed next to every arm-to-arm difference | `tests/test_render_results_tables.py::test_every_arm_to_arm_difference_carries_the_drift_floor_and_a_verdict` |
+
+A second reviewer pass — the reviewer writing its own independent
+re-computation, which it then ran against the pilot artefacts — found four
+more defects of the same kind. Each was fixed **before** the GPU sweep landed
+and before the systems leg ran, so no measured number was ever produced by the
+broken code.
+
+| # | defect | how it was verified | the fix | the test that now pins it |
+|---|---|---|---|---|
+| 5 | **The renderer read a key the merge never writes.** `render_results_tables.py` read `paired.differences_arm_a_minus_b`, while `merge_quality_runs.py` writes `differences_arm_a_minus_arm_b` — so after the fill, QUALITY.md's paired-difference column would have been **empty on every row**, and the gate that reads the correct key would have passed | the reviewer's tool printed the empty column; the renderer's own output showed it | the renderer reads the key the merge writes (and falls back to the other spelling) | `tests/test_render_results_tables.py::test_the_paired_difference_column_is_never_empty` |
+| 6 | **The 80% t-quantile table was wrong for 29 of its 30 rows.** It listed 1.282 at df = 1 where the exact quantile is 1.376, and 0.466 at df = 30 where it is 0.838 — the "seeds needed for 80% power" loop used that column and understated the requirement by 10–24% (12 seeds instead of 15 at an effect of 0.8·s_d) | the reviewer's tool inverted the Student-t CDF numerically (validated against the Cauchy case df = 1, whose quantile is `tan(0.3π)`) and compared | the builder now **computes** the quantiles from the Student-t CDF (no table), and `verify_protocol_constants()` fails the run if they stop reproducing the protocol's stated constants (t₀.₉₇₅,₂ = 4.3027, t₀.₈₀,₂ = 1.0607, CI 2.484·s_d, MDD 3.097·s_d) | `tests/test_quality_tools.py::test_the_t_quantiles_reproduce_the_protocols_constants`, `::test_the_seeds_needed_loop_uses_the_computed_80_percent_quantile` |
+| 7 | **The A/A null was not a same-context null.** `run_systems.py` compared an arm's first and last slot across the whole block, but the prefill and decode blocks carry one row per context per slot — so the "drift floor" was mostly the growth of the latency with the context | on the CPU rehearsal artefact: the prefill floor was 0.052005 s (a context gap) and is 0.003183 s as a same-context null; the decode floor was 0.024263 s and is 0.001187 s | the null is computed **per (arm, context)**; the artefact carries `aa_null_by_context` and `floor_by_context_seconds`; the renderer judges each difference against the floor of its own context; the G6 checker recomputes the null from the slot rows and fails if the artefact's null is not the same-context one | `tests/test_systems_null.py`, `tests/test_verify_scripts.py::test_systems_checker_rejects_a_cross_context_null` |
+| 8 | **The per-eval-point dispersion table printed the population SD under a bare `std` header** — the exact statistic protocol §7 rule 3 forbids quoting as the dispersion (the paired table below it was labelled correctly, so the two tables disagreed) | read the two headers side by side | the column is now `std (population, ddof=0 — descriptive only)` | the renderer self-test (no cell may be `None`/`nan`) and the paired table's label |
 
 Two more defects were found by the rehearsal (the write-up rendered from the
 pilot-scale artefacts before the real ones existed):

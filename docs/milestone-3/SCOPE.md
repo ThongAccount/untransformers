@@ -92,8 +92,13 @@ artefacts stay unreviewed outside the repository.
 
    * the **floor** for a block and a context is the **max−min spread across
      the A/A null's repetitions** — the same arm measured at the start and at
-     the end of the palindromic order — taken as the **largest** such spread
-     over the arms at that context (the conservative choice);
+     the end of the palindromic order **at that context** — taken as the
+     **largest** such spread over the arms at that context (the conservative
+     choice). The null is same-context by construction: the prefill and decode
+     blocks carry one row per context per slot, so an arm-level comparison
+     across the block would measure the growth of the latency with the context
+     instead of the run-order drift (defect D-25, fixed before the systems leg
+     ran);
    * an arm-to-arm difference is **resolvable** iff `|difference|` **exceeds**
      that floor. Below the floor it is **"not resolvable", whatever its sign**;
    * the floor is printed next to every arm-to-arm difference, so the reader
