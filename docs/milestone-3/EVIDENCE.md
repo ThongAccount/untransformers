@@ -20,8 +20,8 @@ somebody else's number: each row is the output of the command in that row.
 | python | `/home/node/.venv/bin/python` (CPython 3.12.15) |
 | torch | 2.14.1+cpu (local host) |
 | threads | 1 (`torch.set_num_threads(1)` in the drivers) |
-| git | `f207b7a` (the commit each row was executed at, unless stated) |
-| date | 2026-10-23 (UTC) |
+| git | `6448165` (the commit each row was executed at, unless stated) |
+| date | 2026-10-24 (UTC) |
 
 The Colab runs carry their own conditions in the artefacts themselves
 (`environment` block of each results JSON) and in the session logs committed
@@ -34,16 +34,16 @@ alongside them.
 | gate | status | command | exit | matched token | wall |
 |---|---|---|---|---|---|
 | G1 | MET | `/home/node/.venv/bin/python -m pytest tests/test_t14_data_pipeline.py -q` | 0 | `12 passed` | 3.33 s |
-| G2 | MET | `/home/node/.venv/bin/python -m pytest -q` | 0 | `91 passed, 1 skipped` | 5.61 s |
+| G2 | MET | `/home/node/.venv/bin/python -m pytest -q` | 0 | `153 passed, 1 skipped` | 16.53 s |
 | G3 | MET | `… check_quality_results.py --file results/quality_pilot.json --label pilot --arms HE attention-32h --seeds 1 2` | 0 | `PILOT_OK` | 2026-10-24 02:24 UTC (pilot artefact from session `he-pilot-cpu2`) |
 | G3a | MET | `… verify_pairing_evidence.py --results results/quality_pilot.json --out results/pairing_evidence_pilot.json --merge-into results/quality_pilot.json` | 0 | `verified=True` (both claims) | 2026-10-24 02:24 UTC |
-| G4 | IN FLIGHT | `… check_quality_results.py --file results/quality_gpu_full.json --label full --arms HE attention-32h --seeds 1 2 3` | — | — | GPU sweep running (Colab session `he-gpu3`, Tesla T4, commit `5b296ca`) |
-| G4a | PENDING | `… verify_pairing_evidence.py --results results/quality_gpu_full.json --checkpoint-dir results/checkpoints --out results/pairing_evidence_gpu_full.json --merge-into results/quality_gpu_full.json` | — | — | runs on the merged artefact |
-| G4b | PENDING | `… summarise_quality.py --file results/quality_gpu_full.json --eval-windows results/eval_windows.json --out results/quality_summary.json` | — | — | the pre-registered statistics + bootstrap + sensitivity |
+| G4 | MET | `… check_quality_results.py --file results/quality_gpu_full.json --label full --arms HE attention-32h --seeds 1 2 3` | 0 | `FULL_OK` | 0.06 s |
+| G4a | MET | `… verify_pairing_evidence.py --results results/quality_gpu_full.json --checkpoint-dir results/checkpoints --out results/pairing_evidence_gpu_full.json --merge-into results/quality_gpu_full.json` | 0 | `verified=True` (both claims) | 2.74 s |
+| G4b | PENDING | `… summarise_quality.py --file results/quality_gpu_full.json --eval-windows results/eval_windows.json --out results/quality_summary.json` | — | — | the pre-registered statistics + bootstrap + sensitivity; the eval-window re-scoring is queued on a T4 (see below) |
 | G5 | MET | `/home/node/.venv/bin/python -m pytest tests/test_m3_incremental.py -q` | 0 | `11 passed` | 0.13 s |
-| G6 | PENDING | `… check_systems_results.py --file results/systems.json` | — | — | queued in the same T4 session, after the sweep |
-| G7 | PENDING | `… check_systems_results.py --file results/systems.json --require-paired-quality` | — | — | paired checkpoints come from the sweep's `SAVE_CHECKPOINTS=1` |
-| G8 | PENDING | `… check_docs.py --systems docs/milestone-3/SYSTEMS.md --scope docs/milestone-3/SCOPE.md` | — | — | the scope decision is the reviewer's (H2) |
+| G6 | MET | `… check_systems_results.py --file results/systems.json` | 0 | `SYSTEMS_OK` | 0.08 s |
+| G7 | MET | `… check_systems_results.py --file results/systems.json --require-paired-quality` | 0 | `PAIRED_QUALITY_OK` + `SYSTEMS_OK` | 0.10 s |
+| G8 | PENDING | `… check_docs.py --systems docs/milestone-3/SYSTEMS.md --scope docs/milestone-3/SCOPE.md` | — | — | the scope decision is the reviewer's (H2); the checker now *fails* until it exists |
 | G8b | PENDING | `… check_docs.py --systems … --scope … --quality docs/milestone-2/QUALITY.md` | — | — | after the tables are rendered |
 | G8c | PENDING | `… check_doc_numbers.py --doc docs/milestone-2/QUALITY.md --results results/quality_gpu_full.json --eval-windows results/eval_windows.json --manifest data/manifest.json` | — | — | the prose numbers against the artefacts |
 | G9 | PENDING | `test "$(git rev-parse HEAD)" = "$(git rev-parse origin/research/milestone-1-extractor)" && test -z "$(git status --porcelain)" && echo PUSHED` | — | — | final push (the command was repaired — see below) |
@@ -55,9 +55,10 @@ alongside them.
 took it to `91 passed, 1 skipped`. The skip is T15, which requires CUDA; it
 runs on the GPU session instead (see below).
 
-At the end of the write-up pass the suite is **136 passed, 1 skipped**: the
+At the end of the write-up pass the suite is **153 passed, 1 skipped**: the
 gate-hygiene self-tests below, the renderer self-tests and the doc-number
-checker's self-tests are part of that count.
+checker's self-tests are part of that count. The skip is T15, which needs
+CUDA; it runs inside the GPU session instead.
 
 ---
 
@@ -220,11 +221,11 @@ question. The paper-budget comparison is the GPU sweep.
 
 ---
 
-## 2026-10-24 — the GPU leg, twice: one pruned session and one silent bug
+## 2026-10-24 — the GPU leg, three times: a pruned session, a silent bug and an OOM
 
-Two things went wrong between the first sweep attempt and the sweep that
-counts. Neither produced a measured number that anyone could misread, and
-both are recorded here because they change how the artefacts must be read.
+Three things went wrong between the first sweep attempt and the artefacts that
+count. None of them produced a measured number that anyone could misread, and
+all three are recorded here because they change how the artefacts must be read.
 
 ### 1. The first T4 session was pruned mid-sweep
 
@@ -282,3 +283,49 @@ Recorded as deviation **D-23** in `docs/milestone-1/DEVIATIONS.md`.
 | sweep | one invocation per `(arm, seed)`: `--steps 2000 --eval-every 250 --eval-batches 8 --train-seed 0 --device cuda --save-checkpoints` |
 | measured step time | HE ≈ 1.2 s/step, attention-32h ≈ 0.37 s/step (in-session probe) |
 | artefacts | `/content/runs/<arm>_seed<seed>.json`, `/content/checkpoints/<arm>_seed<seed>.pt`, `/content/sweep.log` — downloaded as they land |
+
+### 3. The session that counts was pruned mid re-scoring
+
+The session `he-gpu3` ran the six-run sweep, the T15 gate and both systems
+legs. The first systems leg died with the CUDA OOM described above; the
+re-measurement at the tooling commit `b2a3221` wrote `results/systems.json`.
+The session was then used for the **evaluation-only re-scoring** — the
+book-aligned stride-1 sweep and the eval-set re-scoring of the six
+checkpoints — and **Colab pruned it at the four-hour limit** (≈ 06:17 UTC).
+
+The prune cost the sweep of the three HE checkpoints that had already been
+scored (≈ 820 s each): they existed only inside the session's filesystem, so
+no artefact was recovered from them. Every checkpoint itself was already on
+the local disk (`results/checkpoints/`, with the digests in
+`results/checkpoints/MANIFEST.json`), and every other artefact of the round
+had already been downloaded, so only the *scoring* had to be redone.
+
+The CPU fallback was measured and rejected rather than assumed: on this
+1-core host the book-aligned path (the exact `region_window_losses` call the
+GPU leg makes — stride 1, batch 64, one thread) costs **19.8 ms per window
+for the HE arm** and **65.3 ms per window for the attention arm**, i.e.
+**2.23 h** and **7.37 h** per checkpoint, or ≈ 29 h for the six checkpoints
+serially on the single core this container has. The eval-set half of the same
+re-scoring (512 windows per checkpoint) costs 10.2 s per HE checkpoint and
+33.0 s per attention checkpoint. The sweep therefore waits for a T4 — where
+one checkpoint takes ≈ 820 s — rather than running on the CPU; Colab's T4
+pool was saturated while this was written (the allocation endpoint answers
+`Service Unavailable`), and the leg sits in a persistent retry loop.
+
+The re-scoring leg was rebuilt so that the next prune cannot cost it again:
+
+* **one checkpoint per `colab exec`**, and the artefact is downloaded
+  immediately after that exec returns — the granularity that was missing
+  before, where two arms ran inside one exec and the download happened only
+  after it returned;
+* **a checkpoint already on the local disk is skipped**, so a leg that dies
+  half way resumes where it stopped instead of starting over;
+* the measurement is unchanged: the same script, the same flags, the same
+  window sets (protocol §2.3). Only the unit of work per exec differs.
+
+The cross-check the re-scoring carries is part of the artefact: the
+recomputed eval-set mean must reproduce the final held-out loss the run
+reported. On the CPU rehearsal of the eval-set half (a rehearsal — the
+committed artefact is the T4 one) the six recomputed means reproduce the
+reported losses to within 3 × 10⁻⁷, which is the float32 CPU-vs-GPU
+difference and not a modelling difference.
