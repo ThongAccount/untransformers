@@ -86,6 +86,17 @@ All commands run with `CWD: /workspace/untransformers` and
   CHECK: /home/node/.venv/bin/python tools/verify/check_docs.py --systems docs/milestone-3/SYSTEMS.md --scope docs/milestone-3/SCOPE.md
   EXPECT: DOCS_OK
 
+## G8b — the quality write-up carries its conditions, its disclosures and its statistics
+
+  CHECK: /home/node/.venv/bin/python tools/verify/check_docs.py --systems docs/milestone-3/SYSTEMS.md --scope docs/milestone-3/SCOPE.md --quality docs/milestone-2/QUALITY.md
+  EXPECT: DOCS_OK
+
+  (The quality write-up is checked for the sections the protocol §7 locks: the
+  conditions, the held-out definition, the paired differences with the 95% CI
+  and the MDD, the eval-set bootstrap, the book-aligned sensitivity analysis,
+  the three disclosures D-A/D-B/D-C, the limitations, the token budget, and the
+  statement that the CPU pilot is a protocol smoke test and not a result.)
+
 ## G9 — everything is committed and on the Hub
 
   CHECK: bash -lc 'test "$(git rev-parse HEAD)" = "$(git rev-parse origin/research/milestone-1-extractor)" && git status --porcelain | grep -q . && exit 1 || true'

@@ -231,3 +231,56 @@ def test_the_chunked_book_sweep_scores_the_same_windows_as_the_plain_one():
     coarse = region_window_losses(model, region, l, coarse_starts, torch.device("cpu"),
                                    batch=5)
     assert np.allclose(coarse, plain[coarse_starts], atol=1e-6)
+
+
+def test_the_doc_filler_replaces_the_markers_with_the_rendered_tables(tmp_path):
+    """The write-ups must carry rendered numbers, not retyped ones: the filler
+    replaces every `<!-- TABLES:... -->` marker with the section it renders."""
+    doc = tmp_path / "DOC.md"
+    doc.write_text("# T\n\n<!-- TABLES:quality-summary -->\n\n"
+                   "<!-- TABLES:quality-bootstrap -->\n", encoding="utf-8")
+    summary = tmp_path / "summary.json"
+    summary.write_text(json.dumps({
+        "conditions": {"arms": ["HE", "attention-32h"], "steps": 2000},
+        "endpoints": {"final": {
+            "definition": "primary: held-out loss at the final step",
+            "sign_convention": "d_s = L_HE(s) - L_attn(s)",
+            "seeds": [1], "per_seed_arm_a": {"1": 1.0},
+            "per_seed_arm_b": {"1": 1.5}, "differences": {"1": -0.5},
+            "arm_a": {"mean": 1.0, "std_ddof1": None},
+            "arm_b": {"mean": 1.5, "std_ddof1": None},
+            "mean_difference": -0.5, "standard_error": 0.0,
+            "ci95": [-0.5, -0.5], "ci95_excludes_zero": True,
+            "mdd_80_power": 0.0, "perplexity_ratio": 0.6065306597126334,
+            "perplexity_ratio_ci95": [0.6065306597126334, 0.6065306597126334],
+            "verdict": "resolved"}},
+        "eval_set_bootstrap": {"per_seed": {"1": {
+            "bootstrap_se_arm_a": 0.01, "bootstrap_se_arm_b": 0.02,
+            "bootstrap_se_paired_difference": 0.005}},
+            "note": "eval-set noise only"},
+    }, indent=2), encoding="utf-8")
+
+    r = subprocess.run([PY, str(REPO / "tools/fill_doc_tables.py"),
+                        "--doc", str(doc), "--summary", str(summary), "--write"],
+                       text=True, capture_output=True)
+    assert r.returncode == 0, r.stdout + r.stderr
+    text = doc.read_text(encoding="utf-8")
+    assert "TABLES:" not in text, "every marker must be replaced"
+    assert "Endpoint: primary: held-out loss at the final step" in text
+    assert "2000" in text
+    assert "-0.500000" in text
+    assert "Eval-set bootstrap" in text
+
+
+def test_the_doc_filler_refuses_a_marker_it_cannot_render(tmp_path):
+    doc = tmp_path / "DOC.md"
+    doc.write_text("# T\n\n<!-- TABLES:quality-nonsense -->\n", encoding="utf-8")
+    summary = tmp_path / "summary.json"
+    summary.write_text(json.dumps({"conditions": {}, "endpoints": {}}), encoding="utf-8")
+    r = subprocess.run([PY, str(REPO / "tools/fill_doc_tables.py"),
+                        "--doc", str(doc), "--summary", str(summary), "--write"],
+                       text=True, capture_output=True)
+    assert r.returncode != 0
+    assert "quality-nonsense" in (r.stdout + r.stderr)
+    # the document is left untouched
+    assert "TABLES:quality-nonsense" in doc.read_text(encoding="utf-8")

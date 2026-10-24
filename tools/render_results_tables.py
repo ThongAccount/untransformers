@@ -26,6 +26,50 @@ def _fmt(x, nd=4):
     return str(x)
 
 
+def render_quality_conditions(path: Path) -> str:
+    """The conditions table of a quality run, on its own."""
+    d = json.loads(path.read_text(encoding="utf-8"))
+    cfg = d.get("config", {})
+    proto = d.get("protocol", {})
+    env = d.get("environment", {})
+    corp = d.get("corpus", {})
+    out: list[str] = []
+
+    d = json.loads(path.read_text(encoding="utf-8"))
+    out: list[str] = []
+    cfg = d.get("config", {})
+    proto = d.get("protocol", {})
+    env = d.get("environment", {})
+    corp = d.get("corpus", {})
+
+    out.append("### Conditions\n")
+    out.append("| field | value |\n|---|---|")
+    out.append(f"| label | {d.get('label')} |")
+    out.append(f"| commit | {d.get('commit', '—')} |")
+    out.append(f"| corpus_id | `{corp.get('corpus_id', '—')}` |")
+    out.append(f"| tokenizer sha256 | `{corp.get('tokenizer_sha256', '—')}` |")
+    out.append(f"| tokens (train / held-out) | {corp.get('n_tokens', '—')} |")
+    out.append(f"| model shape | d={cfg.get('d')} l={cfg.get('l')} "
+               f"layers={cfg.get('n_layers', cfg.get('layers'))} "
+               f"ffn={cfg.get('ffn_width', cfg.get('ffn'))} "
+               f"vocab={cfg.get('vocab')} "
+               f"heads={cfg.get('n_heads', cfg.get('heads', 32))} |")
+    out.append(f"| steps | {proto.get('steps')} |")
+    out.append(f"| tokens per step | {proto.get('tokens_per_step')} |")
+    out.append(f"| tokens processed per run | {proto.get('tokens_processed_per_run')} |")
+    out.append(f"| seeds | {proto.get('seeds')} |")
+    out.append(f"| eval every / eval batches | {proto.get('eval_every')} / {proto.get('eval_batches')} |")
+    out.append(f"| train seed | {proto.get('train_seed')} |")
+    out.append(f"| device | {env.get('device')} |")
+    out.append(f"| hardware | {env.get('gpu', env.get('platform', '—'))} |")
+    out.append(f"| torch | {env.get('torch')} |")
+    out.append(f"| python | {env.get('python')} |")
+    out.append(f"| threads | {env.get('torch_threads')} |")
+    out.append("")
+
+    return "\n".join(out)
+
+
 def render_quality(path: Path) -> str:
     d = json.loads(path.read_text(encoding="utf-8"))
     out: list[str] = []
@@ -41,8 +85,11 @@ def render_quality(path: Path) -> str:
     out.append(f"| corpus_id | `{corp.get('corpus_id', '—')}` |")
     out.append(f"| tokenizer sha256 | `{corp.get('tokenizer_sha256', '—')}` |")
     out.append(f"| tokens (train / held-out) | {corp.get('n_tokens', '—')} |")
-    out.append(f"| model shape | d={cfg.get('d')} l={cfg.get('l')} layers={cfg.get('layers')} "
-               f"ffn={cfg.get('ffn')} vocab={cfg.get('vocab')} heads={cfg.get('heads')} |")
+    out.append(f"| model shape | d={cfg.get('d')} l={cfg.get('l')} "
+               f"layers={cfg.get('n_layers', cfg.get('layers'))} "
+               f"ffn={cfg.get('ffn_width', cfg.get('ffn'))} "
+               f"vocab={cfg.get('vocab')} "
+               f"heads={cfg.get('n_heads', cfg.get('heads', 32))} |")
     out.append(f"| steps | {proto.get('steps')} |")
     out.append(f"| tokens per step | {proto.get('tokens_per_step')} |")
     out.append(f"| tokens processed per run | {proto.get('tokens_processed_per_run')} |")
@@ -295,11 +342,9 @@ def render_systems(path: Path) -> str:
     return "\n".join(out)
 
 
-def render_summary(path: Path) -> str:
-    """The pre-registered statistics block (protocol §3.2) from the summary."""
-    d = json.loads(path.read_text(encoding="utf-8"))
-    out: list[str] = []
+def summary_conditions(d: dict) -> str:
     cond = d.get("conditions") or {}
+    out: list[str] = []
     out.append("### Conditions of the comparison\n")
     out.append("| field | value |\n|---|---|")
     for key in ("arms", "seeds", "steps", "tokens_per_step", "tokens_processed_per_run",
@@ -309,14 +354,18 @@ def render_summary(path: Path) -> str:
         if key in cond:
             out.append(f"| {key} | {cond[key]} |")
     out.append("")
+    return "\n".join(out)
 
+
+def summary_endpoints(d: dict) -> str:
+    out: list[str] = []
     for endpoint in ("final", "last4"):
         block = (d.get("endpoints") or {}).get(endpoint)
         if not block:
             continue
         out.append(f"### Endpoint: {block.get('definition')}\n")
         out.append(f"Sign convention: {block.get('sign_convention')}\n")
-        out.append("| seed | HE | attention-32h | d = HE − attention |\n|---|---|---|---|")
+        out.append("| seed | HE | attention-32h | d = HE - attention |\n|---|---|---|---|")
         fa = block.get("per_seed_arm_a") or {}
         fb = block.get("per_seed_arm_b") or {}
         diffs = block.get("differences") or {}
@@ -334,10 +383,10 @@ def render_summary(path: Path) -> str:
         out.append("| statistic | value |\n|---|---|")
         out.append(f"| standard error | {_fmt(block.get('standard_error'), 6)} |")
         ci = block.get("ci95") or [None, None]
-        out.append(f"| 95% CI for d̄ | [{_fmt(ci[0], 6)}, {_fmt(ci[1], 6)}] |")
+        out.append(f"| 95% CI for d-bar | [{_fmt(ci[0], 6)}, {_fmt(ci[1], 6)}] |")
         out.append(f"| CI excludes 0 | {block.get('ci95_excludes_zero')} |")
         out.append(f"| MDD at 80% power | {_fmt(block.get('mdd_80_power'), 6)} |")
-        out.append(f"| perplexity ratio exp(d̄) | {_fmt(block.get('perplexity_ratio'), 6)} |")
+        out.append(f"| perplexity ratio exp(d-bar) | {_fmt(block.get('perplexity_ratio'), 6)} |")
         pr = block.get("perplexity_ratio_ci95") or [None, None]
         out.append(f"| perplexity ratio, 95% CI | [{_fmt(pr[0], 6)}, {_fmt(pr[1], 6)}] |")
         out.append(f"| verdict | {block.get('verdict')} |")
@@ -345,66 +394,89 @@ def render_summary(path: Path) -> str:
         if needed is not None:
             out.append(f"| seeds needed for 80% power at the observed effect | {needed} |")
         out.append("")
+    return "\n".join(out)
 
+
+def summary_bootstrap(d: dict) -> str:
     boot = d.get("eval_set_bootstrap") or {}
     per_seed = boot.get("per_seed") or {}
-    if per_seed:
-        out.append("### Eval-set bootstrap (1,000 resamples of the 512 eval windows)\n")
-        out.append("| seed | bootstrap SE, HE | bootstrap SE, attention-32h | "
-                   "bootstrap SE, paired difference |\n|---|---|---|---|")
-        for s, b in sorted(per_seed.items()):
-            out.append(f"| {s} | {_fmt(b.get('bootstrap_se_arm_a'), 6)} | "
-                       f"{_fmt(b.get('bootstrap_se_arm_b'), 6)} | "
-                       f"{_fmt(b.get('bootstrap_se_paired_difference'), 6)} |")
-        out.append("")
-        out.append(f"_{boot.get('note')}_\n")
+    if not per_seed:
+        return ""
+    out: list[str] = []
+    out.append("### Eval-set bootstrap (1,000 resamples of the 512 eval windows)\n")
+    out.append("| seed | bootstrap SE, HE | bootstrap SE, attention-32h | "
+               "bootstrap SE, paired difference |\n|---|---|---|---|")
+    for s, b in sorted(per_seed.items()):
+        out.append(f"| {s} | {_fmt(b.get('bootstrap_se_arm_a'), 6)} | "
+                   f"{_fmt(b.get('bootstrap_se_arm_b'), 6)} | "
+                   f"{_fmt(b.get('bootstrap_se_paired_difference'), 6)} |")
+    out.append("")
+    out.append(f"_{boot.get('note')}_\n")
+    return "\n".join(out)
 
+
+def summary_sensitivity(d: dict) -> str:
     sens = d.get("book_aligned_sensitivity") or {}
-    if sens:
-        out.append("### Book-aligned sensitivity analysis (post-hoc, 3 unseen books)\n")
-        out.append(f"_{sens.get('definition')}_\n")
-        out.append("| seed | HE | attention-32h | d = HE − attention |\n|---|---|---|---|")
-        fa = sens.get("per_seed_arm_a") or {}
-        fb = sens.get("per_seed_arm_b") or {}
-        diffs = sens.get("differences") or {}
-        for s in sens.get("seeds") or []:
-            out.append(f"| {s} | {_fmt(fa.get(str(s)), 6)} | {_fmt(fb.get(str(s)), 6)} | "
-                       f"{_fmt(diffs.get(str(s)), 6)} |")
-        ci = sens.get("ci95") or [None, None]
-        out.append(f"| **mean** | | | {_fmt(sens.get('mean_difference'), 6)} |")
-        out.append(f"| **95% CI** | | | [{_fmt(ci[0], 6)}, {_fmt(ci[1], 6)}] |")
-        out.append(f"| **verdict** | | | {sens.get('verdict')} |")
-        out.append("")
+    if not sens:
+        return ""
+    out: list[str] = []
+    out.append("### Book-aligned sensitivity analysis (post-hoc, 3 unseen books)\n")
+    out.append(f"_{sens.get('definition')}_\n")
+    out.append("| seed | HE | attention-32h | d = HE - attention |\n|---|---|---|---|")
+    fa = sens.get("per_seed_arm_a") or {}
+    fb = sens.get("per_seed_arm_b") or {}
+    diffs = sens.get("differences") or {}
+    for s in sens.get("seeds") or []:
+        out.append(f"| {s} | {_fmt(fa.get(str(s)), 6)} | {_fmt(fb.get(str(s)), 6)} | "
+                   f"{_fmt(diffs.get(str(s)), 6)} |")
+    ci = sens.get("ci95") or [None, None]
+    out.append(f"| **mean** | | | {_fmt(sens.get('mean_difference'), 6)} |")
+    out.append(f"| **95% CI** | | | [{_fmt(ci[0], 6)}, {_fmt(ci[1], 6)}] |")
+    out.append(f"| **verdict** | | | {sens.get('verdict')} |")
+    out.append("")
+    return "\n".join(out)
 
+
+def summary_curves(d: dict) -> str:
     curves = d.get("curves") or {}
-    if curves:
-        out.append("### The eval curves (every eval point, every seed)\n")
-        arms = list(curves.keys())
-        steps = []
-        for arm in arms:
-            for seed_rows in curves[arm].values():
-                for e in seed_rows.get("evals", []):
-                    if e["step"] not in steps:
-                        steps.append(e["step"])
-        steps.sort()
-        header = "| eval step |"
-        sep = "|---|"
+    if not curves:
+        return ""
+    out: list[str] = []
+    out.append("### The eval curves (every eval point, every seed)\n")
+    arms = list(curves.keys())
+    steps = []
+    for arm in arms:
+        for seed_rows in curves[arm].values():
+            for e in seed_rows.get("evals", []):
+                if e["step"] not in steps:
+                    steps.append(e["step"])
+    steps.sort()
+    header = "| eval step |"
+    sep = "|---|"
+    for arm in arms:
+        for seed in sorted(curves[arm].keys()):
+            header += f" {arm} seed {seed} |"
+            sep += "---|"
+    out.append(header)
+    out.append(sep)
+    for step in steps:
+        row = f"| {step} |"
         for arm in arms:
             for seed in sorted(curves[arm].keys()):
-                header += f" {arm} seed {seed} |"
-                sep += "---|"
-        out.append(header)
-        out.append(sep)
-        for step in steps:
-            row = f"| {step} |"
-            for arm in arms:
-                for seed in sorted(curves[arm].keys()):
-                    evals = {e["step"]: e["held_out_loss"]
-                             for e in curves[arm][seed].get("evals", [])}
-                    row += f" {_fmt(evals.get(step), 6)} |"
-            out.append(row)
-        out.append("")
+                evals = {e["step"]: e["held_out_loss"]
+                         for e in curves[arm][seed].get("evals", [])}
+                row += f" {_fmt(evals.get(step), 6)} |"
+        out.append(row)
+    out.append("")
     return "\n".join(out)
+
+
+def render_summary(path: Path) -> str:
+    """The pre-registered statistics block (protocol 3.2) from the summary."""
+    d = json.loads(path.read_text(encoding="utf-8"))
+    parts = [summary_conditions(d), summary_endpoints(d), summary_bootstrap(d),
+             summary_sensitivity(d), summary_curves(d)]
+    return "\n".join(p for p in parts if p)
 
 
 def main() -> int:

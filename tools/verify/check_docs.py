@@ -41,6 +41,22 @@ SCOPE_SECTIONS = [
     ("what would change it", ("falsifier", "would change", "revisit", "trigger")),
 ]
 
+QUALITY_SECTIONS = [
+    ("conditions", ("condition",)),
+    ("the corpus", ("corpus", "corpus_id")),
+    ("the held-out definition", ("held-out", "held out")),
+    ("the primary endpoint", ("primary endpoint", "final step")),
+    ("the paired differences", ("paired difference", "differences")),
+    ("the confidence interval", ("95% ci", "ci95", "confidence interval")),
+    ("the minimum detectable difference", ("mdd", "minimum detectable")),
+    ("the eval-set bootstrap", ("bootstrap",)),
+    ("the book-aligned sensitivity analysis", ("book-aligned", "sensitivity")),
+    ("the disclosures", ("d-a", "d-b", "d-c", "disclosure")),
+    ("the limitations", ("limitation",)),
+    ("the token budget", ("token budget", "tokens processed", "nominal epoch")),
+    ("the pilot is not a result", ("smoke test", "pilot")),
+]
+
 PLACEHOLDERS = ("TODO", "TBD", "FIXME", "XXX", "PLACEHOLDER", "Lorem ipsum")
 _PLACEHOLDER_RE = re.compile(
     r"\b(" + "|".join(p.replace(" ", r"\s+") for p in PLACEHOLDERS) + r")\b",
@@ -71,6 +87,8 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--systems", required=True)
     ap.add_argument("--scope", required=True)
+    ap.add_argument("--quality", default="",
+                    help="the quality write-up (checked when given)")
     args = ap.parse_args()
 
     failures: list[str] = []
@@ -78,6 +96,8 @@ def main() -> int:
 
     _check_doc(Path(args.systems), SYSTEMS_SECTIONS, failures, notes)
     _check_doc(Path(args.scope), SCOPE_SECTIONS, failures, notes)
+    if args.quality:
+        _check_doc(Path(args.quality), QUALITY_SECTIONS, failures, notes)
 
     for note in notes:
         print(f"[info] {note}")
