@@ -258,6 +258,47 @@ def _order_effect(slot_rows: List[Dict], block: str) -> Dict:
     }
 
 
+def _pool_decode_slots(slot_rows: List[Dict]) -> List[Dict]:
+    """Pool the decode slot rows per (arm, context).
+
+    The per-token statistics are pooled across the two slots of that arm, and
+    the pooled row's `latency_stats` is the **pooled** steady-state statistic
+    — not the last slot's copy. The other two blocks make the same guarantee
+    (`_pool_slots` overwrites `latency_stats` with the pooled statistics), and
+    a consumer that reads `latency_stats` (the reviewer's independent
+    recomputation among them) must not see a different number from the one in
+    `steady_state_per_token_seconds`.
+    """
+    groups: Dict = {}
+    for r in slot_rows:
+        groups.setdefault((r["arm"], r["context_tokens"]), []).append(r)
+    out: List[Dict] = []
+    for (arm, ctx), rows in groups.items():
+        rows = sorted(rows, key=lambda r: r["order_index"])
+        base = dict(rows[-1])
+        time_key = {"per_token_seconds": "per_token",
+                    "first_token_seconds": "first_token",
+                    "steady_state_per_token_seconds": "steady_state"}
+        for field_name, tkey in time_key.items():
+            pooled: List[float] = []
+            for r in rows:
+                pooled.extend(r["_times"].get(tkey) or [])
+            merged = _stats(pooled)
+            merged["n_slots"] = len(rows)
+            merged["samples_per_slot"] = rows[0][field_name].get("n")
+            base[field_name] = merged
+        base.pop("_times", None)
+        base["slots"] = len(rows)
+        base["order_indices"] = [r["order_index"] for r in rows]
+        base["memory"] = _merge_memory(rows)
+        base["latency_stats"] = dict(base["steady_state_per_token_seconds"])
+        steady_med = base["steady_state_per_token_seconds"]["median"]
+        base["tokens_per_second"] = 1.0 / steady_med if steady_med else None
+        out.append(base)
+    out.sort(key=lambda r: (r["arm"], r["context_tokens"]))
+    return out
+
+
 # --------------------------------------------------------------------------
 # quality checkpoints (S8)
 # --------------------------------------------------------------------------
@@ -942,33 +983,7 @@ def main() -> int:
 
     # The decode rows are aggregated per (arm, context) with the per-token
     # statistics pooled across the two slots of that arm.
-    dec_groups: Dict = {}
-    for r in dec_slots:
-        dec_groups.setdefault((r["arm"], r["context_tokens"]), []).append(r)
-    dec_out = []
-    for (arm, ctx), rows in dec_groups.items():
-        rows = sorted(rows, key=lambda r: r["order_index"])
-        base = dict(rows[-1])
-        time_key = {"per_token_seconds": "per_token",
-                    "first_token_seconds": "first_token",
-                    "steady_state_per_token_seconds": "steady_state"}
-        for field_name, tkey in time_key.items():
-            pooled: List[float] = []
-            for r in rows:
-                pooled.extend(r["_times"].get(tkey) or [])
-            merged = _stats(pooled)
-            merged["n_slots"] = len(rows)
-            merged["samples_per_slot"] = rows[0][field_name].get("n")
-            base[field_name] = merged
-        base.pop("_times", None)
-        base["slots"] = len(rows)
-        base["order_indices"] = [r["order_index"] for r in rows]
-        base["memory"] = _merge_memory(rows)
-        steady_med = base["steady_state_per_token_seconds"]["median"]
-        base["tokens_per_second"] = 1.0 / steady_med if steady_med else None
-        dec_out.append(base)
-    dec_out.sort(key=lambda r: (r["arm"], r["context_tokens"]))
-    out["incremental_decode"] = dec_out
+    out["incremental_decode"] = _pool_decode_slots(dec_slots)
 
     # --- D. sublayer-1 scaling ---------------------------------------------
     print(f"[sublayer-scaling] {' '.join(ARMS_ALL)}", flush=True)
