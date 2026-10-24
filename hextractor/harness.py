@@ -108,7 +108,8 @@ def held_out_loss(model: nn.Module, stream_factory: BatchStream,
 def train_one_seed(arm: str, cfg: TrainConfig, seed: int, steps: int,
                    train_stream: BatchStream, held_out_stream: BatchStream,
                    log_every: Optional[int] = None,
-                   save_path: Optional[str] = None) -> Dict:
+                   save_path: Optional[str] = None,
+                   print_every: Optional[int] = None) -> Dict:
     """One seed's trajectory: per-step train losses + held-out eval points.
 
     Returns plain data (curves only — no verdicts). Mechanics validated by
@@ -119,6 +120,10 @@ def train_one_seed(arm: str, cfg: TrainConfig, seed: int, steps: int,
     step count, the config, the eval points and the final held-out loss —
     the paired quality checkpoint that Milestone 3 ties to its performance
     numbers.
+
+    `print_every` (optional) prints one progress line every N steps. It is
+    pure logging: it touches neither the RNG, nor the data order, nor the
+    loss.
     """
     torch.manual_seed(seed)
     model = build_model(arm, cfg)
@@ -140,6 +145,9 @@ def train_one_seed(arm: str, cfg: TrainConfig, seed: int, steps: int,
             nn.utils.clip_grad_norm_(model.parameters(), cfg.clip_grad)
         opt.step()
         curve.append(float(loss.item()))
+        if print_every is not None and (step + 1) % print_every == 0:
+            print(f"[{arm} seed {seed}] step {step + 1}/{steps} "
+                  f"train_loss={curve[-1]:.6f}", flush=True)
         if (step + 1) % log_every == 0 or step == steps - 1:
             evals.append({"step": step + 1,
                           "held_out_loss": held_out_loss(model, held_out_stream, cfg)})
@@ -210,11 +218,14 @@ def corpus_stream_factory(bundle, cfg: TrainConfig, train_seed: int = 0,
 def run_multi_seed_corpus(arm: str, cfg: TrainConfig, seeds: List[int], steps: int,
                            bundle, train_seed: int = 0,
                            log_every: Optional[int] = None,
-                           checkpoint_dir: Optional[str] = None) -> Dict:
+                           checkpoint_dir: Optional[str] = None,
+                           print_every: Optional[int] = None) -> Dict:
     """Multi-seed protocol on the pinned corpus. Curves only — no verdicts.
 
     `checkpoint_dir` (optional) writes one checkpoint per (arm, seed) — the
     paired quality checkpoints Milestone 3 attaches to its performance rows.
+
+    `print_every` (optional) prints a progress line every N steps per seed.
     """
     train_stream = corpus_stream_factory(bundle, cfg, train_seed=train_seed, held_out=False)
     held_out_stream = corpus_stream_factory(bundle, cfg, train_seed=train_seed, held_out=True)
@@ -224,6 +235,7 @@ def run_multi_seed_corpus(arm: str, cfg: TrainConfig, seeds: List[int], steps: i
         if checkpoint_dir is not None:
             save_path = str(Path(checkpoint_dir) / f"{arm}_seed{s}.pt")
         runs.append(train_one_seed(arm, cfg, s, steps, train_stream, held_out_stream,
-                                   log_every=log_every, save_path=save_path))
+                                   log_every=log_every, save_path=save_path,
+                                   print_every=print_every))
     return {"arm": arm, "seeds": seeds, "train_seed": train_seed, "steps": steps,
             "runs": runs, "dispersion": dispersion(runs)}

@@ -104,6 +104,8 @@ def main() -> int:
     ap.add_argument("--pairing-batches", type=int, default=100,
                     help="windows per stream hashed for the pairing evidence "
                          "(0 disables the evidence block)")
+    ap.add_argument("--print-every", type=int, default=0,
+                    help="print a progress line every N steps (0 = no progress lines)")
     args = ap.parse_args()
 
     if args.threads:
@@ -202,7 +204,8 @@ def main() -> int:
         print(f"[{arm}] starting, seeds={args.seeds}, steps={args.steps}", flush=True)
         res = run_multi_seed_corpus(arm, cfg, args.seeds, args.steps, bundle,
                                      train_seed=args.train_seed,
-                                     checkpoint_dir=str(ckpt_dir) if args.save_checkpoints else None)
+                                     checkpoint_dir=str(ckpt_dir) if args.save_checkpoints else None,
+                                     print_every=args.print_every or None)
         res["wall_seconds"] = time.time() - t0
         if args.save_checkpoints:
             res["checkpoints"] = [str(ckpt_dir / f"{arm}_seed{s}.pt") for s in args.seeds]
