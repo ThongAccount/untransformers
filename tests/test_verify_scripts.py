@@ -451,3 +451,85 @@ def test_docs_checker_requires_content(tmp_path):
     scope.write_text("# Scope\n\nTODO write this\n", encoding="utf-8")
     r = _run("check_docs.py", "--systems", str(systems), "--scope", str(scope))
     assert r.returncode == 1
+
+
+def test_doc_number_checker_passes_on_the_artefacts_numbers_and_fails_on_a_stale_one(tmp_path):
+    """The prose of a write-up is typed by hand; a hand-typed number is where a
+    stale figure hides. The checker must pass when the prose agrees with the
+    artefact and fail when one constant is wrong."""
+    results = {
+        "protocol": {
+            "tokens_processed_per_run": 16_384_000,
+            "epochs_of_our_corpus": 1.8127392432109876,
+            "corpus_tokens_train_region": 9_038_476,
+            "corpus_tokens_heldout_region": 475_710,
+            "eval_batches": 8,
+        },
+        "config": {"batch_size": 64, "l": 128},
+    }
+    rpath = tmp_path / "results.json"
+    rpath.write_text(json.dumps(results), encoding="utf-8")
+
+    good = tmp_path / "GOOD.md"
+    good.write_text(
+        "# T\n\n"
+        "This run processed 16,384,000 tokens per run — 1.813 nominal epochs, "
+        "and 3.333% of the paper's 491,520,000-token budget.\n"
+        "The held-out region is 475,710 tokens and is scored on 512 windows "
+        "(65,536 target tokens).\n",
+        encoding="utf-8")
+
+    r = subprocess.run([PY, str(REPO / "tools/verify/check_doc_numbers.py"),
+                        "--doc", str(good), "--results", str(rpath)],
+                       text=True, capture_output=True)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "DOC_NUMBERS_OK" in r.stdout
+
+    # a stale token budget in the prose must be caught
+    stale = tmp_path / "STALE.md"
+    stale.write_text(good.read_text(encoding="utf-8").replace("16,384,000", "8,192,000"),
+                     encoding="utf-8")
+    r = subprocess.run([PY, str(REPO / "tools/verify/check_doc_numbers.py"),
+                        "--doc", str(stale), "--results", str(rpath)],
+                       text=True, capture_output=True)
+    assert r.returncode != 0
+    assert "16,384,000" in (r.stdout + r.stderr)
+    assert "tokens processed per run" in (r.stdout + r.stderr)
+
+
+def test_doc_number_checker_recomputes_the_unseen_book_share_from_the_manifest(tmp_path):
+    """The 85.5% figure is a property of the corpus and the split, not of a
+    run: the checker recomputes it from the manifest and the cut."""
+    manifest = {"tokens": {"per_book": [
+        {"ebook_id": 1, "n_tokens": 100},
+        {"ebook_id": 2, "n_tokens": 100},
+        {"ebook_id": 3, "n_tokens": 100},
+        {"ebook_id": 4, "n_tokens": 100},
+    ]}}
+    mpath = tmp_path / "manifest.json"
+    mpath.write_text(json.dumps(manifest), encoding="utf-8")
+
+    # the cut falls inside book 3 (at token 250 of 400): book 3's tail (50
+    # tokens) is held out but the book was seen, and book 4 (100 tokens) was
+    # never seen at all -> 100 of the 150 held-out tokens are from unseen books
+    results = {
+        "protocol": {"tokens_processed_per_run": 16_384_000,
+                     "epochs_of_our_corpus": 1.8127,
+                     "corpus_tokens_train_region": 250,
+                     "corpus_tokens_heldout_region": 150,
+                     "eval_batches": 8},
+        "config": {"batch_size": 64, "l": 128},
+    }
+    rpath = tmp_path / "results.json"
+    rpath.write_text(json.dumps(results), encoding="utf-8")
+
+    doc = tmp_path / "DOC.md"
+    doc.write_text("16,384,000 tokens; 1.813 nominal epochs; 3.333% of the paper; "
+                   "150 held-out tokens; 512 windows; 65,536 target tokens; "
+                   "66.7% of the held-out tokens come from books never seen in "
+                   "training.\n", encoding="utf-8")
+    r = subprocess.run([PY, str(REPO / "tools/verify/check_doc_numbers.py"),
+                        "--doc", str(doc), "--results", str(rpath),
+                        "--manifest", str(mpath)], text=True, capture_output=True)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "66.7" in r.stdout

@@ -97,6 +97,21 @@ All commands run with `CWD: /workspace/untransformers` and
   the three disclosures D-A/D-B/D-C, the limitations, the token budget, and the
   statement that the CPU pilot is a protocol smoke test and not a result.)
 
+## G8c — the prose numbers are the artefacts' numbers
+
+  CHECK: /home/node/.venv/bin/python tools/verify/check_doc_numbers.py --doc docs/milestone-2/QUALITY.md --results results/quality_gpu_full.json --eval-windows results/eval_windows.json --manifest data/manifest.json
+  EXPECT: DOC_NUMBERS_OK
+
+  (The tables in the write-ups are rendered from the artefacts, so they cannot
+  drift. The PROSE is typed by hand, and a hand-typed constant is exactly where
+  a stale figure hides. This gate recomputes the constants the prose is allowed
+  to state — the tokens processed per run, the nominal epochs, the share of the
+  paper's token budget, the held-out region's token count, the eval window
+  count and target tokens, the three unseen books' token count, and the share
+  of the held-out tokens that come from books never seen in training (recomputed
+  from the manifest and the cut) — and refuses the document if any of them is
+  missing or contradicts the artefact.)
+
 ## G9 — everything is committed and on the Hub
 
   CHECK: bash -lc 'test "$(git rev-parse HEAD)" = "$(git rev-parse origin/research/milestone-1-extractor)" && git status --porcelain | grep -q . && exit 1 || true'
