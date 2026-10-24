@@ -95,10 +95,13 @@ code; nothing trains until sign-off).
 
 - From Table 1 **[P]**: batch 64 sequences × l=128 tokens; 60,000 batches;
   AdamW γ=0.001, β1=0.9, β2=0.999; dropout 0.1.
-- Ours / recorded **[U]**: AdamW weight decay value and gradient clipping are
-  not stated in the paper — we set weight decay 0.01 (AdamW's common default)
-  and no clipping, both logged as deviations D-12/D-13 and held constant across
-  arms (they cannot bias the arm comparison either way).
+- Ours / recorded **[U]**: gradient clipping is not stated in the paper — we set
+  no clipping, logged as deviation D-13 and held constant across arms (it cannot
+  bias the arm comparison either way). The weight decay is **not** an open
+  hyperparameter: Table 1 gives AdamW γ=0.001 **[P]**, and the harness uses
+  **weight decay 0.001** (`harness.py`, D-15). An earlier version of this line
+  said 0.01; that was wrong and is corrected here (F13 of
+  `docs/milestone-3/PROTOCOL.md`).
 - **Same-batches-same-order** **[P]** ("not only all the batches ... are the
   same, but also the orders ... the same"): enforced structurally — batches are
   derived deterministically from a SHA-256-seeded `numpy.random.Generator` over
