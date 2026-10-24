@@ -166,3 +166,30 @@ def test_a_nan_is_printed_as_a_dash_and_never_as_the_word_nan():
     assert rrt._fmt(1.5, 2) == "1.50"
     md = rrt._fmt(float("nan")) + " " + rrt._fmt(None)
     assert "nan" not in md.lower()
+
+
+def test_the_conditions_table_carries_everything_protocol_rule_1_requires(tmp_path):
+    """Protocol §7 rule 1: a headline number carries the seeds, the steps, the
+    tokens processed, the nominal epochs, the corpus identity, the held-out
+    definition, the eval window count and target tokens, and the device."""
+    p = tmp_path / "q.json"
+    d = _quality()
+    d["protocol"].update({
+        "epochs_of_our_corpus": 1.813,
+        "corpus_tokens_train_region": 9_038_476,
+        "corpus_tokens_heldout_region": 475_710,
+    })
+    d["config"]["batch_size"] = 64
+    d["config"]["l"] = 128
+    p.write_text(json.dumps(d), encoding="utf-8")
+    md = rrt.render_quality_conditions(p)
+    for needle in ("nominal epochs of the train region", "1.813",
+                   "eval windows / target tokens per eval point",
+                   "512 windows / 65536 target tokens",
+                   "token budget vs the paper", "held-out definition",
+                   "corpus_id", "tokenizer sha256", "train seed",
+                   "tokens processed per run"):
+        assert needle in md, needle
+    # the token budget is stated as a share of the paper's, with the paper's own
+    # budget printed so the ratio can be checked
+    assert "491,520,000" in md

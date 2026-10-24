@@ -26,3 +26,9 @@ venv/
 # Benchmark output
 bench/results/local/
 *.log
+
+# Checkpoint blobs: reproducible outputs (same commit, same pinned corpus, same
+# seeds => the same bytes). The repository carries results/checkpoints/MANIFEST.json
+# (the digests, the arm, the seed, the steps, the held-out loss) instead of
+# ~120 MB of float32 weights.
+results/checkpoints/*.pt

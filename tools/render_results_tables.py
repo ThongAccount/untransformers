@@ -37,20 +37,19 @@ def _fmt(x, nd=4):
 
 
 def render_quality_conditions(path: Path) -> str:
-    """The conditions table of a quality run, on its own."""
-    d = json.loads(path.read_text(encoding="utf-8"))
-    cfg = d.get("config", {})
-    proto = d.get("protocol", {})
-    env = d.get("environment", {})
-    corp = d.get("corpus", {})
-    out: list[str] = []
+    """The conditions table of a quality run, on its own.
 
+    Protocol §7 rule 1: every headline number carries arm, seeds, steps, tokens
+    processed, nominal epochs, corpus_id + tokenizer digest, the held-out
+    definition, the eval window count and target tokens, device/torch, trials
+    and warmup. This table is where those conditions live.
+    """
     d = json.loads(path.read_text(encoding="utf-8"))
-    out: list[str] = []
     cfg = d.get("config", {})
     proto = d.get("protocol", {})
     env = d.get("environment", {})
     corp = d.get("corpus", {})
+    out: list[str] = []
 
     out.append("### Conditions\n")
     out.append("| field | value |\n|---|---|")
@@ -58,7 +57,13 @@ def render_quality_conditions(path: Path) -> str:
     out.append(f"| commit | {d.get('commit', '—')} |")
     out.append(f"| corpus_id | `{corp.get('corpus_id', '—')}` |")
     out.append(f"| tokenizer sha256 | `{corp.get('tokenizer_sha256', '—')}` |")
-    out.append(f"| tokens (train / held-out) | {corp.get('n_tokens', '—')} |")
+    out.append(f"| books | {corp.get('books', '—')} |")
+    train_tok = proto.get("corpus_tokens_train_region", "—")
+    held_tok = proto.get("corpus_tokens_heldout_region", "—")
+    out.append(f"| tokens: total / train region / held-out region | "
+               f"{corp.get('n_tokens', '—')} / {train_tok} / {held_tok} |")
+    out.append(f"| held-out definition | the last 5% of the frozen token array "
+               f"({held_tok} tokens); never trained on, never used for selection |")
     out.append(f"| model shape | d={cfg.get('d')} l={cfg.get('l')} "
                f"layers={cfg.get('n_layers', cfg.get('layers'))} "
                f"ffn={cfg.get('ffn_width', cfg.get('ffn'))} "
@@ -67,8 +72,23 @@ def render_quality_conditions(path: Path) -> str:
     out.append(f"| steps | {proto.get('steps')} |")
     out.append(f"| tokens per step | {proto.get('tokens_per_step')} |")
     out.append(f"| tokens processed per run | {proto.get('tokens_processed_per_run')} |")
+    epochs = proto.get("epochs_of_our_corpus")
+    out.append(f"| nominal epochs of the train region | "
+               f"{_fmt(epochs, 3) if epochs is not None else '—'} "
+               f"(windows are sampled with replacement: repeats included) |")
+    tokens_run = proto.get("tokens_processed_per_run")
+    if isinstance(tokens_run, (int, float)):
+        out.append(f"| token budget vs the paper | {_fmt(tokens_run / 491_520_000 * 100, 3)}% "
+                   f"of the paper's 491,520,000 tokens (60,000 batches x 8,192) |")
     out.append(f"| seeds | {proto.get('seeds')} |")
     out.append(f"| eval every / eval batches | {proto.get('eval_every')} / {proto.get('eval_batches')} |")
+    batch = cfg.get("batch_size")
+    l_ctx = cfg.get("l")
+    eval_batches = proto.get("eval_batches")
+    if batch and l_ctx and eval_batches:
+        windows = batch * eval_batches
+        out.append(f"| eval windows / target tokens per eval point | "
+                   f"{windows} windows / {windows * l_ctx} target tokens |")
     out.append(f"| train seed | {proto.get('train_seed')} |")
     out.append(f"| device | {env.get('device')} |")
     out.append(f"| hardware | {env.get('gpu', env.get('platform', '—'))} |")
@@ -83,35 +103,9 @@ def render_quality_conditions(path: Path) -> str:
 def render_quality(path: Path) -> str:
     d = json.loads(path.read_text(encoding="utf-8"))
     out: list[str] = []
-    cfg = d.get("config", {})
-    proto = d.get("protocol", {})
-    env = d.get("environment", {})
-    corp = d.get("corpus", {})
 
-    out.append("### Conditions\n")
-    out.append("| field | value |\n|---|---|")
-    out.append(f"| label | {d.get('label')} |")
-    out.append(f"| commit | {d.get('commit', '—')} |")
-    out.append(f"| corpus_id | `{corp.get('corpus_id', '—')}` |")
-    out.append(f"| tokenizer sha256 | `{corp.get('tokenizer_sha256', '—')}` |")
-    out.append(f"| tokens (train / held-out) | {corp.get('n_tokens', '—')} |")
-    out.append(f"| model shape | d={cfg.get('d')} l={cfg.get('l')} "
-               f"layers={cfg.get('n_layers', cfg.get('layers'))} "
-               f"ffn={cfg.get('ffn_width', cfg.get('ffn'))} "
-               f"vocab={cfg.get('vocab')} "
-               f"heads={cfg.get('n_heads', cfg.get('heads', 32))} |")
-    out.append(f"| steps | {proto.get('steps')} |")
-    out.append(f"| tokens per step | {proto.get('tokens_per_step')} |")
-    out.append(f"| tokens processed per run | {proto.get('tokens_processed_per_run')} |")
-    out.append(f"| seeds | {proto.get('seeds')} |")
-    out.append(f"| eval every / eval batches | {proto.get('eval_every')} / {proto.get('eval_batches')} |")
-    out.append(f"| train seed | {proto.get('train_seed')} |")
-    out.append(f"| device | {env.get('device')} |")
-    out.append(f"| hardware | {env.get('gpu', env.get('platform', '—'))} |")
-    out.append(f"| torch | {env.get('torch')} |")
-    out.append(f"| python | {env.get('python')} |")
-    out.append(f"| threads | {env.get('torch_threads')} |")
-    out.append("")
+    # the conditions block is rendered in one place only
+    out.append(render_quality_conditions(path))
 
     out.append("### Held-out loss per seed (final eval point)\n")
     out.append("| arm | seed | steps | final held-out loss | perplexity = exp(loss) |")
@@ -136,7 +130,12 @@ def render_quality(path: Path) -> str:
             out.append(f"| {s} | {_fmt(fa.get(str(s)), 6)} | {_fmt(fb.get(str(s)), 6)} | "
                        f"{_fmt(diffs.get(str(s)), 6)} |")
         out.append(f"| **mean** | | | {_fmt(paired.get('mean_difference'), 6)} |")
-        out.append(f"| **std** | | | {_fmt(paired.get('std_difference'), 6)} |")
+        # the harness's own spread is a POPULATION SD (ddof=0). Protocol §7 rule 3
+        # forbids quoting it as the dispersion: the pre-registered statistic is
+        # the sample SD (ddof=1) with its CI and the MDD, and those are in the
+        # statistics table of the write-up, not here.
+        out.append(f"| population SD of the differences (ddof=0, descriptive only) "
+                   f"| | | {_fmt(paired.get('std_difference'), 6)} |")
         out.append(f"| n | | | {paired.get('n')} |")
         out.append("")
 
