@@ -288,6 +288,46 @@ def test_the_doc_filler_refuses_a_marker_it_cannot_render(tmp_path):
     assert "TABLES:quality-nonsense" in doc.read_text(encoding="utf-8")
 
 
+def test_the_doc_filler_refuses_a_section_that_renders_empty(tmp_path):
+    """A marker whose artefact is missing must fail loudly.
+
+    The bootstrap and the sensitivity analysis are rendered from blocks of the
+    summary. If that block is absent the renderer returns an empty string, and
+    an empty string would silently delete a required section of the write-up —
+    and the doc gate (which looks for the word "bootstrap") would still pass.
+    """
+    doc = tmp_path / "DOC.md"
+    doc.write_text("# T\n\n<!-- TABLES:quality-summary -->\n\n"
+                   "<!-- TABLES:quality-bootstrap -->\n", encoding="utf-8")
+    summary = tmp_path / "summary.json"
+    summary.write_text(json.dumps({
+        "conditions": {},
+        "endpoints": {"final": {
+            "definition": "primary: held-out loss at the final step",
+            "sign_convention": "d_s = L_HE(s) - L_attn(s)",
+            "seeds": [1], "per_seed_arm_a": {"1": 1.0},
+            "per_seed_arm_b": {"1": 1.5}, "differences": {"1": -0.5},
+            "arm_a": {"mean": 1.0, "std_ddof1": None},
+            "arm_b": {"mean": 1.5, "std_ddof1": None},
+            "mean_difference": -0.5, "standard_error": None,
+            "ci95": [None, None], "ci95_excludes_zero": False,
+            "mdd_80_power": None, "perplexity_ratio": 0.6065306597126334,
+            "perplexity_ratio_ci95": [None, None],
+            "verdict": "not resolved at n = 1"}},
+        # no eval_set_bootstrap and no book_aligned_sensitivity: the artefacts
+        # for those two sections are missing
+    }, indent=2), encoding="utf-8")
+
+    r = subprocess.run([PY, str(REPO / "tools/fill_doc_tables.py"),
+                        "--doc", str(doc), "--summary", str(summary), "--write"],
+                       text=True, capture_output=True)
+    assert r.returncode != 0
+    assert "quality-bootstrap" in (r.stdout + r.stderr)
+    # the document is left untouched: the marker is still there
+    text = doc.read_text(encoding="utf-8")
+    assert "TABLES:quality-bootstrap" in text
+
+
 def test_a_single_seed_has_no_interval_and_no_nan():
     """One seed has no spread: the interval and the MDD are undefined, and they
     must be written as null (NaN is not valid JSON)."""

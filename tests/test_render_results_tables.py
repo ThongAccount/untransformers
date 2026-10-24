@@ -150,3 +150,19 @@ def test_systems_tables_carry_conditions_and_numbers(tmp_path):
     assert "Run-order null" in md and "0.0100" in md
     # the caveats travel with the artefact
     assert "the CPU memory rows are process-level" in md
+
+
+def test_a_nan_is_printed_as_a_dash_and_never_as_the_word_nan():
+    """A NaN is not a number: the tables must not print it as one.
+
+    `float('nan')` formats as "nan" in Python, so a table could carry the
+    literal string "nan" into the write-up, where a reader would take it for a
+    measurement. The renderer shows an em dash instead, and the dash is the
+    only thing a missing value may look like.
+    """
+    assert rrt._fmt(float("nan")) == "—"
+    assert rrt._fmt(None) == "—"
+    assert rrt._fmt(float("inf")) == "∞"
+    assert rrt._fmt(1.5, 2) == "1.50"
+    md = rrt._fmt(float("nan")) + " " + rrt._fmt(None)
+    assert "nan" not in md.lower()

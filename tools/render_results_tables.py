@@ -19,9 +19,19 @@ from pathlib import Path
 
 
 def _fmt(x, nd=4):
+    """Format one number for a markdown cell.
+
+    A missing value and a NaN are both shown as an em dash: a table must never
+    print "nan" (it is not a number, it is a bug in the arithmetic upstream) and
+    it must never print "None" (that is a Python object leaking into prose).
+    """
     if x is None:
         return "—"
     if isinstance(x, float):
+        if x != x:  # NaN
+            return "—"
+        if x in (float("inf"), float("-inf")):
+            return "∞" if x > 0 else "−∞"
         return f"{x:.{nd}f}"
     return str(x)
 

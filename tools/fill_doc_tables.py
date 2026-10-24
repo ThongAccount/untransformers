@@ -74,17 +74,29 @@ def main() -> int:
 
     text = doc_path.read_text(encoding="utf-8")
     missing: list[str] = []
+    empty: list[str] = []
 
     def repl(m: re.Match) -> str:
         name = m.group(1)
         if name not in sections:
             missing.append(name)
             return m.group(0)
-        return sections[name].strip()
+        rendered = sections[name].strip()
+        if not rendered:
+            # a section that renders empty would silently delete a required
+            # part of the write-up (the bootstrap, the sensitivity analysis):
+            # that is a missing artefact, not a finished document
+            empty.append(name)
+            return m.group(0)
+        return rendered
 
     filled = MARKER.sub(repl, text)
     if missing:
         print(f"FAIL: no section for the marker(s): {sorted(set(missing))}")
+        return 1
+    if empty:
+        print(f"FAIL: the section(s) {sorted(set(empty))} rendered empty — "
+              f"the artefact they need is missing or incomplete")
         return 1
     left = MARKER.findall(filled)
     if left:
