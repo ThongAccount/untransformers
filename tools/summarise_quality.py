@@ -98,40 +98,52 @@ def paired_block(values_a: Dict[int, float], values_b: Dict[int, float]) -> Dict
     out["mean_difference"] = d_mean
     if n > 1:
         sd = math.sqrt(sum((d - d_mean) ** 2 for d in diffs) / (n - 1))
+        se = sd / math.sqrt(n)
+        df = n - 1
+        t975 = t_quantile(T975, df, NORMAL_975)
+        t80 = t_quantile(T80, df, NORMAL_80)
+        half = t975 * se
+        out["std_difference_ddof1"] = sd
+        out["standard_error"] = se
+        out["t_critical_95"] = t975
+        out["ci95"] = [d_mean - half, d_mean + half]
+        out["ci95_excludes_zero"] = bool(d_mean - half > 0 or d_mean + half < 0)
+        out["mdd_80_power"] = (t975 + t80) * se
+        out["resolved"] = out["ci95_excludes_zero"]
+        out["verdict"] = ("resolved (the 95% CI for d̄ excludes 0)" if out["resolved"]
+                          else f"not resolved at n = {n}")
+        # how many seeds would have been needed for 80% power at the observed effect
+        if d_mean != 0.0:
+            needed = None
+            for cand in range(max(n, 2), 1001):
+                se_c = sd / math.sqrt(cand)
+                mdd_c = (t_quantile(T975, cand - 1, NORMAL_975) +
+                         t_quantile(T80, cand - 1, NORMAL_80)) * se_c
+                if mdd_c <= abs(d_mean):
+                    needed = cand
+                    break
+            out["seeds_needed_for_80_power_at_observed_effect"] = needed
+        else:
+            out["seeds_needed_for_80_power_at_observed_effect"] = None
     else:
-        sd = 0.0
-    out["std_difference_ddof1"] = sd
-    se = sd / math.sqrt(n)
-    out["standard_error"] = se
-    df = n - 1
-    t975 = t_quantile(T975, df, NORMAL_975)
-    t80 = t_quantile(T80, df, NORMAL_80)
-    half = t975 * se
-    out["t_critical_95"] = t975
-    out["ci95"] = [d_mean - half, d_mean + half]
-    out["ci95_excludes_zero"] = bool(d_mean - half > 0 or d_mean + half < 0)
-    out["mdd_80_power"] = (t975 + t80) * se
-    out["resolved"] = out["ci95_excludes_zero"]
-    out["verdict"] = ("resolved (the 95% CI for d̄ excludes 0)" if out["resolved"]
-                      else f"not resolved at n = {n}")
-    # how many seeds would have been needed for 80% power at the observed effect
-    if d_mean != 0.0:
-        needed = None
-        for cand in range(max(n, 2), 1001):
-            se_c = sd / math.sqrt(cand)
-            mdd_c = (t_quantile(T975, cand - 1, NORMAL_975) +
-                     t_quantile(T80, cand - 1, NORMAL_80)) * se_c
-            if mdd_c <= abs(d_mean):
-                needed = cand
-                break
-        out["seeds_needed_for_80_power_at_observed_effect"] = needed
-    else:
+        # one seed: the spread, the interval and the MDD are undefined. They are
+        # written as null (never NaN, which is not valid JSON).
+        out["std_difference_ddof1"] = None
+        out["standard_error"] = None
+        out["t_critical_95"] = None
+        out["ci95"] = [None, None]
+        out["ci95_excludes_zero"] = False
+        out["mdd_80_power"] = None
+        out["resolved"] = False
+        out["verdict"] = f"not resolved at n = {n} (a single seed has no interval)"
         out["seeds_needed_for_80_power_at_observed_effect"] = None
     # perplexity, with the interval mapped through exp()
     out["perplexity_arm_a"] = {str(s): math.exp(values_a[s]) for s in seeds}
     out["perplexity_arm_b"] = {str(s): math.exp(values_b[s]) for s in seeds}
     out["perplexity_ratio"] = math.exp(d_mean)
-    out["perplexity_ratio_ci95"] = [math.exp(v) for v in out["ci95"]]
+    # a null bound stays null: exp(None) is a TypeError, not a number
+    out["perplexity_ratio_ci95"] = [None if v is None else math.exp(v)
+                                    for v in out["ci95"]]
     return out
 
 

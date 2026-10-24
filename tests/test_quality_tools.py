@@ -19,6 +19,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 REPO = Path(__file__).resolve().parents[1]
 PY = sys.executable
 
@@ -284,3 +286,20 @@ def test_the_doc_filler_refuses_a_marker_it_cannot_render(tmp_path):
     assert "quality-nonsense" in (r.stdout + r.stderr)
     # the document is left untouched
     assert "TABLES:quality-nonsense" in doc.read_text(encoding="utf-8")
+
+
+def test_a_single_seed_has_no_interval_and_no_nan():
+    """One seed has no spread: the interval and the MDD are undefined, and they
+    must be written as null (NaN is not valid JSON)."""
+    sys.path.insert(0, str(REPO / "tools"))
+    import summarise_quality as sq  # noqa: E402
+
+    block = sq.paired_block({1: 1.5}, {1: 1.4})
+    assert block["mean_difference"] == pytest.approx(0.1)
+    assert block["std_difference_ddof1"] is None
+    assert block["ci95"] == [None, None]
+    assert block["mdd_80_power"] is None
+    assert block["resolved"] is False
+    assert block["perplexity_ratio_ci95"] == [None, None]
+    text = json.dumps(block)
+    assert "NaN" not in text, "the summary must stay valid JSON"
