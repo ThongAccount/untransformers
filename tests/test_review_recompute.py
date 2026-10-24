@@ -135,6 +135,25 @@ def test_a_difference_is_resolvable_only_above_the_floor_of_its_context():
     assert by_context["256"]["verdict"] == "not resolvable"
 
 
+def test_two_systems_legs_are_compared_against_the_drift_floor():
+    """The discarded first systems leg is an independent measurement of the
+    same quantities: the two legs must agree within the quoted leg's floor."""
+    systems = _slot_system()
+    systems["order_effect"] = {
+        "prefill": {"floor_by_context_seconds": {"128": 0.010, "256": 0.020}}}
+    alt = _slot_system()
+    for row in alt["prefill"]:
+        row["latency_stats"]["median"] += (0.002 if row["context_tokens"] == 128
+                                           else 0.030)
+    comparison = rr.systems_cross_leg(systems, alt)
+    assert comparison["n_compared"] == 4
+    # the context-128 rows differ by 0.002 s (inside the 0.010 s floor);
+    # the context-256 rows by 0.030 s (outside the 0.020 s floor)
+    assert comparison["n_within_floor"] == 2
+    assert comparison["n_above_floor"] == 2
+    assert comparison["max_difference_seconds"] == pytest.approx(0.030)
+
+
 # ---------------------------------------------------------------------------
 # the renderer-key invariant
 # ---------------------------------------------------------------------------

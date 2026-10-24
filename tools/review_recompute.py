@@ -361,6 +361,61 @@ def systems_verdicts(systems: Dict, nulls: Dict) -> List[Dict]:
     return rows
 
 
+def _pooled_by_arm_context(rows: Sequence[Dict]) -> Dict:
+    """(arm, context) -> the pooled median of one systems artefact's rows."""
+    out: Dict = {}
+    for r in rows:
+        med = _median_of(r)
+        if med is None:
+            continue
+        out[(r.get("arm"), str(r.get("context_tokens")))] = med
+    return out
+
+
+def systems_cross_leg(primary: Dict, other: Dict) -> Dict:
+    """Compare two systems artefacts leg by leg, per (arm, context).
+
+    The systems leg was measured twice: once at the commit whose A/A null
+    mixed the contexts (kept in the repository, but discarded as a result) and
+    once at the tooling commit (the artefact the write-up quotes). The
+    discarded leg is not useless — it is an independent measurement of the
+    same quantities — so the two legs must agree within the drift floor of
+    the quoted leg. A disagreement above that floor is a finding for the
+    review, not a failure of this tool, so the result is an observation.
+    """
+    rows: List[Dict] = []
+    for block, pooled_key in (("training_step", "training_step"),
+                              ("prefill", "prefill"),
+                              ("incremental_decode", "incremental_decode")):
+        a = _pooled_by_arm_context(primary.get(pooled_key) or [])
+        b = _pooled_by_arm_context(other.get(pooled_key) or [])
+        floors = ((primary.get("order_effect") or {}).get(block) or {}).get(
+            "floor_by_context_seconds") or {}
+        for key in sorted(set(a) & set(b), key=lambda k: (str(k[0]), str(k[1]))):
+            arm, ctx = key
+            diff = abs(a[key] - b[key])
+            floor = floors.get(ctx)
+            rows.append({
+                "block": block, "arm": arm, "context_tokens": ctx,
+                "median_quoted_leg_seconds": a[key],
+                "median_other_leg_seconds": b[key],
+                "difference_seconds": diff,
+                "floor_seconds": floor,
+                "within_floor": (floor is not None and diff <= floor),
+            })
+    within = [r for r in rows if r["within_floor"]]
+    return {
+        "note": ("an observation, not a gate: a disagreement above the drift "
+                 "floor is a finding for the review, not a failure of this tool"),
+        "rows": rows,
+        "n_compared": len(rows),
+        "n_within_floor": len(within),
+        "n_above_floor": len(rows) - len(within),
+        "max_difference_seconds": max((r["difference_seconds"] for r in rows),
+                                      default=None),
+    }
+
+
 # ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
@@ -370,6 +425,10 @@ def main() -> int:
     ap.add_argument("--summary", default="", help="the builder's quality summary JSON")
     ap.add_argument("--eval-windows", default="", help="the checkpoint-eval JSON")
     ap.add_argument("--systems", default="", help="the systems artefact JSON")
+    ap.add_argument("--systems-alt", default="",
+                    help="a second systems artefact to compare leg by leg "
+                         "(e.g. the first systems leg, which was discarded as a "
+                         "result because its A/A null mixed the contexts)")
     ap.add_argument("--out", default="", help="write the reviewer's recomputation here")
     args = ap.parse_args()
 
@@ -631,6 +690,17 @@ def main() -> int:
             arms = {r.get("arm") for r in (systems.get(pooled_key) or [])}
             checks.add(f"{block}: the optimized SDPA arm is timed too",
                        ARM_C in arms, f"arms={sorted(a for a in arms if a)}")
+
+        # a second leg of the same measurement, if one was kept
+        if args.systems_alt:
+            alt = json.loads(Path(args.systems_alt).read_text(encoding="utf-8"))
+            comparison = systems_cross_leg(systems, alt)
+            review["systems_cross_leg_comparison"] = comparison
+            review["systems_cross_leg_other_artefact"] = str(args.systems_alt)
+            print(f"[note] the two systems legs agree within the drift floor in "
+                  f"{comparison['n_within_floor']} of {comparison['n_compared']} "
+                  f"(arm, context) rows; the largest disagreement is "
+                  f"{comparison['max_difference_seconds']!r} s")
 
     # --- report ------------------------------------------------------------
     for row in checks.rows:
