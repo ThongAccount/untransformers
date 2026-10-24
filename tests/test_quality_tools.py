@@ -195,3 +195,39 @@ def test_bootstrap_se_is_a_se_and_the_resample_is_seeded(tmp_path):
     assert first["bootstrap_se_paired_difference"] >= 0.0
     assert first["n_windows"] == 4
     assert sq.bootstrap_se([], b)["available"] is False
+
+
+def test_the_chunked_book_sweep_scores_the_same_windows_as_the_plain_one():
+    """`region_window_losses` builds the windows in bounded chunks; it has to
+    produce the same per-window losses as the straightforward path."""
+    sys.path.insert(0, str(REPO / "experiments"))
+    sys.path.insert(0, str(REPO))
+    import numpy as np  # noqa: E402
+    import torch  # noqa: E402
+
+    from eval_checkpoints import per_window_losses, region_window_losses  # noqa: E402
+    from hextractor.init import apply_init_policy  # noqa: E402
+    from hextractor.model import ExtractorTransformer  # noqa: E402
+
+    torch.manual_seed(0)
+    model = ExtractorTransformer(arm="HE", d=32, l=8, n_layers=1, ffn_width=32,
+                                 vocab=50, dropout=0.0)
+    apply_init_policy(model, seed=0)
+    model.eval()
+
+    l = 8
+    region = (np.arange(40) % 50).astype(np.int64)
+    starts = np.arange(0, region.size - l, dtype=np.int64)
+    wins = np.stack([region[s:s + l + 1] for s in starts])
+
+    chunked = region_window_losses(model, region, l, starts, torch.device("cpu"), batch=7)
+    plain = per_window_losses(model, wins[:, :-1], wins[:, 1:], torch.device("cpu"),
+                               batch=64)
+    assert chunked.shape == plain.shape == starts.shape
+    assert np.allclose(chunked, plain, atol=1e-6), "the chunked sweep must agree"
+
+    # a coarser stride scores a subset of the same windows, unchanged
+    coarse_starts = np.arange(0, region.size - l, 3, dtype=np.int64)
+    coarse = region_window_losses(model, region, l, coarse_starts, torch.device("cpu"),
+                                   batch=5)
+    assert np.allclose(coarse, plain[coarse_starts], atol=1e-6)

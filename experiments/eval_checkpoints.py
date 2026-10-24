@@ -79,6 +79,29 @@ def per_window_losses(model, x: np.ndarray, y: np.ndarray, device: torch.device,
     return out
 
 
+@torch.no_grad()
+def region_window_losses(model, region: np.ndarray, l: int, starts: np.ndarray,
+                         device: torch.device, batch: int = 64) -> np.ndarray:
+    """The mean CE of every window of `l+1` tokens that starts at `starts`.
+
+    The windows are built one chunk at a time: the exhaustive stride-1 sweep
+    over the three unseen books is ~406k windows, and materialising them all
+    at once would cost hundreds of megabytes for no reason.
+    """
+    model.eval()
+    out = np.empty(starts.size, dtype=np.float64)
+    for chunk in range(0, starts.size, batch):
+        st = starts[chunk:chunk + batch]
+        wins = np.stack([region[s:s + l + 1] for s in st]).astype(np.int64)
+        xb = torch.from_numpy(wins[:, :-1]).to(device)
+        yb = torch.from_numpy(wins[:, 1:]).to(device)
+        logits = model(xb)
+        ce = F.cross_entropy(logits.reshape(-1, logits.shape[-1]), yb.reshape(-1),
+                             reduction="none").reshape(yb.shape[0], -1)
+        out[chunk:chunk + st.size] = ce.mean(dim=1).double().cpu().numpy()
+    return out
+
+
 def build_model_from_checkpoint(blob: dict, device: torch.device):
     cfg = blob["config"]
     model = ExtractorTransformer(
@@ -100,7 +123,12 @@ def main() -> int:
     ap.add_argument("--train-seed", type=int, default=0)
     ap.add_argument("--eval-batches", type=int, default=8)
     ap.add_argument("--books", nargs="+", type=int, default=list(UNSEEN_BOOKS))
-    ap.add_argument("--batch", type=int, default=64)
+    ap.add_argument("--batch", type=int, default=64,
+                    help="the compute batch (the scored windows are independent, so "
+                         "this changes the wall-clock, not the metric)")
+    ap.add_argument("--stride", type=int, default=1,
+                    help="the window starts advance by this many tokens; 1 = the "
+                         "exhaustive stride-1 sweep the protocol asks for")
     args = ap.parse_args()
 
     device = torch.device("cuda" if (args.device == "cuda" or
@@ -122,9 +150,13 @@ def main() -> int:
         "torch": torch.__version__,
         "train_seed": args.train_seed,
         "books": list(args.books),
+        "compute_batch": args.batch,
+        "stride": args.stride,
         "book_aligned": {
-            "definition": ("every stride-1 window of length l+1 inside each fully "
-                           "unseen book; no sampling, so no window-sampling noise"),
+            "definition": (f"every window of length l+1 inside each fully unseen book, "
+                           f"the window starts advancing by {args.stride} token(s) "
+                           f"(stride 1 = the exhaustive sweep the protocol asks for); "
+                           f"no sampling, so no window-sampling noise"),
             "books": {},
         },
         "eval_set": {},
@@ -171,15 +203,15 @@ def main() -> int:
             for ebook_id in args.books:
                 start, end = spans[ebook_id]
                 region = tokens[start:end]
-                n = region.size - l          # stride-1 windows of l+1 tokens
+                n = region.size - l          # windows of l+1 tokens
                 if n <= 0:
                     continue
-                wins = np.stack([region[s:s + l + 1] for s in range(n)]).astype(np.int64)
-                bx, by = wins[:, :-1], wins[:, 1:]
-                losses = per_window_losses(model, bx, by, device, args.batch)
+                starts = np.arange(0, n, args.stride, dtype=np.int64)
+                losses = region_window_losses(model, region, l, starts, device, args.batch)
                 per_book[str(ebook_id)] = {
                     "n_tokens": int(region.size),
                     "n_windows": int(losses.size),
+                    "stride": args.stride,
                     "mean_loss": float(losses.mean()),
                 }
                 book_losses.append(losses)
