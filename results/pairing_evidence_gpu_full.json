@@ -1,0 +1,253 @@
+{
+  "schema": "untransformers-pairing-evidence/1",
+  "created_utc": "2026-10-24T06:46:26+00:00",
+  "verifier": {
+    "tool": "tools/verify/verify_pairing_evidence.py",
+    "module": "hextractor/pairing.py",
+    "version": "1",
+    "git_commit": "b2a3221d006f4a41365e82531f0beb02e7b0a55e",
+    "git_branch": "research/milestone-1-extractor",
+    "git_dirty": true
+  },
+  "corpus": {
+    "corpus_id": "fd567893d71494fdf5f733c13b4d4ac5e9ecf81c886ab298e1003d4103a5e2d7",
+    "tokenizer_sha256": "4e6abaa775edf70839cc6b0b881b7846e3e558c577c474fcaf22516426f6c647",
+    "n_tokens": 9514186
+  },
+  "protocol": {
+    "arms": [
+      "HE",
+      "attention-32h"
+    ],
+    "seeds": [
+      1,
+      2,
+      3
+    ],
+    "train_seed": 0,
+    "steps": 2000,
+    "l": 128,
+    "batch_size": 64,
+    "d": 128,
+    "n_layers": 18,
+    "vocab": 5000
+  },
+  "claims": {
+    "same_batches_same_order": {
+      "verified": true,
+      "n_batches_hashed": 100,
+      "train_stream_sha256": "db8d8cc49bd6c82049041074fba4e9b8212abbe67c6ecfb9b0b1f59cf1f1b40a",
+      "held_out_stream_sha256": "5612edee47654562007a70327cf08281352d1ae9530327d4183bd6a0faf986ab",
+      "method": "the train and held-out streams are pure functions of (train_seed, split, corpus_id, tokenizer_sha256, l, batch) and take no arm and no seed argument, so every arm and every seed consumes the same windows in the same order; the first N windows of each stream are hashed here and the corpus/config identity they were derived from is recorded",
+      "scope": "certifies that the data pipeline is arm-independent and seed-independent for the recorded corpus/config; it is not an observation of the finished training loop"
+    },
+    "paired_init_seeds": {
+      "verified": true,
+      "per_seed": {
+        "1": {
+          "bitwise_equal": true,
+          "n_generator_drawn": 39,
+          "n_generator_drawn_bitwise_equal": 39,
+          "n_shared_parameters": 150,
+          "per_arm": {
+            "attention-32h": {
+              "compared_against": "HE",
+              "n_shared_parameters": 150,
+              "n_only_in_first_arm": [],
+              "n_only_in_this_arm": [],
+              "n_generator_drawn": 39,
+              "n_generator_drawn_bitwise_equal": 39,
+              "differing_parameters": [],
+              "bitwise_equal": true,
+              "shared_parameter_names_sha256": "78dd6585742d68bea870bf9d0af4437e5c4fd3300636226aad88512d88dab8c2"
+            }
+          }
+        },
+        "2": {
+          "bitwise_equal": true,
+          "n_generator_drawn": 39,
+          "n_generator_drawn_bitwise_equal": 39,
+          "n_shared_parameters": 150,
+          "per_arm": {
+            "attention-32h": {
+              "compared_against": "HE",
+              "n_shared_parameters": 150,
+              "n_only_in_first_arm": [],
+              "n_only_in_this_arm": [],
+              "n_generator_drawn": 39,
+              "n_generator_drawn_bitwise_equal": 39,
+              "differing_parameters": [],
+              "bitwise_equal": true,
+              "shared_parameter_names_sha256": "78dd6585742d68bea870bf9d0af4437e5c4fd3300636226aad88512d88dab8c2"
+            }
+          }
+        },
+        "3": {
+          "bitwise_equal": true,
+          "n_generator_drawn": 39,
+          "n_generator_drawn_bitwise_equal": 39,
+          "n_shared_parameters": 150,
+          "per_arm": {
+            "attention-32h": {
+              "compared_against": "HE",
+              "n_shared_parameters": 150,
+              "n_only_in_first_arm": [],
+              "n_only_in_this_arm": [],
+              "n_generator_drawn": 39,
+              "n_generator_drawn_bitwise_equal": 39,
+              "differing_parameters": [],
+              "bitwise_equal": true,
+              "shared_parameter_names_sha256": "78dd6585742d68bea870bf9d0af4437e5c4fd3300636226aad88512d88dab8c2"
+            }
+          }
+        }
+      },
+      "method": "both arms are rebuilt with the same seed through the runner's own `apply_init_policy` and their shared (non-sublayer-1) parameters are compared bitwise; the generator-drawn tensors are counted separately from the constant-filled ones (LayerNorm gains/biases)",
+      "scope": "certifies the initialisation of the shared parameters; sublayer-1 is arm-specific by construction and is not expected to match"
+    }
+  },
+  "checkpoints": {
+    "HE_seed1": {
+      "present": true,
+      "path": "results/checkpoints/HE_seed1.pt",
+      "file_sha256": "e6bf6c1cd2bc11f6590f5faf8bf8fec41e1260203027110a6fac293ad06799bc",
+      "file_bytes": 19510759,
+      "arm": "HE",
+      "seed": 1,
+      "steps": 2000,
+      "final_held_out_loss": 4.138238847255707,
+      "n_state_dict_tensors": 222
+    },
+    "HE_seed2": {
+      "present": true,
+      "path": "results/checkpoints/HE_seed2.pt",
+      "file_sha256": "a6cfda301cefb07ada1dad547058b0915383f79d737319e0e392cd4c523879f0",
+      "file_bytes": 19510759,
+      "arm": "HE",
+      "seed": 2,
+      "steps": 2000,
+      "final_held_out_loss": 4.149547040462494,
+      "n_state_dict_tensors": 222
+    },
+    "HE_seed3": {
+      "present": true,
+      "path": "results/checkpoints/HE_seed3.pt",
+      "file_sha256": "f3a1f1696bf30a5b19ef8f19f1ebdac56bd0afbc52a271fe4fa033d27a086807",
+      "file_bytes": 19510759,
+      "arm": "HE",
+      "seed": 3,
+      "steps": 2000,
+      "final_held_out_loss": 4.1512532234191895,
+      "n_state_dict_tensors": 222
+    },
+    "attention-32h_seed1": {
+      "present": true,
+      "path": "results/checkpoints/attention-32h_seed1.pt",
+      "file_sha256": "a5a1c3e309606c77c7fb3b880c0b262e943f287a1328d8d978da264062ade638",
+      "file_bytes": 19513011,
+      "arm": "attention-32h",
+      "seed": 1,
+      "steps": 2000,
+      "final_held_out_loss": 4.243823289871216,
+      "n_state_dict_tensors": 222
+    },
+    "attention-32h_seed2": {
+      "present": true,
+      "path": "results/checkpoints/attention-32h_seed2.pt",
+      "file_sha256": "6e2c47d82ce7e1b2c8f2dc513a41882f2d0be663bb5a0e3cfd47915f810ef8d0",
+      "file_bytes": 19513011,
+      "arm": "attention-32h",
+      "seed": 2,
+      "steps": 2000,
+      "final_held_out_loss": 4.256580650806427,
+      "n_state_dict_tensors": 222
+    },
+    "attention-32h_seed3": {
+      "present": true,
+      "path": "results/checkpoints/attention-32h_seed3.pt",
+      "file_sha256": "6f22cd3c546a8d198d8d871931cf6d7e3531521ef9e270fe97d49346d98f82a4",
+      "file_bytes": 19513011,
+      "arm": "attention-32h",
+      "seed": 3,
+      "steps": 2000,
+      "final_held_out_loss": 4.2502206563949585,
+      "n_state_dict_tensors": 222
+    }
+  },
+  "results_cross_check": {
+    "method": "each checkpoint's own metadata (arm, seed, steps, final held-out loss) is compared with the number the results file reports for the same (arm, seed)",
+    "per_checkpoint": {
+      "HE_seed1": {
+        "present": true,
+        "reported_in_results": {
+          "steps": 2000,
+          "final_held_out_loss": 4.138238847255707
+        },
+        "steps_match": true,
+        "final_held_out_loss_match": true,
+        "arm_match": true,
+        "seed_match": true
+      },
+      "HE_seed2": {
+        "present": true,
+        "reported_in_results": {
+          "steps": 2000,
+          "final_held_out_loss": 4.149547040462494
+        },
+        "steps_match": true,
+        "final_held_out_loss_match": true,
+        "arm_match": true,
+        "seed_match": true
+      },
+      "HE_seed3": {
+        "present": true,
+        "reported_in_results": {
+          "steps": 2000,
+          "final_held_out_loss": 4.1512532234191895
+        },
+        "steps_match": true,
+        "final_held_out_loss_match": true,
+        "arm_match": true,
+        "seed_match": true
+      },
+      "attention-32h_seed1": {
+        "present": true,
+        "reported_in_results": {
+          "steps": 2000,
+          "final_held_out_loss": 4.243823289871216
+        },
+        "steps_match": true,
+        "final_held_out_loss_match": true,
+        "arm_match": true,
+        "seed_match": true
+      },
+      "attention-32h_seed2": {
+        "present": true,
+        "reported_in_results": {
+          "steps": 2000,
+          "final_held_out_loss": 4.256580650806427
+        },
+        "steps_match": true,
+        "final_held_out_loss_match": true,
+        "arm_match": true,
+        "seed_match": true
+      },
+      "attention-32h_seed3": {
+        "present": true,
+        "reported_in_results": {
+          "steps": 2000,
+          "final_held_out_loss": 4.2502206563949585
+        },
+        "steps_match": true,
+        "final_held_out_loss_match": true,
+        "arm_match": true,
+        "seed_match": true
+      }
+    },
+    "mismatches": []
+  },
+  "results_file": {
+    "path": "results/quality_gpu_full.json",
+    "sha256_before_merge": "e0f1054562a7da9d00c87bbf8f3ccc12482bf9071959c3c47a6965444e144c11"
+  }
+}

@@ -1,0 +1,65 @@
+[systems] device=cuda arms=['HE', 'attention-32h', 'attention-32h-sdpa']
+[systems] order schedule: ['HE', 'attention-32h', 'attention-32h-sdpa', 'attention-32h-sdpa', 'attention-32h', 'HE']
+[training-step] slot 0 arm=HE
+[training-step] slot 1 arm=attention-32h
+[training-step] slot 2 arm=attention-32h-sdpa
+[training-step] slot 3 arm=attention-32h-sdpa
+[training-step] slot 4 arm=attention-32h
+[training-step] slot 5 arm=HE
+[prefill] slot 0 arm=HE
+[prefill] slot 1 arm=attention-32h
+[prefill] slot 2 arm=attention-32h-sdpa
+[prefill] slot 3 arm=attention-32h-sdpa
+[prefill] slot 4 arm=attention-32h
+[prefill] slot 5 arm=HE
+[incremental-decode] slot 0 arm=HE
+[incremental-decode] slot 1 arm=attention-32h
+[incremental-decode] slot 2 arm=attention-32h-sdpa
+[incremental-decode] slot 3 arm=attention-32h-sdpa
+[incremental-decode] slot 4 arm=attention-32h
+[incremental-decode] slot 5 arm=HE
+[sublayer-scaling] HE attention-32h attention-32h-sdpa
+Traceback (most recent call last):
+  File "/content/repo/experiments/run_systems.py", line 1006, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "/content/repo/experiments/run_systems.py", line 955, in main
+    out["sublayer_scaling"] = measure_sublayer_scaling(
+                              ~~~~~~~~~~~~~~~~~~~~~~~~^
+        list(ARMS_ALL), cfg, device, list(args.sublayer_contexts),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        args.trials, args.warmup)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/content/repo/experiments/run_systems.py", line 504, in measure_sublayer_scaling
+    _sublayer_incremental(arm, sub, chunk, state, 0)
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/content/repo/experiments/run_systems.py", line 478, in _sublayer_incremental
+    return attention_forward_incremental(sub, x, state, start=start)
+  File "/content/repo/hextractor/incremental.py", line 144, in attention_forward_incremental
+    scores = q @ state.k.transpose(-1, -2) / (h ** 0.5)           # [B,H,T,Ttot]
+             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 8.00 GiB. GPU 0 has a total capacity of 14.56 GiB of which 6.11 GiB is free. Process 2521 has 264.00 MiB memory in use. Including non-PyTorch memory, this process has 8.19 GiB memory in use. Of the allocated memory 8.03 GiB is allocated by PyTorch, and 26.50 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)
+
+===== /usr/bin/python3 experiments/run_systems.py --arms HE attention-32h attention-32h-sdpa --systems-arms HE attention-32h attention-32h-sdpa --device cuda --out /content/results/systems.json --d 128 --l 128 --layers 18 --ffn 512 --vocab 5000 --batch 64 --heads 32 --trials 10 --warmup 2 --gen-tokens 16 --decode-trials 5 --checkpoint-dir /content/checkpoints =====
+[systems] device=cuda arms=['HE', 'attention-32h', 'attention-32h-sdpa']
+[systems] order schedule: ['HE', 'attention-32h', 'attention-32h-sdpa', 'attention-32h-sdpa', 'attention-32h', 'HE']
+[training-step] slot 0 arm=HE
+[training-step] slot 1 arm=attention-32h
+[training-step] slot 2 arm=attention-32h-sdpa
+[training-step] slot 3 arm=attention-32h-sdpa
+[training-step] slot 4 arm=attention-32h
+[training-step] slot 5 arm=HE
+[prefill] slot 0 arm=HE
+[prefill] slot 1 arm=attention-32h
+[prefill] slot 2 arm=attention-32h-sdpa
+[prefill] slot 3 arm=attention-32h-sdpa
+[prefill] slot 4 arm=attention-32h
+[prefill] slot 5 arm=HE
+[incremental-decode] slot 0 arm=HE
+[incremental-decode] slot 1 arm=attention-32h
+[incremental-decode] slot 2 arm=attention-32h-sdpa
+[incremental-decode] slot 3 arm=attention-32h-sdpa
+[incremental-decode] slot 4 arm=attention-32h
+[incremental-decode] slot 5 arm=HE
+[sublayer-scaling] HE attention-32h attention-32h-sdpa
+results written: /content/results/systems.json

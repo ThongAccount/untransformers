@@ -1,0 +1,62 @@
+{
+  "schema": "untransformers-checkpoint-manifest/1",
+  "label": "full",
+  "created_utc": "2026-10-24T05:46:58+00:00",
+  "note": "The .pt files themselves are not committed: they are deterministic outputs of the pinned commit, corpus and seeds. The sha256 of each file lets anyone who regenerates them prove the match.",
+  "checkpoints": [
+    {
+      "file": "HE_seed1.pt",
+      "arm": "HE",
+      "seed": 1,
+      "steps": 2000,
+      "final_held_out_loss": 4.138238847255707,
+      "bytes": 19510759,
+      "sha256": "e6bf6c1cd2bc11f6590f5faf8bf8fec41e1260203027110a6fac293ad06799bc"
+    },
+    {
+      "file": "HE_seed2.pt",
+      "arm": "HE",
+      "seed": 2,
+      "steps": 2000,
+      "final_held_out_loss": 4.149547040462494,
+      "bytes": 19510759,
+      "sha256": "a6cfda301cefb07ada1dad547058b0915383f79d737319e0e392cd4c523879f0"
+    },
+    {
+      "file": "HE_seed3.pt",
+      "arm": "HE",
+      "seed": 3,
+      "steps": 2000,
+      "final_held_out_loss": 4.1512532234191895,
+      "bytes": 19510759,
+      "sha256": "f3a1f1696bf30a5b19ef8f19f1ebdac56bd0afbc52a271fe4fa033d27a086807"
+    },
+    {
+      "file": "attention-32h_seed1.pt",
+      "arm": "attention-32h",
+      "seed": 1,
+      "steps": 2000,
+      "final_held_out_loss": 4.243823289871216,
+      "bytes": 19513011,
+      "sha256": "a5a1c3e309606c77c7fb3b880c0b262e943f287a1328d8d978da264062ade638"
+    },
+    {
+      "file": "attention-32h_seed2.pt",
+      "arm": "attention-32h",
+      "seed": 2,
+      "steps": 2000,
+      "final_held_out_loss": 4.256580650806427,
+      "bytes": 19513011,
+      "sha256": "6e2c47d82ce7e1b2c8f2dc513a41882f2d0be663bb5a0e3cfd47915f810ef8d0"
+    },
+    {
+      "file": "attention-32h_seed3.pt",
+      "arm": "attention-32h",
+      "seed": 3,
+      "steps": 2000,
+      "final_held_out_loss": 4.2502206563949585,
+      "bytes": 19513011,
+      "sha256": "6f22cd3c546a8d198d8d871931cf6d7e3531521ef9e270fe97d49346d98f82a4"
+    }
+  ]
+}

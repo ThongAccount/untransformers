@@ -107,6 +107,50 @@ of distinct tokens, and the first token of each book is never a target. The
 coverage table now prints the books' token counts, the window counts, the
 stride and the token-prediction counts, and says so in words.
 
+And one more, found by the rehearsal of the write-up fill (the pilot-scale
+artefacts rendered into a copy of the write-up before the real ones existed):
+the **renderer could put a Python object into a committed write-up**. The
+bootstrap block's note lives on the *per-seed* entries of the summary artefact,
+while the renderer read it from the block — so the rendered note was the
+literal `_None_`; the verdict and the "CI excludes 0" cells were interpolated
+raw, so a missing value printed `None` instead of an em dash; and the
+bootstrap header carried the window count and the resample count as literals,
+so the header could disagree with the artefact it claims to describe. The note
+is now taken from the per-seed entries (falling back to the block's
+definition), a missing value is an em dash everywhere, and the header states
+the artefact's own numbers (`844aaca`, pinned by
+`tests/test_render_results_tables.py::test_the_bootstrap_note_is_rendered_and_never_the_word_none`).
+
+---
+
+## The systems leg, twice: a CUDA OOM and a re-measurement
+
+The first GPU systems leg died **before it wrote an artefact**. The
+sublayer-1 scaling block warms a cache of `T` positions and then times a
+single new token at position `T-1`; the eager attention path materialises the
+`[H, m, T]` score matrix for the chunk it is handed, and at `T = 8192` with 32
+heads that is 8.6 GB per tensor — three of them alive at once, on a GPU with
+14.56 GB. The runner died with:
+
+```
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 8.00 GiB.
+GPU 0 has a total capacity of 14.56 GiB of which 6.11 GiB is free.
+```
+
+The fix is in the runner's **warm-up**, not in the measured implementation: the
+cache is filled in pieces of 256 positions. The warm-up is **not timed** (the
+measured call is a single new token at position `T-1`), and the cache it
+leaves is bit-identical — a token's K and V do not depend on how the warm-up
+was cut, and HE's rolling state keeps the last `l-1` vectors either way. Both
+facts are pinned by `tests/test_systems_warmup.py`, including that the warm-up
+is outside the timed region. Recorded as deviation **D-26**.
+
+No number was produced by the broken code: the leg died before writing its
+artefact, so there is no first-leg artefact to be read. The committed systems
+artefact is the re-measurement, taken at the tooling commit, and the log of
+**both** legs — the OOM traceback and the successful run — is committed as
+`docs/milestone-3/logs/systems.txt`.
+
 ---
 
 ## T15 — the GPU smoke test had never run before
