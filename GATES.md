@@ -31,6 +31,17 @@ All commands run with `CWD: /workspace/untransformers` and
   CHECK: /home/node/.venv/bin/python tools/verify/check_quality_results.py --file results/quality_pilot.json --label pilot --arms HE attention-32h --seeds 1 2
   EXPECT: PILOT_OK
 
+## G3a — the pairing claims are certified from artefacts, not asserted (F1)
+
+  CHECK: /home/node/.venv/bin/python tools/verify/verify_pairing_evidence.py --results results/quality_pilot.json --out results/pairing_evidence_pilot.json --merge-into results/quality_pilot.json
+  EXPECT: same_batches_same_order: verified=True
+  EXPECT: paired_init_seeds: verified=True
+
+  (The quality gate above REFUSES a results file without a `pairing_evidence`
+  block: the two protocol literals used to be hardcoded `True` in the runner,
+  so the gate could not fail. The evidence is derived from the corpus streams
+  and from a bitwise comparison of the shared initial parameters.)
+
 ## G4 — GPU session sweep landed (full multi-seed) or capacity formally abandoned
 
   CHECK: /home/node/.venv/bin/python tools/verify/check_quality_results.py --file results/quality_gpu_full.json --label full --arms HE attention-32h --seeds 1 2 3
@@ -38,6 +49,22 @@ All commands run with `CWD: /workspace/untransformers` and
 
   (If no free-tier GPU slot ever opens, this gate is recorded with
   `ABANDON: G4 <reason>` — abandonment is handoff, never success.)
+
+## G4a — the full sweep's pairing evidence (F1)
+
+  CHECK: /home/node/.venv/bin/python tools/verify/verify_pairing_evidence.py --results results/quality_gpu_full.json --checkpoint-dir results/checkpoints --out results/pairing_evidence_gpu_full.json --merge-into results/quality_gpu_full.json
+  EXPECT: same_batches_same_order: verified=True
+  EXPECT: paired_init_seeds: verified=True
+
+## G4b — the pre-registered statistics, the bootstrap and the sensitivity analysis
+
+  CHECK: /home/node/.venv/bin/python tools/summarise_quality.py --file results/quality_gpu_full.json --eval-windows results/eval_windows.json --out results/quality_summary.json
+  EXPECT: written: results/quality_summary.json
+
+  (The statistics are the ones pre-registered in `docs/milestone-3/PROTOCOL.md`
+  §3.2 — paired differences, sample SD with ddof=1, the 95% CI, the MDD, the
+  perplexity ratio — plus the eval-set bootstrap (§3.3) and the book-aligned
+  sensitivity analysis (§2.3).)
 
 ## G5 — incremental decoding is exact against the full forward pass (both arms)
 

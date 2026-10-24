@@ -180,6 +180,89 @@ def render_systems(path: Path) -> str:
     return "\n".join(out)
 
 
+def render_summary(path: Path) -> str:
+    """The pre-registered statistics block (protocol §3.2) from the summary."""
+    d = json.loads(path.read_text(encoding="utf-8"))
+    out: list[str] = []
+    cond = d.get("conditions") or {}
+    out.append("### Conditions of the comparison\n")
+    out.append("| field | value |\n|---|---|")
+    for key in ("arms", "seeds", "steps", "tokens_per_step", "tokens_processed_per_run",
+                "nominal_epochs_of_train_region", "train_seed", "eval_every",
+                "eval_batches", "corpus_id", "tokenizer_sha256", "device", "torch",
+                "python", "commit"):
+        if key in cond:
+            out.append(f"| {key} | {cond[key]} |")
+    out.append("")
+
+    for endpoint in ("final", "last4"):
+        block = (d.get("endpoints") or {}).get(endpoint)
+        if not block:
+            continue
+        out.append(f"### Endpoint: {block.get('definition')}\n")
+        out.append(f"Sign convention: {block.get('sign_convention')}\n")
+        out.append("| seed | HE | attention-32h | d = HE − attention |\n|---|---|---|---|")
+        fa = block.get("per_seed_arm_a") or {}
+        fb = block.get("per_seed_arm_b") or {}
+        diffs = block.get("differences") or {}
+        for s in block.get("seeds") or []:
+            out.append(f"| {s} | {_fmt(fa.get(str(s)), 6)} | {_fmt(fb.get(str(s)), 6)} | "
+                       f"{_fmt(diffs.get(str(s)), 6)} |")
+        out.append(f"| **mean** | {_fmt((block.get('arm_a') or {}).get('mean'), 6)} | "
+                   f"{_fmt((block.get('arm_b') or {}).get('mean'), 6)} | "
+                   f"{_fmt(block.get('mean_difference'), 6)} |")
+        out.append(f"| **sample SD (ddof=1)** | "
+                   f"{_fmt((block.get('arm_a') or {}).get('std_ddof1'), 6)} | "
+                   f"{_fmt((block.get('arm_b') or {}).get('std_ddof1'), 6)} | "
+                   f"{_fmt(block.get('std_difference_ddof1'), 6)} |")
+        out.append("")
+        out.append("| statistic | value |\n|---|---|")
+        out.append(f"| standard error | {_fmt(block.get('standard_error'), 6)} |")
+        ci = block.get("ci95") or [None, None]
+        out.append(f"| 95% CI for d̄ | [{_fmt(ci[0], 6)}, {_fmt(ci[1], 6)}] |")
+        out.append(f"| CI excludes 0 | {block.get('ci95_excludes_zero')} |")
+        out.append(f"| MDD at 80% power | {_fmt(block.get('mdd_80_power'), 6)} |")
+        out.append(f"| perplexity ratio exp(d̄) | {_fmt(block.get('perplexity_ratio'), 6)} |")
+        pr = block.get("perplexity_ratio_ci95") or [None, None]
+        out.append(f"| perplexity ratio, 95% CI | [{_fmt(pr[0], 6)}, {_fmt(pr[1], 6)}] |")
+        out.append(f"| verdict | {block.get('verdict')} |")
+        needed = block.get("seeds_needed_for_80_power_at_observed_effect")
+        if needed is not None:
+            out.append(f"| seeds needed for 80% power at the observed effect | {needed} |")
+        out.append("")
+
+    boot = d.get("eval_set_bootstrap") or {}
+    per_seed = boot.get("per_seed") or {}
+    if per_seed:
+        out.append("### Eval-set bootstrap (1,000 resamples of the 512 eval windows)\n")
+        out.append("| seed | bootstrap SE, HE | bootstrap SE, attention-32h | "
+                   "bootstrap SE, paired difference |\n|---|---|---|---|")
+        for s, b in sorted(per_seed.items()):
+            out.append(f"| {s} | {_fmt(b.get('bootstrap_se_arm_a'), 6)} | "
+                       f"{_fmt(b.get('bootstrap_se_arm_b'), 6)} | "
+                       f"{_fmt(b.get('bootstrap_se_paired_difference'), 6)} |")
+        out.append("")
+        out.append(f"_{boot.get('note')}_\n")
+
+    sens = d.get("book_aligned_sensitivity") or {}
+    if sens:
+        out.append("### Book-aligned sensitivity analysis (post-hoc, 3 unseen books)\n")
+        out.append(f"_{sens.get('definition')}_\n")
+        out.append("| seed | HE | attention-32h | d = HE − attention |\n|---|---|---|---|")
+        fa = sens.get("per_seed_arm_a") or {}
+        fb = sens.get("per_seed_arm_b") or {}
+        diffs = sens.get("differences") or {}
+        for s in sens.get("seeds") or []:
+            out.append(f"| {s} | {_fmt(fa.get(str(s)), 6)} | {_fmt(fb.get(str(s)), 6)} | "
+                       f"{_fmt(diffs.get(str(s)), 6)} |")
+        ci = sens.get("ci95") or [None, None]
+        out.append(f"| **mean** | | | {_fmt(sens.get('mean_difference'), 6)} |")
+        out.append(f"| **95% CI** | | | [{_fmt(ci[0], 6)}, {_fmt(ci[1], 6)}] |")
+        out.append(f"| **verdict** | | | {sens.get('verdict')} |")
+        out.append("")
+    return "\n".join(out)
+
+
 def main() -> int:
     if len(sys.argv) < 3:
         print(__doc__)
@@ -189,6 +272,8 @@ def main() -> int:
         print(render_quality(path))
     elif kind == "systems":
         print(render_systems(path))
+    elif kind == "summary":
+        print(render_summary(path))
     else:
         print(f"unknown kind: {kind}")
         return 2
