@@ -539,6 +539,27 @@ def _sublayer_incremental(arm: str, sub, x, state, start):
     return attention_forward_incremental(sub, x, state, start=start)
 
 
+# the warm-up of the sublayer cache is fed to the sublayer in pieces: the
+# eager attention path materialises the [H, m, T] score matrix for the chunk
+# it is given, and at T = 8192 with 32 heads that is 8.6 GB per tensor (three
+# of them alive at once), which does not fit on a T4 — the first GPU leg died
+# there with a CUDA OOM. The cache that comes out is the same either way (a
+# token's K and V do not depend on how the warm-up was cut, and the HE state
+# keeps the last l-1 vectors regardless), and the warm-up is NOT timed: the
+# measured call is a single new token at position T-1. So the measurement is
+# unchanged; only the way the cache is filled before it is.
+WARM_PIECE = 256
+
+
+def _warm_cache(arm: str, sub, chunk, state, piece: int = WARM_PIECE) -> None:
+    """Warm a sublayer's cache to the end of `chunk`, in pieces."""
+    m = int(chunk.shape[1])
+    if m == 0:
+        return
+    for s in range(0, m, piece):
+        _sublayer_incremental(arm, sub, chunk[:, s:s + piece], state, s)
+
+
 def measure_sublayer_scaling(arms: List[str], cfg: TrainConfig, device: torch.device,
                              context_lengths: List[int], trials: int, warmup: int,
                              seed: int = 1) -> List[Dict]:
@@ -562,7 +583,7 @@ def measure_sublayer_scaling(arms: List[str], cfg: TrainConfig, device: torch.de
             state = HEState() if arm == "HE" else AttentionState()
             with torch.no_grad():
                 chunk = torch.randn(1, T - 1, cfg.d, device=device)
-                _sublayer_incremental(arm, sub, chunk, state, 0)
+                _warm_cache(arm, sub, chunk, state)
             times: List[float] = []
             for i in range(trials + warmup):
                 _sync(device)
