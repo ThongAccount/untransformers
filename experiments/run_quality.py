@@ -25,6 +25,7 @@ import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Optional
 
 import torch
 
@@ -34,6 +35,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from hextractor.corpus import CorpusBundle  # noqa: E402
 from hextractor.harness import TrainConfig, run_multi_seed_corpus  # noqa: E402
+from hextractor.pairing import build_pairing_evidence, checkpoint_provenance  # noqa: E402
 
 
 def env_manifest(device: torch.device) -> dict:
@@ -99,6 +101,9 @@ def main() -> int:
     ap.add_argument("--batch", type=int, default=64)
     ap.add_argument("--vocab", type=int, default=5000)
     ap.add_argument("--threads", type=int, default=0, help="torch threads (0 = leave default)")
+    ap.add_argument("--pairing-batches", type=int, default=100,
+                    help="windows per stream hashed for the pairing evidence "
+                         "(0 disables the evidence block)")
     args = ap.parse_args()
 
     if args.threads:
@@ -133,8 +138,10 @@ def main() -> int:
             "corpus_tokens_total": total,
             "corpus_tokens_train_region": cut,
             "corpus_tokens_heldout_region": total - cut,
-            "same_batches_same_order": True,
-            "paired_init_seeds": True,
+            # Filled from the DERIVED pairing evidence below (memo F1): the
+            # runner does not assert these, it copies what the evidence says.
+            "same_batches_same_order": None,
+            "paired_init_seeds": None,
         },
         "config": {
             "d": cfg.d, "l": cfg.l, "n_layers": cfg.n_layers, "ffn_width": cfg.ffn_width,
@@ -158,6 +165,28 @@ def main() -> int:
     ckpt_dir = Path(args.checkpoint_dir)
     if args.save_checkpoints:
         ckpt_dir.mkdir(parents=True, exist_ok=True)
+
+    # --- pairing evidence (Researcher's memo F1) --------------------------
+    # The two pairing claims are DERIVED from artefacts, never asserted: this
+    # block is what the quality gate checks, and the protocol literals are
+    # copied from it. It is built before the sweep so that even a partial
+    # flush carries verified claims, and the checkpoint provenance is filled
+    # in once the checkpoints exist.
+    evidence: Optional[dict] = None
+    if args.pairing_batches > 0:
+        evidence = build_pairing_evidence(
+            bundle, cfg, args.arms, args.seeds, train_seed=args.train_seed,
+            steps=args.steps, checkpoint_dir=None,
+            n_batches=args.pairing_batches, repo_root=REPO_ROOT)
+        claims = evidence["claims"]
+        out["protocol"]["same_batches_same_order"] = bool(
+            claims["same_batches_same_order"]["verified"])
+        out["protocol"]["paired_init_seeds"] = bool(
+            claims["paired_init_seeds"]["verified"])
+        out["pairing_evidence"] = evidence
+        print(f"[pairing] same_batches_same_order="
+              f"{out['protocol']['same_batches_same_order']} "
+              f"paired_init_seeds={out['protocol']['paired_init_seeds']}", flush=True)
 
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -187,6 +216,13 @@ def main() -> int:
         out["paired_final"] = paired_stats(out["results"][args.arms[0]],
                                            out["results"][args.arms[1]])
         print(f"[paired] {json.dumps(out['paired_final'], indent=2)}", flush=True)
+
+    if evidence is not None:
+        # the checkpoints now exist: attach their provenance (digest, size,
+        # and the numbers they carry) to the evidence block
+        evidence["checkpoints"] = checkpoint_provenance(
+            ckpt_dir if args.save_checkpoints else None, args.arms, args.seeds)
+        out["pairing_evidence"] = evidence
 
     flush_results()
     print(f"results written: {out_path}", flush=True)

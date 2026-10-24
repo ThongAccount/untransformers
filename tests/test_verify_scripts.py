@@ -21,16 +21,40 @@ def _pairing_evidence(arms=("HE", "attention-32h"), seeds=(1, 2)):
 
     It is what `tools/verify/verify_pairing_evidence.py` writes; the synthetic
     version here has the same shape so the checker can be tested against it.
+    The shape is pinned by `hextractor/pairing.py::build_pairing_evidence`:
+    the protocol (arms/seeds) lives inside `protocol`, and every per-seed
+    entry carries the seed-level aggregates plus the per-arm detail.
     """
+    per_seed = {}
+    for s in seeds:
+        per_arm = {}
+        for arm in arms[1:]:
+            per_arm[arm] = {
+                "compared_against": arms[0],
+                "n_shared_parameters": 42,
+                "n_only_in_first_arm": [],
+                "n_only_in_this_arm": [],
+                "n_generator_drawn": 12,
+                "n_generator_drawn_bitwise_equal": 12,
+                "differing_parameters": [],
+                "bitwise_equal": True,
+                "shared_parameter_names_sha256": "e" * 64,
+            }
+        per_seed[str(s)] = {
+            "bitwise_equal": True,
+            "n_generator_drawn": 12,
+            "n_generator_drawn_bitwise_equal": 12,
+            "n_shared_parameters": 42,
+            "per_arm": per_arm,
+        }
     return {
         "schema": "untransformers-pairing-evidence/1",
         "created_utc": "2026-10-23T00:00:00+00:00",
         "verifier": {"tool": "tools/verify/verify_pairing_evidence.py",
                      "version": "1", "git_commit": "b" * 40, "git_dirty": False},
         "corpus": {"corpus_id": "x" * 64, "tokenizer_sha256": "y" * 64},
-        "protocol": {"train_seed": 0, "l": 32, "batch_size": 8, "steps": 3},
-        "arms": list(arms),
-        "seeds": list(seeds),
+        "protocol": {"arms": list(arms), "seeds": list(seeds),
+                     "train_seed": 0, "l": 32, "batch_size": 8, "steps": 3},
         "claims": {
             "same_batches_same_order": {
                 "verified": True,
@@ -46,12 +70,7 @@ def _pairing_evidence(arms=("HE", "attention-32h"), seeds=(1, 2)):
                 "verified": True,
                 "method": ("both arms are rebuilt with the same seed and the shared "
                            "(non-sublayer-1) parameters are compared bitwise"),
-                "per_seed": {
-                    str(s): {"n_shared_parameters": 42, "bitwise_equal": True,
-                             "n_differing": 0,
-                             "shared_parameter_names_sha256": "e" * 64}
-                    for s in seeds
-                },
+                "per_seed": per_seed,
             },
         },
         "checkpoints": {},
