@@ -1,0 +1,151 @@
+# Milestone 3 — the scope decision
+
+**Question.** What should happen to this work after the measured round: keep
+it as an execution-only research artefact, broaden it into something that
+could support a larger claim, or stop?
+
+**Decision:** _filled in below once the measured artefacts and the gates are in
+(§4)._
+
+**Who decides.** The reviewer (Researcher, Job B) has the final word on this
+call; the user owns anything that would be published outside this repository
+(handoff H3 in `GATES.md`).
+
+---
+
+## 1. What this round actually established
+
+The evidence is in `results/` and the gate ledger is in
+`docs/milestone-3/EVIDENCE.md`:
+
+* **Quality (Milestone 2)** — a paired, three-seed comparison of the HE
+  Extractor sublayer against a 32-head self-attention sublayer under one
+  protocol, on the pinned substitute corpus, at 3.333% of the paper's token
+  budget, with the statistics pre-registered in
+  `docs/milestone-3/PROTOCOL.md` §3.2 and the disclosures D-A, D-B and D-C
+  attached. The write-up is `docs/milestone-2/QUALITY.md`.
+* **Systems (Milestone 3)** — the same three implementations timed on one
+  accelerator with the optimized SDPA baseline included in every block, an
+  A/A run-order null as the drift floor, the numerics settings pinned and
+  recorded, the first decode token separated from the steady state, and the
+  per-token state traffic given as analytic formulas. The write-up is
+  `docs/milestone-3/SYSTEMS.md`.
+* **Reproduction** — the corpus, the tokenizer, the token array, the harness,
+  the runners, the gates and the tests are in the repository, and the whole
+  pipeline is re-runnable from the manifest alone.
+
+## 2. The three options
+
+### Option A — execution-only
+
+Keep the repository as an execution-only research artefact: the replication,
+the harness, the measured artefacts, the gates and the write-ups. No claim
+beyond "this is what we measured, under these conditions". No publication
+outside the repository, no runtime change, no product surface.
+
+*What it buys:* every number in the repository is backed by an artefact and a
+gate; the work is reproducible by a third party from the manifest; the
+disclosures stay attached to the numbers.
+
+*What it costs:* the round leaves the open questions open. In particular the
+quality comparison is a **within-corpus, within-protocol** comparison at 3.333%
+of the paper's token budget, on a substitute corpus, with three unseen books.
+
+### Option B — broaden
+
+Invest in what this round exposed, so that the next round can support a larger
+claim. The concrete list is in §5 (the declared limitations): a data-order
+seed sweep, a fused/optimised HE implementation, a preallocated attention KV
+cache, a tokenizer fitted on the train region only, a larger corpus with a
+book-aligned held-out set (≈30 unseen books instead of 3), and more seeds.
+
+*What it buys:* the two limitations that currently cap the quality claim (the
+book count and the missing data-order variance) are both addressable, and the
+kernel asymmetry that currently caps the systems claim is addressable.
+
+*What it costs:* every one of these items changes the measurement, so the
+next round is a new set of runs with a new provenance, not a continuation of
+this one. The existing artefacts would remain valid as what they are — a
+completed, gated round — but they would not be the basis of the larger claim.
+
+### Option C — stop
+
+Stop the work here. Keep the repository as it is, with the artefacts, the
+gates and the write-ups, and invest nothing further.
+
+*What it buys:* the cheapest outcome; nothing is left half-done, because the
+gates in `GATES.md` are the definition of "not half-done" for this round.
+
+*What it costs:* the questions the round raised stay unanswered, and the
+artefacts stay unreviewed outside the repository.
+
+## 3. The criteria the decision is made against
+
+1. **Is the quality comparison resolved at n = 3?** The pre-registered rule
+   (`PROTOCOL.md` §3.2): the comparison is resolved iff the 95% CI for the
+   paired difference excludes 0. If it is not resolved, the write-up reports
+   "not resolved at n = 3", with the MDD; a larger claim is then not
+   available from this round.
+2. **Are the systems differences resolvable above the run-order drift
+   floor?** An arm-to-arm difference smaller than the A/A null is clock
+   drift, not a result.
+3. **Does anything here support a claim about the paper's own numbers?** No —
+   and nothing in this repository may say otherwise: the corpus is a
+   substitute, the metric differs, and the budget is 3.333% of the paper's.
+4. **Is the round reproducible and self-consistent?** The gates, the
+   artefacts and the evidence ledger must agree with each other.
+5. **What would each option cost in credibility?** An option that would
+   require the write-up to soften a disclosure is not acceptable at any
+   price.
+
+## 4. The decision and its rationale
+
+_filled in below once the measured artefacts and the gates are in._
+
+## 5. What the round left open (the declared limitations)
+
+These are the items of `PROTOCOL.md` §8.D and the protocol review's action
+list that this round did **not** do. They are limitations of the round, not
+open bugs, and each of them is a concrete, scoped piece of work:
+
+| # | limitation | why it is out of budget here | what it would change |
+|---|---|---|---|
+| D-16 | Data-order seed sweep (every seed currently shares one batch sequence, so `s_d` is a lower bound on run-to-run variance and the MDD is optimistic) | it changes the training run, so it breaks the provenance of the runs in flight | the uncertainty of the quality comparison becomes a full run-to-run variance rather than a lower bound |
+| D-17 | Fused/optimised HE implementation | a new kernel is a new engineering project, and the paper's claim is not about kernels | the systems wall-clock rows would compare two implementations of comparable maturity |
+| D-18 | Preallocated attention KV cache | the current attention implementation reallocates the cache with `torch.cat` on every token | the attention decode latency would stop carrying an implementation artefact |
+| D-19 | Tokenizer fitted on the train region only | re-tokenising changes the corpus_id and every measurement taken on it | the held-out metric would stop carrying the tokenizer leak (D-C / D-22) |
+| D-20 | The full 317-book shelf and/or a book-aligned held-out set (≈30 unseen books) | it changes the corpus, and therefore the whole run | the unseen-book evidence would rest on ~30 books instead of 3, and book-level variance would become measurable |
+
+## 6. What would change this decision (the falsifiers)
+
+* A **resolved** quality comparison (95% CI excluding 0) *and* systems
+  differences above the drift floor would make Option B attractive: the
+  round would have produced something worth extending.
+* A **not resolved** quality comparison, or systems differences below the
+  drift floor, would make Option B premature: the next round would need to
+  fix the measurement (more seeds, the data-order sweep, the fused kernel)
+  before it can say anything more.
+* A **failure of the gates or of the evidence ledger** — an artefact that does
+  not reproduce, a gate that cannot fail, a number in a document that is not
+  in the artefact — would trigger a revisit of the whole round before any
+  scope call.
+* The **user's decision** on publication (H3) is outside this repository and
+  outside this document.
+
+## 7. The evidence this decision rests on
+
+* `results/quality_gpu_full.json` — the merged six runs (the primary
+  artefact of the quality comparison).
+* `results/quality_summary.json` — the pre-registered statistics, the
+  eval-set bootstrap and the book-aligned sensitivity analysis.
+* `results/eval_windows.json` — the per-window losses of the eval set and the
+  book-aligned sweep.
+* `results/systems.json` — the systems comparison.
+* `results/checkpoints/MANIFEST.json` — the digests of the checkpoints the
+  measurements were taken from.
+* `docs/milestone-2/QUALITY.md`, `docs/milestone-3/SYSTEMS.md` — the
+  write-ups.
+* `docs/milestone-3/EVIDENCE.md` — the gate ledger, with the command, exit
+  code and matched token of every gate.
+* `docs/milestone-3/PROTOCOL.md` — the pre-registration the round was judged
+  against.
