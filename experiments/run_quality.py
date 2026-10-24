@@ -38,6 +38,18 @@ from hextractor.harness import TrainConfig, run_multi_seed_corpus  # noqa: E402
 from hextractor.pairing import build_pairing_evidence, checkpoint_provenance  # noqa: E402
 
 
+def git_commit(repo_root: Path) -> Optional[str]:
+    """The commit the run was measured from (provenance, not interpretation)."""
+    import subprocess
+
+    try:
+        r = subprocess.run(["git", "rev-parse", "HEAD"], cwd=str(repo_root),
+                           text=True, capture_output=True, timeout=20)
+        return r.stdout.strip() if r.returncode == 0 else None
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def env_manifest(device: torch.device) -> dict:
     man = {
         "python": platform.python_version(),
@@ -45,6 +57,7 @@ def env_manifest(device: torch.device) -> dict:
         "torch": torch.__version__,
         "torch_threads": torch.get_num_threads(),
         "device": device.type,
+        "train_device": str(device),
     }
     if device.type == "cuda":
         man["cuda"] = torch.version.cuda
@@ -163,6 +176,7 @@ def main() -> int:
         "environment": env_manifest(device),
         "results": {},
     }
+    out["commit"] = git_commit(REPO_ROOT)
 
     ckpt_dir = Path(args.checkpoint_dir)
     if args.save_checkpoints:
@@ -205,7 +219,8 @@ def main() -> int:
         res = run_multi_seed_corpus(arm, cfg, args.seeds, args.steps, bundle,
                                      train_seed=args.train_seed,
                                      checkpoint_dir=str(ckpt_dir) if args.save_checkpoints else None,
-                                     print_every=args.print_every or None)
+                                     print_every=args.print_every or None,
+                                     device=device)
         res["wall_seconds"] = time.time() - t0
         if args.save_checkpoints:
             res["checkpoints"] = [str(ckpt_dir / f"{arm}_seed{s}.pt") for s in args.seeds]

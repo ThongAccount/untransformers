@@ -95,11 +95,13 @@ def held_out_loss(model: nn.Module, stream_factory: BatchStream,
     model.eval()
     total, n = 0.0, 0
     it = stream_factory()
+    device = next(model.parameters()).device
     with torch.no_grad():
         for _ in range(cfg.eval_batches):
             x, y = next(it)
-            logits = model(x)
-            total += F.cross_entropy(logits.reshape(-1, cfg.vocab), y.reshape(-1)).item()
+            logits = model(x.to(device))
+            total += F.cross_entropy(logits.reshape(-1, cfg.vocab),
+                                     y.reshape(-1).to(device)).item()
             n += 1
     model.train()
     return total / max(n, 1)
@@ -109,7 +111,8 @@ def train_one_seed(arm: str, cfg: TrainConfig, seed: int, steps: int,
                    train_stream: BatchStream, held_out_stream: BatchStream,
                    log_every: Optional[int] = None,
                    save_path: Optional[str] = None,
-                   print_every: Optional[int] = None) -> Dict:
+                   print_every: Optional[int] = None,
+                   device: Optional[torch.device] = None) -> Dict:
     """One seed's trajectory: per-step train losses + held-out eval points.
 
     Returns plain data (curves only — no verdicts). Mechanics validated by
@@ -124,10 +127,20 @@ def train_one_seed(arm: str, cfg: TrainConfig, seed: int, steps: int,
     `print_every` (optional) prints one progress line every N steps. It is
     pure logging: it touches neither the RNG, nor the data order, nor the
     loss.
+
+    `device` (optional) is where the training happens. The model is
+    INITIALISED on the CPU (so the seeded generator draws the same tensors
+    everywhere) and then moved; the optimizer is built after the move, so it
+    owns the tensors that are actually trained. Without it the run stays on
+    the CPU — which is what happened to the first GPU sweep attempt
+    (2026-10-24): the runner advertised `device=cuda` in its environment
+    manifest while the training loop stayed on the CPU.
     """
     torch.manual_seed(seed)
     model = build_model(arm, cfg)
     apply_init_policy(model, seed=seed)
+    if device is not None:
+        model = model.to(device)
     opt = build_optimizer(model, cfg)
 
     log_every = log_every if log_every is not None else cfg.eval_every
@@ -137,6 +150,8 @@ def train_one_seed(arm: str, cfg: TrainConfig, seed: int, steps: int,
     model.train()
     for step in range(steps):
         x, y = next(train_it)
+        if device is not None:
+            x, y = x.to(device), y.to(device)
         logits = model(x)
         loss = F.cross_entropy(logits.reshape(-1, cfg.vocab), y.reshape(-1))
         opt.zero_grad(set_to_none=True)
@@ -156,10 +171,12 @@ def train_one_seed(arm: str, cfg: TrainConfig, seed: int, steps: int,
         from dataclasses import asdict
 
         Path(save_path).parent.mkdir(parents=True, exist_ok=True)
+        # the weights are stored on the CPU, so a checkpoint is portable
+        state = {k: v.detach().cpu() for k, v in model.state_dict().items()}
         torch.save({"arm": arm, "seed": seed, "steps": steps,
                     "config": asdict(cfg), "evals": evals,
                     "final_held_out_loss": final,
-                    "state_dict": model.state_dict()}, save_path)
+                    "state_dict": state}, save_path)
     return {"arm": arm, "seed": seed, "steps": steps,
             "train_curve": curve, "evals": evals,
             "final_held_out_loss": final}
@@ -219,13 +236,16 @@ def run_multi_seed_corpus(arm: str, cfg: TrainConfig, seeds: List[int], steps: i
                            bundle, train_seed: int = 0,
                            log_every: Optional[int] = None,
                            checkpoint_dir: Optional[str] = None,
-                           print_every: Optional[int] = None) -> Dict:
+                           print_every: Optional[int] = None,
+                           device: Optional[torch.device] = None) -> Dict:
     """Multi-seed protocol on the pinned corpus. Curves only — no verdicts.
 
     `checkpoint_dir` (optional) writes one checkpoint per (arm, seed) — the
     paired quality checkpoints Milestone 3 attaches to its performance rows.
 
     `print_every` (optional) prints a progress line every N steps per seed.
+
+    `device` (optional) is where the training happens (see `train_one_seed`).
     """
     train_stream = corpus_stream_factory(bundle, cfg, train_seed=train_seed, held_out=False)
     held_out_stream = corpus_stream_factory(bundle, cfg, train_seed=train_seed, held_out=True)
@@ -236,6 +256,6 @@ def run_multi_seed_corpus(arm: str, cfg: TrainConfig, seeds: List[int], steps: i
             save_path = str(Path(checkpoint_dir) / f"{arm}_seed{s}.pt")
         runs.append(train_one_seed(arm, cfg, s, steps, train_stream, held_out_stream,
                                    log_every=log_every, save_path=save_path,
-                                   print_every=print_every))
+                                   print_every=print_every, device=device))
     return {"arm": arm, "seeds": seeds, "train_seed": train_seed, "steps": steps,
             "runs": runs, "dispersion": dispersion(runs)}

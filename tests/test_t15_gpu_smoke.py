@@ -14,6 +14,8 @@ defects in itself, both fixed here:
     model. Rows < 64 are the ones that must stay bit-identical.
 """
 
+import math
+
 import pytest
 
 torch = pytest.importorskip("torch")
@@ -21,6 +23,7 @@ torch = pytest.importorskip("torch")
 if not torch.cuda.is_available():
     pytest.skip("no GPU available (capacity-blocked; see handoff session 31)", allow_module_level=True)
 
+from hextractor.harness import TrainConfig                        # noqa: E402
 from hextractor.init import apply_init_policy                    # noqa: E402
 from hextractor.incremental import ModelCache, model_forward_incremental  # noqa: E402
 from hextractor.layers import HESublayer                         # noqa: E402
@@ -99,3 +102,39 @@ def test_gpu_model_forward_and_incremental_agree(arm):
     scale = max(1.0, full[:, 16].abs().max().item())
     print(f"\n[gpu incremental] arm={arm} max_abs_diff={diff:.3e} scale={scale:.3e}")
     assert diff <= 1e-3 * scale
+
+
+def test_quality_training_loop_really_trains_on_the_gpu(monkeypatch):
+    """The device the runner is given must reach the training loop.
+
+    Incident 2026-10-24: `run_quality.py --device cuda` advertised
+    `device=cuda` in its environment manifest, but the harness built the
+    model on the CPU and never moved it — the first "GPU" sweep trained on
+    the CPU (14.3 s/step against 1.2 s/step for the same work in the same
+    session). This test watches the device the forward actually sees.
+    """
+    import hextractor.harness as harness
+
+    seen = []
+    original = harness.build_model
+
+    def spy(arm, cfg):
+        model = original(arm, cfg)
+        model.register_forward_pre_hook(
+            lambda mod, inputs: seen.append(inputs[0].device))
+        return model
+
+    monkeypatch.setattr(harness, "build_model", spy)
+
+    cfg = TrainConfig(d=32, l=32, n_layers=2, ffn_width=64, vocab=128,
+                      n_heads=4, batch_size=4, eval_every=2, eval_batches=1)
+    train = lambda: harness.synthetic_stream(cfg.vocab, cfg.l, cfg.batch_size, seed=0)
+    held = lambda: harness.synthetic_stream(cfg.vocab, cfg.l, cfg.batch_size,
+                                            seed=0, held_out=True)
+    run = harness.train_one_seed("HE", cfg, seed=1, steps=2, train_stream=train,
+                                  held_out_stream=held, device=torch.device(DEV))
+    assert seen, "the model never ran"
+    assert all(d.type == "cuda" for d in seen), \
+        f"the training loop ran on {sorted({str(d) for d in seen})}, not on the GPU"
+    assert run["final_held_out_loss"] is not None
+    assert all(math.isfinite(v) for v in run["train_curve"])
