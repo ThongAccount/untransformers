@@ -12477,12 +12477,12 @@
   },
   "pairing_evidence": {
     "schema": "untransformers-pairing-evidence/1",
-    "created_utc": "2026-10-24T06:46:26+00:00",
+    "created_utc": "2026-10-24T07:24:33+00:00",
     "verifier": {
       "tool": "tools/verify/verify_pairing_evidence.py",
       "module": "hextractor/pairing.py",
       "version": "1",
-      "git_commit": "b2a3221d006f4a41365e82531f0beb02e7b0a55e",
+      "git_commit": "3c358622ae5afb038e54da9f2ffed9d3944ac93c",
       "git_branch": "research/milestone-1-extractor",
       "git_dirty": true
     },
@@ -12725,8 +12725,8 @@
     },
     "results_file": {
       "path": "results/quality_gpu_full.json",
-      "sha256_before_merge": "e0f1054562a7da9d00c87bbf8f3ccc12482bf9071959c3c47a6965444e144c11"
+      "sha256_before_merge": "939215ab78e652178d9cb946e2dc333ce5faf5da138ec45afb40e80940071c23"
     }
   },
-  "pairing_evidence_added_utc": "2026-10-24T06:46:34+00:00"
+  "pairing_evidence_added_utc": "2026-10-24T07:24:33+00:00"
 }
