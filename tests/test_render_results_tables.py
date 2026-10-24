@@ -222,3 +222,39 @@ def test_no_rendered_table_leaks_none_or_nan():
             cell = cell.strip()
             assert cell not in ("None", "nan", "NaN", "null"), \
                 f"{f.name}: the cell {cell!r} is not a measurement"
+
+
+def _slot(arm, order_index, median, lo, hi):
+    return {"arm": arm, "order_index": order_index,
+            "latency_stats": {"median": median, "mean": median, "p10": lo,
+                              "p90": hi, "min": lo, "max": hi, "n": 10}}
+
+
+def test_every_arm_to_arm_difference_carries_the_drift_floor_and_a_verdict(tmp_path):
+    """The reviewer's pre-registered rule: a difference is resolvable iff it
+    exceeds the A/A null's spread for the same block and context; below the
+    floor it is not resolvable, whatever its sign."""
+    d = {"training_step": [
+            {"arm": "HE", "step_seconds": {"median": 0.50, "n": 20}},
+            {"arm": "attention-32h", "step_seconds": {"median": 0.45, "n": 20}}],
+         "training_step_slots": [
+            _slot("HE", 0, 0.50, 0.35, 0.55), _slot("HE", 1, 0.50, 0.36, 0.56),
+            _slot("attention-32h", 2, 0.45, 0.40, 0.60),
+            _slot("attention-32h", 3, 0.45, 0.41, 0.61)]}
+    p = tmp_path / "s.json"
+    p.write_text(json.dumps(d), encoding="utf-8")
+    md = rrt.render_systems_differences(d)
+    # the floor is max-min across the null's repetitions, the largest over arms
+    assert "0.210000" in md
+    # the difference and the verdict
+    assert "0.050000" in md
+    assert "| not resolvable |" in md
+    assert "| **resolvable** |" not in md
+    # the rule travels with the table
+    assert "whatever its sign" in md
+    assert "fixed before the systems numbers existed" in md
+
+    # a difference larger than the floor is resolvable
+    d["training_step"][0]["step_seconds"]["median"] = 0.90
+    md = rrt.render_systems_differences(d)
+    assert "**resolvable**" in md

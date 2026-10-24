@@ -163,6 +163,116 @@ def _quality_cell(q: dict) -> str:
     return "architecture at initialisation (no quality level)"
 
 
+def _aa_spread_by_context(slots: list[dict]) -> dict:
+    """(arm, context) -> the A/A null's max-min spread, in seconds.
+
+    The null is the same arm measured at the start and at the end of the
+    palindromic order. Its two slots carry the timed samples, so the spread is
+    max(the slots' maxima) - min(the slots' minima).
+    """
+    by: dict = {}
+    for s in slots:
+        st = s.get("latency_stats") or {}
+        lo, hi = st.get("min"), st.get("max")
+        if lo is None or hi is None:
+            continue
+        key = (s.get("arm"), s.get("context_tokens"))
+        cur = by.get(key)
+        by[key] = [lo, hi] if cur is None else [min(cur[0], lo), max(cur[1], hi)]
+    return {k: (v[1] - v[0]) for k, v in by.items()}
+
+
+def _floor_by_context(slots: list[dict]) -> dict:
+    """context -> the drift floor: the largest A/A spread over the arms.
+
+    The floor is the conservative one (the largest spread at that context), so
+    a difference has to beat the worst arm's own drift to count.
+    """
+    floors: dict = {}
+    for (_arm, ctx), spread in _aa_spread_by_context(slots).items():
+        if ctx not in floors or spread > floors[ctx]:
+            floors[ctx] = spread
+    return floors
+
+
+def _block_medians(block: str, rows: list[dict]) -> dict:
+    """(arm, context) -> the pooled median of that block."""
+    out: dict = {}
+    for r in rows:
+        if block == "training_step":
+            med = (r.get("step_seconds") or {}).get("median")
+            ctx = None
+        elif block == "prefill":
+            med = (r.get("latency") or {}).get("median")
+            ctx = r.get("context_tokens")
+        else:
+            med = (r.get("steady_state_per_token_seconds") or {}).get("median")
+            ctx = r.get("context_tokens")
+        if med is None:
+            continue
+        out[(r.get("arm"), ctx)] = med
+    return out
+
+
+def render_systems_differences(d: dict) -> str:
+    """Every arm-to-arm difference, with the drift floor next to it.
+
+    The rule was fixed before the systems numbers existed (the reviewer's
+    pre-registration, `docs/milestone-3/SCOPE.md` §3.2): a difference is
+    resolvable iff its absolute value exceeds the A/A null's spread for the
+    same block and context; below the floor it is not resolvable, whatever its
+    sign.
+    """
+    blocks = (
+        ("training_step", d.get("training_step") or [], d.get("training_step_slots") or []),
+        ("prefill", d.get("prefill") or [], d.get("prefill_slots") or []),
+        ("incremental_decode", d.get("incremental_decode") or [],
+         d.get("incremental_decode_slots") or []),
+    )
+    out: list[str] = []
+    out.append("### Arm-to-arm differences against the drift floor\n")
+    out.append("The floor for a block and a context is the **max−min spread across "
+               "the A/A null's repetitions** (the same arm at the start and at the "
+               "end of the palindromic order), taken as the **largest** such spread "
+               "over the arms at that context. A difference is **resolvable** iff "
+               "its absolute value exceeds the floor; below the floor it is **not "
+               "resolvable, whatever its sign**. The rule was fixed before the "
+               "systems numbers existed (`docs/milestone-3/SCOPE.md` §3.2). "
+               "Exceeding the floor is necessary, not sufficient, for a claim.\n")
+    out.append("| block | context | arm A | arm B | median A (s) | median B (s) | "
+               "difference (s) | relative | floor (s) | resolvable? |")
+    out.append("|---|---|---|---|---|---|---|---|---|---|")
+    any_row = False
+    for block, rows, slots in blocks:
+        meds = _block_medians(block, rows)
+        floors = _floor_by_context(slots)
+        arms = sorted({arm for arm, _ctx in meds})
+        contexts = sorted({ctx for _arm, ctx in meds}, key=lambda c: (c is None, c))
+        for ctx in contexts:
+            present = [a for a in arms if (a, ctx) in meds]
+            for i, a in enumerate(present):
+                for b in present[i + 1:]:
+                    ma, mb = meds[(a, ctx)], meds[(b, ctx)]
+                    diff = ma - mb
+                    floor = floors.get(ctx)
+                    rel = (abs(diff) / mb) if mb else None
+                    if floor is None:
+                        verdict = "no floor measured"
+                    elif abs(diff) > floor:
+                        verdict = "**resolvable**"
+                    else:
+                        verdict = "not resolvable"
+                    any_row = True
+                    ctx_label = "model shape" if ctx is None else str(ctx)
+                    out.append(f"| {block} | {ctx_label} | {a} | {b} | "
+                               f"{_fmt(ma, 6)} | {_fmt(mb, 6)} | {_fmt(diff, 6)} | "
+                               f"{_fmt(rel, 4)} | {_fmt(floor, 6)} | {verdict} |")
+    if not any_row:
+        return ""
+    out.append("")
+    return "\n".join(out)
+
+
 def render_systems(path: Path) -> str:
     d = json.loads(path.read_text(encoding="utf-8"))
     env = d.get("environment", {})
@@ -225,6 +335,8 @@ def render_systems(path: Path) -> str:
             out.append(f"| {block} | {_fmt(entry.get('drift_floor_seconds'), 6)} | "
                        f"{_fmt(entry.get('drift_floor_relative'), 4)} |")
         out.append("")
+
+    out.append(render_systems_differences(d))
 
     out.append("### Training step (forward + backward + optimizer step)\n")
     out.append("| arm | median s/step | mean | p10 | p90 | min | n | tok/s | params | "
@@ -366,10 +478,11 @@ def summary_conditions(d: dict) -> str:
     out.append("| field | value |\n|---|---|")
     for key in ("arms", "seeds", "steps", "tokens_per_step", "tokens_processed_per_run",
                 "nominal_epochs_of_train_region", "train_seed", "eval_every",
-                "eval_batches", "corpus_id", "tokenizer_sha256", "device", "torch",
-                "python", "commit"):
+                "eval_batches", "context_length_l", "batch_size", "eval_windows",
+                "eval_target_tokens", "corpus_id", "tokenizer_sha256", "device",
+                "torch", "python", "commit"):
         if key in cond:
-            out.append(f"| {key} | {cond[key]} |")
+            out.append(f"| {key} | {_fmt(cond[key])} |")
     out.append("")
     return "\n".join(out)
 
@@ -451,6 +564,34 @@ def summary_sensitivity(d: dict) -> str:
     out.append(f"| **95% CI** | | | [{_fmt(ci[0], 6)}, {_fmt(ci[1], 6)}] |")
     out.append(f"| **verdict** | | | {sens.get('verdict')} |")
     out.append("")
+
+    # the coverage, stated honestly: with stride 1 the windows overlap, so the
+    # count of target positions is a count of TOKEN-PREDICTIONS, not of
+    # distinct tokens, and the first token of each book is never a target.
+    per_book = sens.get("per_book") or {}
+    if per_book:
+        l_ctx = ((d.get("conditions") or {}).get("context_length_l")
+                 or (d.get("conditions") or {}).get("l"))
+        out.append("### Book-aligned coverage (how much was actually scored)\n")
+        out.append("The stride-1 sweep places one window start at every token "
+                   "position inside each unseen book, so the windows **overlap**: "
+                   "the target count below is a count of **token-predictions** "
+                   "(windows x the context length), **not** of distinct tokens, "
+                   "and the first token of each book is never a target (a window "
+                   "needs `l + 1` tokens to predict its last one).\n")
+        out.append("| checkpoint | book | book tokens | windows | stride | "
+                   "token-predictions | mean loss |")
+        out.append("|---|---|---|---|---|---|---|")
+        for ckpt in sorted(per_book):
+            books = per_book[ckpt] or {}
+            for ebook_id in sorted(books, key=lambda k: int(k)):
+                b = books[ebook_id] or {}
+                windows = b.get("n_windows")
+                preds = (windows * l_ctx) if (windows and l_ctx) else None
+                out.append(f"| {ckpt} | {ebook_id} | {_fmt(b.get('n_tokens'))} | "
+                           f"{_fmt(windows)} | {_fmt(b.get('stride'))} | "
+                           f"{_fmt(preds)} | {_fmt(b.get('mean_loss'), 6)} |")
+        out.append("")
     return "\n".join(out)
 
 

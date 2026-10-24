@@ -114,10 +114,14 @@ All commands run with `CWD: /workspace/untransformers` and
 
 ## G9 — everything is committed and on the Hub
 
-  CHECK: bash -lc 'test "$(git rev-parse HEAD)" = "$(git rev-parse origin/research/milestone-1-extractor)" && git status --porcelain | grep -q . && exit 1 || true'
+  CHECK: bash -lc 'test "$(git rev-parse HEAD)" = "$(git rev-parse origin/research/milestone-1-extractor)" && test -z "$(git status --porcelain)" && echo PUSHED'
   EXPECT: PUSHED
 
-  (Run after the final commit; `git status --porcelain` must be empty.)
+  (The earlier form of this command ended in `|| true`, which swallowed every
+  failure: it exited 0 with a dirty tree and exited 0 with an unpushed commit,
+  and it printed nothing, so under the rule above ("exits zero AND the EXPECT
+  matches the combined output") it could never be MET. This form fails on a
+  dirty tree, fails on an unpushed commit, and prints the token.)
 
 ---
 

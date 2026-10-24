@@ -57,6 +57,24 @@ NORMAL_975 = 1.959964
 NORMAL_80 = 0.841621
 
 
+def _eval_windows(results: Dict) -> Optional[int]:
+    """The number of windows in one eval point: eval batches x batch size."""
+    batch = (results.get("config") or {}).get("batch_size")
+    batches = (results.get("protocol") or {}).get("eval_batches")
+    if batch and batches:
+        return int(batch) * int(batches)
+    return None
+
+
+def _eval_target_tokens(results: Dict) -> Optional[int]:
+    """The target tokens in one eval point: windows x the context length."""
+    windows = _eval_windows(results)
+    l_ctx = (results.get("config") or {}).get("l")
+    if windows and l_ctx:
+        return int(windows) * int(l_ctx)
+    return None
+
+
 def t_quantile(table: Sequence[float], df: int, normal: float) -> float:
     if df <= 0:
         return float("nan")
@@ -231,6 +249,10 @@ def main() -> int:
             "train_seed": proto.get("train_seed"),
             "eval_every": proto.get("eval_every"),
             "eval_batches": proto.get("eval_batches"),
+            "context_length_l": (data.get("config") or {}).get("l"),
+            "batch_size": (data.get("config") or {}).get("batch_size"),
+            "eval_windows": _eval_windows(data),
+            "eval_target_tokens": _eval_target_tokens(data),
             "corpus_id": (data.get("corpus") or {}).get("corpus_id"),
             "tokenizer_sha256": (data.get("corpus") or {}).get("tokenizer_sha256"),
             "device": (data.get("environment") or {}).get("device"),

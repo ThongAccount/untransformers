@@ -37,6 +37,14 @@ in the wall-clock rows.
   run-order drift floor. An arm-to-arm difference smaller than the floor is
   not resolvable against clock/thermal drift, and is reported as such rather
   than as a result.
+* **The floor is printed next to every arm-to-arm difference.** The rule was
+  fixed before the systems numbers existed: the floor for a block and a
+  context is the **max−min spread across the A/A null's repetitions**, taken
+  as the **largest** such spread over the arms at that context; a difference
+  is **resolvable** iff its absolute value exceeds that floor, and below the
+  floor it is **not resolvable, whatever its sign**. Exceeding the floor is
+  necessary, not sufficient, for a claim — the kernel caveat still travels
+  with the row.
 * **Context lengths are kept apart.** The model-level rows live at or below
   the model's context cap (`l = 128`); the sublayer-1 sweep goes far past it
   (128 … 8192) and measures **one sublayer**, not the model.
@@ -75,10 +83,11 @@ in the wall-clock rows.
   kernel that may be fused; the kernel caveat travels with every such row.
 * any speed claim made against an unoptimised baseline: the optimized
   `attention-32h-sdpa` arm is timed in every block, and it is the arm the
-  comparison is made against.
+  comparison is made against. **Gate G6 requires the SDPA rows in every
+  block; if any block lacks them, this sentence is false and the gate fails.**
 * any decode-latency claim that ignores the `torch.cat`-growing KV cache of
   the attention arms (an O(T) copy per token; a preallocated cache would not
-  pay it — declared limitation D in `docs/milestone-3/SCOPE.md`).
+  pay it — declared limitation L-03 in `docs/milestone-3/SCOPE.md`).
 * any per-arm CPU memory comparison: the CPU rows are **process-level**
   high-water marks. On CUDA the counters are reset per arm, so those rows are
   per-arm.

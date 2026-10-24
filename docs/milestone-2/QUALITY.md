@@ -119,8 +119,16 @@ above, and the two are not simply additive.
 
 Every checkpoint is re-scored, without any retraining, on a **book-aligned**
 set: the three fully unseen books (ebooks 3536, 3795, 3796), swept
-exhaustively with stride 1 (every token position inside each book is a
-target), so this metric carries no window-sampling noise at all.
+exhaustively with stride 1 (a window start at every token position inside each
+book), so this metric carries no window-sampling noise at all.
+
+**What the coverage is, precisely.** The windows overlap: each window scores
+`l` target positions, and consecutive windows share all but one of them. The
+count of scored positions is therefore a count of **token-predictions**, not of
+distinct tokens, and the first token of each book is never a target (a window
+needs `l + 1` tokens to predict its last one). The coverage table below prints
+the books' token counts, the window counts, the stride and the token-prediction
+counts, so the coverage cannot be read as larger than it is.
 
 This is a **post-hoc sensitivity analysis**. The primary endpoint stays the
 run's own metric; this number is reported *alongside* it and may not replace
@@ -141,7 +149,7 @@ favourable one is not picked.
   sequence** (`corpus_stream_factory` seeds from `train_seed` only), so `s_d`
   covers initialisation and dropout variance only and is a **lower bound** on
   run-to-run variance; the MDD derived from it is therefore optimistic
-  (protocol §3.4, limitation D in `docs/milestone-3/SCOPE.md`);
+  (protocol §3.4, limitation L-01 in `docs/milestone-3/SCOPE.md`);
 * anything about the tokenizer's generalisation (D-C).
 
 **Does establish, within this protocol:**

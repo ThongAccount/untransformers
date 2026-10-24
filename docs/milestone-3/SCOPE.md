@@ -87,8 +87,22 @@ artefacts stay unreviewed outside the repository.
    "not resolved at n = 3", with the MDD; a larger claim is then not
    available from this round.
 2. **Are the systems differences resolvable above the run-order drift
-   floor?** An arm-to-arm difference smaller than the A/A null is clock
-   drift, not a result.
+   floor?** The rule was fixed **before** the systems numbers existed (the
+   reviewer's pre-registration, 2026-10-24 03:58 UTC):
+
+   * the **floor** for a block and a context is the **max−min spread across
+     the A/A null's repetitions** — the same arm measured at the start and at
+     the end of the palindromic order — taken as the **largest** such spread
+     over the arms at that context (the conservative choice);
+   * an arm-to-arm difference is **resolvable** iff `|difference|` **exceeds**
+     that floor. Below the floor it is **"not resolvable", whatever its sign**;
+   * the floor is printed next to every arm-to-arm difference, so the reader
+     never has to take the verdict on trust.
+
+   Exceeding the floor is **necessary, not sufficient**, for a claim: it says
+   the difference is bigger than the clock drift this harness can resolve,
+   not that the difference means what one would like it to mean (the kernel
+   caveat travels with every wall-clock row).
 3. **Does anything here support a claim about the paper's own numbers?** No —
    and nothing in this repository may say otherwise: the corpus is a
    substitute, the metric differs, and the budget is 3.333% of the paper's.
@@ -106,21 +120,32 @@ _filled in below once the measured artefacts and the gates are in._
 
 These are the items of `PROTOCOL.md` §8.D and the protocol review's action
 list that this round did **not** do. They are limitations of the round, not
-open bugs, and each of them is a concrete, scoped piece of work:
+open bugs, and each of them is a concrete, scoped piece of work.
 
-| # | limitation | why it is out of budget here | what it would change |
-|---|---|---|---|
-| D-16 | Data-order seed sweep (every seed currently shares one batch sequence, so `s_d` is a lower bound on run-to-run variance and the MDD is optimistic) | it changes the training run, so it breaks the provenance of the runs in flight | the uncertainty of the quality comparison becomes a full run-to-run variance rather than a lower bound |
-| D-17 | Fused/optimised HE implementation | a new kernel is a new engineering project, and the paper's claim is not about kernels | the systems wall-clock rows would compare two implementations of comparable maturity |
-| D-18 | Preallocated attention KV cache | the current attention implementation reallocates the cache with `torch.cat` on every token | the attention decode latency would stop carrying an implementation artefact |
-| D-19 | Tokenizer fitted on the train region only | re-tokenising changes the corpus_id and every measurement taken on it | the held-out metric would stop carrying the tokenizer leak (D-C / D-22) |
-| D-20 | The full 317-book shelf and/or a book-aligned held-out set (≈30 unseen books) | it changes the corpus, and therefore the whole run | the unseen-book evidence would rest on ~30 books instead of 3, and book-level variance would become measurable |
+They are numbered **L-01…L-05** on purpose: the `D-` prefix belongs to the
+deviation ledger (`docs/milestone-1/DEVIATIONS.md`), and calling these D-16…
+D-20 would have made one number mean two different things in two documents.
+The last column names the protocol item each limitation comes from.
+
+| # | limitation | why it is out of budget here | what it would change | protocol item |
+|---|---|---|---|---|
+| L-01 | Data-order seed sweep (every seed currently shares one batch sequence, so `s_d` is a lower bound on run-to-run variance and the MDD is optimistic) | it changes the training run, so it breaks the provenance of the runs in flight | the uncertainty of the quality comparison becomes a full run-to-run variance rather than a lower bound | §8.D item 16 / F11 |
+| L-02 | Fused/optimised HE implementation | a new kernel is a new engineering project | the systems wall-clock rows would compare two implementations of comparable maturity | §8.D item 17 / F3 |
+| L-03 | Preallocated attention KV cache | the current attention implementation reallocates the cache with `torch.cat` on every token | the attention decode latency would stop carrying an implementation artefact | §8.D item 18 / F5 |
+| L-04 | Tokenizer fitted on the train region only | re-tokenising changes the corpus_id and every measurement taken on it | the held-out metric would stop carrying the tokenizer leak (D-C / deviation D-22) | §8.D item 19 / F12 |
+| L-05 | The full 317-book shelf and/or a book-aligned held-out set (≈30 unseen books) | it changes the corpus, and therefore the whole run | the unseen-book evidence would rest on ~30 books instead of 3, and book-level variance would become measurable | §8.D item 20 |
+
+On L-02, the wording matters and is the reviewer's: the paper's speed claim is
+hedged and rests on shorter critical paths and analytic complexity, not on
+kernel choice — which is exactly why a fused-vs-eager comparison in this
+harness cannot speak to it.
 
 ## 6. What would change this decision (the falsifiers)
 
 * A **resolved** quality comparison (95% CI excluding 0) *and* systems
-  differences above the drift floor would make Option B attractive: the
-  round would have produced something worth extending.
+  differences that exceed the drift floor under the rule in §3.2 would make
+  Option B attractive: the round would have produced something worth
+  extending.
 * A **not resolved** quality comparison, or systems differences below the
   drift floor, would make Option B premature: the next round would need to
   fix the measurement (more seeds, the data-order sweep, the fused kernel)

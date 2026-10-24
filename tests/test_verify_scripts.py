@@ -431,19 +431,31 @@ def test_systems_checker_requires_units_quality_and_analytic_labels(tmp_path):
     assert r.returncode == 1
 
 
+def _systems_doc():
+    return ("# Systems\n\n## Conditions\ndevice=cpu\n## Model shape\n"
+            "d=32 l=32 layers=2\n## Training step\n"
+            "median 0.1 s\n## Prefill\n## Incremental decoding\n"
+            "## Sublayer scaling\n## Weight traffic\n## Paired quality\n"
+            "## Context lengths\n1 8 32\n" + "x" * 500)
+
+
+def _scope_doc(decision_body: str) -> str:
+    return ("# Scope\n\n## Options\n### execution-only\n### broaden\n### stop\n"
+            "## 4. The decision and its rationale\n" + decision_body +
+            "\n## Evidence\nmeasured\n## What would change it\n"
+            "falsifier: a GPU rerun\n" + "y" * 500)
+
+
 def test_docs_checker_requires_content(tmp_path):
     systems = tmp_path / "SYSTEMS.md"
     scope = tmp_path / "SCOPE.md"
-    systems.write_text("# Systems\n\n## Conditions\ndevice=cpu\n## Model shape\n"
-                       "d=32 l=32 layers=2\n## Training step\n"
-                       "median 0.1 s\n## Prefill\n## Incremental decoding\n"
-                       "## Sublayer scaling\n## Weight traffic\n## Paired quality\n"
-                       "## Context lengths\n1 8 32\n" + "x" * 500, encoding="utf-8")
-    scope.write_text("# Scope\n\n## Options\n### execution-only\n### broaden\n### stop\n"
-                     "## Decision\nexecution-only\n## Rationale\nbecause the measured "
-                     "evidence in results/ supports it\n## Evidence\nmeasured\n"
-                     "## What would change it\nfalsifier: a GPU rerun\n" + "y" * 500,
-                     encoding="utf-8")
+    systems.write_text(_systems_doc(), encoding="utf-8")
+    scope.write_text(_scope_doc(
+        "**Decision: execution-only.** The measured round stands as an "
+        "execution-only research artefact because every number in it is backed "
+        "by an artefact and a gate, and because the quality comparison did not "
+        "resolve at n = 3. The rationale is in the evidence in results/ and in "
+        "docs/milestone-3/EVIDENCE.md. " + "z" * 400), encoding="utf-8")
     r = _run("check_docs.py", "--systems", str(systems), "--scope", str(scope))
     assert r.returncode == 0, r.stdout + r.stderr
     assert "DOCS_OK" in r.stdout
@@ -451,6 +463,40 @@ def test_docs_checker_requires_content(tmp_path):
     scope.write_text("# Scope\n\nTODO write this\n", encoding="utf-8")
     r = _run("check_docs.py", "--systems", str(systems), "--scope", str(scope))
     assert r.returncode == 1
+
+
+def test_docs_checker_refuses_a_scope_document_that_decides_nothing(tmp_path):
+    """The gate that certifies "the scope decision exists" must fail when the
+    decision section is a stub: the surrounding prose already contains the
+    words "decision", "rationale" and "evidence", so without this check the
+    gate passes on a document that decides nothing."""
+    systems = tmp_path / "SYSTEMS.md"
+    scope = tmp_path / "SCOPE.md"
+    systems.write_text(_systems_doc(), encoding="utf-8")
+
+    # a stub, in the words the write-up actually used
+    scope.write_text(_scope_doc("_filled in below once the measured artefacts "
+                                "and the gates are in._"), encoding="utf-8")
+    r = _run("check_docs.py", "--systems", str(systems), "--scope", str(scope))
+    assert r.returncode == 1
+    out = r.stdout + r.stderr
+    assert "does not name an option" in out
+    assert "gives no rationale" in out
+    assert "placeholder" in out
+
+    # a decision with no rationale
+    scope.write_text(_scope_doc("**Decision: broaden.** " + "z" * 400),
+                     encoding="utf-8")
+    r = _run("check_docs.py", "--systems", str(systems), "--scope", str(scope))
+    assert r.returncode == 1
+    assert "gives no rationale" in (r.stdout + r.stderr)
+
+    # a decision with a rationale, but too short to be one
+    scope.write_text(_scope_doc("execution-only, because the gates passed."),
+                     encoding="utf-8")
+    r = _run("check_docs.py", "--systems", str(systems), "--scope", str(scope))
+    assert r.returncode == 1
+    assert "chars" in (r.stdout + r.stderr)
 
 
 def test_doc_number_checker_passes_on_the_artefacts_numbers_and_fails_on_a_stale_one(tmp_path):

@@ -57,10 +57,83 @@ QUALITY_SECTIONS = [
     ("the pilot is not a result", ("smoke test", "pilot")),
 ]
 
-PLACEHOLDERS = ("TODO", "TBD", "FIXME", "XXX", "PLACEHOLDER", "Lorem ipsum")
+PLACEHOLDERS = ("TODO", "TBD", "FIXME", "XXX", "PLACEHOLDER", "Lorem ipsum",
+                "filled in", "to be written", "to be filled")
 _PLACEHOLDER_RE = re.compile(
-    r"\b(" + "|".join(p.replace(" ", r"\s+") for p in PLACEHOLDERS) + r")\b",
+    # a word boundary is not enough: markdown italics put an underscore right
+    # against the word ("_filled in below_"), and "_" is a word character
+    r"(?<![A-Za-z0-9])(" +
+    "|".join(p.replace(" ", r"\s+") for p in PLACEHOLDERS) + r")(?![A-Za-z0-9])",
     flags=re.IGNORECASE)
+
+# The scope decision must exist: §4 has to name one of the three options and
+# carry a body. Without this, the section markers ("decision", "rationale",
+# "evidence", "falsifier") are satisfied by the surrounding prose and the gate
+# passes on a document that decides nothing.
+SCOPE_OPTIONS = ("execution-only", "execution only", "broaden", "stop")
+SCOPE_DECISION_MIN_CHARS = 400
+
+
+def _scope_decision_sections(text: str) -> tuple[str, str]:
+    """The decision section's body and the rationale that goes with it.
+
+    The decision section is found by its heading, with a priority: the heading
+    that carries the rationale first, then a heading numbered 4, then a heading
+    that is the decision. The surrounding sections ("the criteria the decision
+    is made against") must not be mistaken for the decision itself.
+
+    The rationale may live in the same section or in the section right after
+    it, so both are returned and checked together.
+    """
+    headings = list(re.finditer(r"^#{2,6}\s+(?P<title>.+)$", text, flags=re.MULTILINE))
+
+    def body_of(index: int) -> str:
+        h = headings[index]
+        rest = text[h.end():]
+        nxt = re.search(r"^#{2,6}\s+", rest, flags=re.MULTILINE)
+        return (rest[:nxt.start()] if nxt else rest).strip()
+
+    chosen = None
+    for predicate in (
+        lambda t: "rationale" in t,
+        lambda t: re.match(r"^(?:§\s*)?4[.)]\s", t) is not None,
+        lambda t: t.strip().startswith("decision"),
+    ):
+        for i, h in enumerate(headings):
+            if predicate(h.group("title").lower()):
+                chosen = i
+                break
+        if chosen is not None:
+            break
+    if chosen is None:
+        return "", ""
+
+    title = headings[chosen].group("title").lower()
+    decision = body_of(chosen)
+    rationale = ""
+    if "rationale" not in title and chosen + 1 < len(headings):
+        nxt_title = headings[chosen + 1].group("title").lower()
+        if "rationale" in nxt_title or "reason" in nxt_title:
+            rationale = body_of(chosen + 1)
+    return decision, rationale
+
+
+def _check_scope_decision(text: str, path: Path, failures: list[str]) -> None:
+    """The decision section must decide, not defer."""
+    decision, rationale = _scope_decision_sections(text)
+    if not decision:
+        failures.append(f"{path}: no decision section (it must carry the "
+                        f"decision and its rationale)")
+        return
+    if len(decision) < SCOPE_DECISION_MIN_CHARS:
+        failures.append(f"{path}: the decision section is {len(decision)} chars — "
+                        f"a decision needs at least {SCOPE_DECISION_MIN_CHARS}")
+    low = (decision + "\n" + rationale).lower()
+    if not any(o in low for o in SCOPE_OPTIONS):
+        failures.append(f"{path}: the decision section does not name an option "
+                        f"(one of {', '.join(SCOPE_OPTIONS)})")
+    if not any(k in low for k in ("because", "rationale", "reasoning", "since")):
+        failures.append(f"{path}: the decision section gives no rationale")
 
 
 def _check_doc(path: Path, sections, failures: list[str], notes: list[str]) -> None:
@@ -96,6 +169,9 @@ def main() -> int:
 
     _check_doc(Path(args.systems), SYSTEMS_SECTIONS, failures, notes)
     _check_doc(Path(args.scope), SCOPE_SECTIONS, failures, notes)
+    scope_path = Path(args.scope)
+    if scope_path.exists():
+        _check_scope_decision(scope_path.read_text(encoding="utf-8"), scope_path, failures)
     if args.quality:
         _check_doc(Path(args.quality), QUALITY_SECTIONS, failures, notes)
 
