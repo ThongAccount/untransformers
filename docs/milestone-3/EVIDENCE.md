@@ -43,8 +43,10 @@ alongside them.
 | G5 | MET | `/home/node/.venv/bin/python -m pytest tests/test_m3_incremental.py -q` | 0 | `11 passed` | 0.13 s |
 | G6 | PENDING | `… check_systems_results.py --file results/systems.json` | — | — | queued in the same T4 session, after the sweep |
 | G7 | PENDING | `… check_systems_results.py --file results/systems.json --require-paired-quality` | — | — | paired checkpoints come from the sweep's `SAVE_CHECKPOINTS=1` |
-| G8 | PENDING | `… check_docs.py --systems docs/milestone-3/SYSTEMS.md --scope docs/milestone-3/SCOPE.md` | — | — | written after the numbers land |
-| G9 | PENDING | `git rev-parse HEAD` == `git rev-parse origin/research/milestone-1-extractor` and clean tree | — | — | final push |
+| G8 | PENDING | `… check_docs.py --systems docs/milestone-3/SYSTEMS.md --scope docs/milestone-3/SCOPE.md` | — | — | the scope decision is the reviewer's (H2) |
+| G8b | PENDING | `… check_docs.py --systems … --scope … --quality docs/milestone-2/QUALITY.md` | — | — | after the tables are rendered |
+| G8c | PENDING | `… check_doc_numbers.py --doc docs/milestone-2/QUALITY.md --results results/quality_gpu_full.json --eval-windows results/eval_windows.json --manifest data/manifest.json` | — | — | the prose numbers against the artefacts |
+| G9 | PENDING | `test "$(git rev-parse HEAD)" = "$(git rev-parse origin/research/milestone-1-extractor)" && test -z "$(git status --porcelain)" && echo PUSHED` | — | — | final push (the command was repaired — see below) |
 
 ### G2 note — the suite has grown
 
@@ -52,6 +54,45 @@ alongside them.
 (`a6f9fde`). The three gate-checker self-tests (`tests/test_verify_scripts.py`)
 took it to `91 passed, 1 skipped`. The skip is T15, which requires CUDA; it
 runs on the GPU session instead (see below).
+
+At the end of the write-up pass the suite is **126 passed, 1 skipped**: the
+gate-hygiene self-tests below, the renderer self-tests and the doc-number
+checker's self-tests are part of that count.
+
+---
+
+## The gates that could not fail (the reviewer's Job-B pass, 2026-10-24)
+
+The reviewer read the gates and the write-ups while the GPU sweep was still
+running, and found four defects in the *gate machinery* itself. All four were
+verified by running them, and all four were fixed before any systems or
+quality number existed — so nothing here was adjusted after seeing a result.
+
+| # | defect | how it was verified | the fix | the test that now pins it |
+|---|---|---|---|---|
+| 1 | **G8 passed with the scope decision still empty.** The placeholder list was `TODO/TBD/FIXME/XXX/PLACEHOLDER/Lorem ipsum`, so the write-up's own "_filled in below_" was invisible, and the section markers ("decision", "rationale", "evidence", "falsifier") were all satisfied by the surrounding prose | `check_docs.py` printed `DOCS_OK` with exit 0 while `SCOPE.md` §4 was a 67-character stub | `tools/verify/check_docs.py` now treats "filled in" / "to be written" as placeholders, requires the decision section to name one of the three options, to carry a rationale, and to be at least 400 characters | `tests/test_verify_scripts.py::test_docs_checker_refuses_a_scope_document_that_decides_nothing` |
+| 2 | **G9 could never be MET.** The command ended in `\|\| true`, so it exited 0 with a dirty tree and exited 0 with an unpushed commit, and it printed nothing — under the rule "exits zero AND the EXPECT matches", it could not pass | run with a dirty tree (exit 0) and with an unpushed commit (exit 0) | `GATES.md` now uses `test … = … && test -z "$(git status --porcelain)" && echo PUSHED` | the command itself (it now prints the token and fails in both directions) |
+| 3 | **The limitation IDs collided.** `SCOPE.md` §5 called its limitations D-16…D-20, and the deviation ledger already used those numbers for other things — D-19 meant two different things in two documents | read both ledgers side by side | the scope limitations are **L-01…L-05**, each naming the `PROTOCOL.md` §8.D item it comes from; the cross-references in `QUALITY.md` and `SYSTEMS.md` follow | the doc checker (the ids are now unique across the repository) |
+| 4 | **The drift-floor rule was not operationalised.** "Above the drift floor" had no definition, so it could have been defined after seeing the numbers | — | the reviewer pre-registered it and it is implemented in the renderer: the floor for a block and a context is the **max−min spread across the A/A null's repetitions**, the **largest** such spread over the arms at that context; a difference is **resolvable** iff `\|difference\|` exceeds it, and below it it is **not resolvable, whatever its sign**. The rule and the floor are printed next to every arm-to-arm difference | `tests/test_render_results_tables.py::test_every_arm_to_arm_difference_carries_the_drift_floor_and_a_verdict` |
+
+Two more defects were found by the rehearsal (the write-up rendered from the
+pilot-scale artefacts before the real ones existed):
+
+* the quality summary wrote **NaN** — not valid JSON — when it had a single
+  seed, and crashed mapping the perplexity interval through `exp()`; both are
+  now null-safe, and the null renders as an em dash, never as the word "nan"
+  (`e024981`, `c30fdd4`);
+* a table section whose artefact was missing rendered as an **empty string**,
+  which would have silently deleted a required section of a write-up while the
+  doc gate still passed. The filler now refuses an empty section (`c30fdd4`).
+
+And one more, found by the reviewer while it was writing its own independent
+re-computation: the **book-aligned metric's coverage** was described as "every
+token position inside each book is a target". With stride 1 the windows
+overlap, so the count is a count of **token-predictions** (windows × `l`), not
+of distinct tokens, and the first token of each book is never a target. The
+coverage table now prints the books' token counts, the window counts, the
+stride and the token-prediction counts, and says so in words.
 
 ---
 
