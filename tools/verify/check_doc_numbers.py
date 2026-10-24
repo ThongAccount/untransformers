@@ -99,14 +99,34 @@ def check(results: dict, eval_windows: dict | None,
         per_book = (manifest.get("tokens") or {}).get("per_book") or []
         start = 0
         unseen = 0
+        n_unseen = 0
+        unseen_sizes = []
         for entry in per_book:
             n = int(entry["n_tokens"])
             if start >= train_region:
                 unseen += n
+                n_unseen += 1
+                unseen_sizes.append(n)
             start += n
         if unseen and held_out:
             checks.append(("the share of the held-out tokens from unseen books",
                            f"{unseen / held_out * 100:.1f}"))
+
+        # the coverage of the book-aligned sweep (protocol §2.3), recomputed
+        # from the manifest and the model's context length: the books' token
+        # count, the number of stride-1 windows that fit inside them, and the
+        # token-predictions that sweep scores. These are properties of the
+        # CORPUS, not of the models, so they are the same whether or not the
+        # sweep was run — and the write-up states them either way.
+        if (unseen and n_unseen and l_ctx
+                and all(n > l_ctx for n in unseen_sizes)):
+            windows = unseen - n_unseen * l_ctx
+            checks.append(("the token count of the books never seen in training",
+                           _fmt_int(unseen)))
+            checks.append(("the number of stride-1 windows in those books",
+                           _fmt_int(windows)))
+            checks.append(("the token-predictions of the stride-1 sweep",
+                           _fmt_int(windows * l_ctx)))
 
     # the two numbers the eval-set-noise sentence compares: the bootstrap SE of
     # the paired difference (the largest over the seeds) and the training-noise

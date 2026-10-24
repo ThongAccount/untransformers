@@ -129,6 +129,15 @@ def main() -> int:
     ap.add_argument("--stride", type=int, default=1,
                     help="the window starts advance by this many tokens; 1 = the "
                          "exhaustive stride-1 sweep the protocol asks for")
+    ap.add_argument("--skip-book-aligned", action="store_true",
+                    help="score only the run's own eval set and do NOT run the "
+                         "book-aligned stride-1 sweep. The artefact then records "
+                         "the book-aligned block as 'not run', with the reason, "
+                         "so a missing sensitivity analysis can never be read "
+                         "as a measured one.")
+    ap.add_argument("--note", default="",
+                    help="a free-text note recorded in the artefact (what this "
+                         "run is, and anything a reader must know about it)")
     args = ap.parse_args()
 
     device = torch.device("cuda" if (args.device == "cuda" or
@@ -157,11 +166,19 @@ def main() -> int:
                            f"the window starts advancing by {args.stride} token(s) "
                            f"(stride 1 = the exhaustive sweep the protocol asks for); "
                            f"no sampling, so no window-sampling noise"),
+            "status": ("not run" if args.skip_book_aligned else "measured"),
             "books": {},
         },
         "eval_set": {},
         "checkpoints": {},
     }
+    if args.note:
+        out["note"] = args.note
+    if args.skip_book_aligned:
+        out["book_aligned"]["reason"] = (
+            args.note or "not run (--skip-book-aligned): the stride-1 sweep over "
+                         "the three fully unseen books was not executed, so there "
+                         "is NO book-aligned measurement in this artefact")
     book_arrays = {}
 
     for arm in args.arms:
@@ -200,24 +217,30 @@ def main() -> int:
             # (2) the book-aligned set
             per_book = {}
             book_losses = []
-            for ebook_id in args.books:
-                start, end = spans[ebook_id]
-                region = tokens[start:end]
-                n = region.size - l          # windows of l+1 tokens
-                if n <= 0:
-                    continue
-                starts = np.arange(0, n, args.stride, dtype=np.int64)
-                losses = region_window_losses(model, region, l, starts, device, args.batch)
-                per_book[str(ebook_id)] = {
-                    "n_tokens": int(region.size),
-                    "n_windows": int(losses.size),
-                    "stride": args.stride,
-                    "mean_loss": float(losses.mean()),
-                }
-                book_losses.append(losses)
-            all_losses = np.concatenate(book_losses) if book_losses else np.zeros(0)
-            out["book_aligned"]["books"][f"{arm}_seed{seed}"] = per_book
-            book_arrays[f"{arm}_seed{seed}"] = all_losses.astype(np.float32)
+            if not args.skip_book_aligned:
+                for ebook_id in args.books:
+                    start, end = spans[ebook_id]
+                    region = tokens[start:end]
+                    n = region.size - l          # windows of l+1 tokens
+                    if n <= 0:
+                        continue
+                    starts = np.arange(0, n, args.stride, dtype=np.int64)
+                    losses = region_window_losses(model, region, l, starts, device, args.batch)
+                    per_book[str(ebook_id)] = {
+                        "n_tokens": int(region.size),
+                        "n_windows": int(losses.size),
+                        "stride": args.stride,
+                        "mean_loss": float(losses.mean()),
+                    }
+                    book_losses.append(losses)
+                all_losses = np.concatenate(book_losses) if book_losses else np.zeros(0)
+                out["book_aligned"]["books"][f"{arm}_seed{seed}"] = per_book
+                book_arrays[f"{arm}_seed{seed}"] = all_losses.astype(np.float32)
+                aligned_mean = float(all_losses.mean())
+                aligned_n = int(all_losses.size)
+            else:
+                aligned_mean = None
+                aligned_n = 0
 
             out["checkpoints"][f"{arm}_seed{seed}"] = {
                 "arm": blob.get("arm"), "seed": blob.get("seed"),
@@ -226,9 +249,15 @@ def main() -> int:
                 "checkpoint": str(path),
                 "wall_seconds": time.time() - t0,
             }
-            print(f"[eval] {arm} seed {seed}: eval-set mean={recomputed:.6f} "
-                  f"(reported {reported}), book-aligned mean={float(all_losses.mean()):.6f} "
-                  f"over {all_losses.size} windows in {time.time() - t0:.1f}s", flush=True)
+            if aligned_n:
+                print(f"[eval] {arm} seed {seed}: eval-set mean={recomputed:.6f} "
+                      f"(reported {reported}), book-aligned mean={aligned_mean:.6f} "
+                      f"over {aligned_n} windows in {time.time() - t0:.1f}s", flush=True)
+            else:
+                print(f"[eval] {arm} seed {seed}: eval-set mean={recomputed:.6f} "
+                      f"(reported {reported}) over {eval_losses.size} windows in "
+                      f"{time.time() - t0:.1f}s; the book-aligned sweep was not run",
+                      flush=True)
             del model, blob
 
     out["book_aligned"]["overall"] = {

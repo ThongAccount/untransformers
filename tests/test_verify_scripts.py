@@ -691,3 +691,54 @@ def test_doc_number_checker_recomputes_the_unseen_book_share_from_the_manifest(t
                         "--manifest", str(mpath)], text=True, capture_output=True)
     assert r.returncode == 0, r.stdout + r.stderr
     assert "66.7" in r.stdout
+
+
+def test_doc_number_checker_gates_the_book_aligned_coverage_from_the_manifest(tmp_path):
+    """The coverage of the book-aligned sweep is stated in the write-up even
+    when the sweep was not run: it is a property of the corpus and the
+    model's context length, not of a measurement, so the checker recomputes
+    it from the manifest and refuses the document if the prose disagrees."""
+    manifest = {"tokens": {"per_book": [
+        {"ebook_id": 1, "n_tokens": 1000},
+        {"ebook_id": 2, "n_tokens": 1000},
+        {"ebook_id": 3, "n_tokens": 1000},
+    ]}}
+    mpath = tmp_path / "manifest.json"
+    mpath.write_text(json.dumps(manifest), encoding="utf-8")
+
+    # the cut falls inside book 1 (at token 100 of 3,000): book 1 was seen,
+    # books 2 and 3 never were -> 2,000 of the 2,900 held-out tokens
+    results = {
+        "protocol": {"tokens_processed_per_run": 16_384_000,
+                     "epochs_of_our_corpus": 1.8127,
+                     "corpus_tokens_train_region": 100,
+                     "corpus_tokens_heldout_region": 2900,
+                     "eval_batches": 8},
+        "config": {"batch_size": 64, "l": 128},
+    }
+    rpath = tmp_path / "results.json"
+    rpath.write_text(json.dumps(results), encoding="utf-8")
+
+    # 2,000 tokens in two unseen books: 2,000 - 2 * 128 = 1,744 windows,
+    # and 1,744 * 128 = 223,232 token-predictions
+    doc = tmp_path / "DOC.md"
+    doc.write_text("16,384,000 tokens; 1.813 nominal epochs; 3.333% of the paper; "
+                   "2,900 held-out tokens; 512 windows; 65,536 target tokens; "
+                   "69.0% of the held-out tokens come from books never seen in "
+                   "training. The unseen books hold 2,000 tokens: 1,744 stride-1 "
+                   "windows and 223,232 token-predictions.\n", encoding="utf-8")
+    r = subprocess.run([PY, str(REPO / "tools/verify/check_doc_numbers.py"),
+                        "--doc", str(doc), "--results", str(rpath),
+                        "--manifest", str(mpath)], text=True, capture_output=True)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "DOC_NUMBERS_OK" in r.stdout
+
+    # a stale window count must be caught
+    stale = tmp_path / "STALE.md"
+    stale.write_text(doc.read_text(encoding="utf-8").replace("1,744", "1,745"),
+                     encoding="utf-8")
+    r = subprocess.run([PY, str(REPO / "tools/verify/check_doc_numbers.py"),
+                        "--doc", str(stale), "--results", str(rpath),
+                        "--manifest", str(mpath)], text=True, capture_output=True)
+    assert r.returncode != 0
+    assert "stride-1 windows" in (r.stdout + r.stderr)
