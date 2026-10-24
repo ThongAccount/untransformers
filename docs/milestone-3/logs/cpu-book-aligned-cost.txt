@@ -1,0 +1,2 @@
+HE: 4096 windows in 75.7s -> 18.5 ms/window; the full stride-1 sweep would take 2.09 h
+attention-32h: 4096 windows in 252.0s -> 61.5 ms/window; the full stride-1 sweep would take 6.95 h

@@ -1,0 +1,11 @@
+# gate: G4
+# command: /home/node/.venv/bin/python tools/verify/check_quality_results.py --file results/quality_gpu_full.json --label full --arms HE attention-32h --seeds 1 2 3
+# exit: 0
+# wall: 0.07 s
+# utc: 2026-10-24T08:24:14+00:00
+
+[info] device=cuda torch=2.11.0+cu130 python=3.13.16
+[info] HE: seeds=[1, 2, 3] steps=2000 wall=None
+[info] attention-32h: seeds=[1, 2, 3] steps=2000 wall=None
+[info] final held-out loss: HE=4.138238847255707 attention-32h=4.243823289871216, HE=4.149547040462494 attention-32h=4.256580650806427, HE=4.1512532234191895 attention-32h=4.2502206563949585
+FULL_OK: results/quality_gpu_full.json (2 arms x 3 seeds, 2000 steps, 16384000 tokens/run)

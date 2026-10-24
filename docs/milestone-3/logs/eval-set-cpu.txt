@@ -1,0 +1,7 @@
+[eval] HE seed 1: eval-set mean=4.138239 (reported 4.138238847255707) over 512 windows in 9.8s; the book-aligned sweep was not run
+[eval] HE seed 2: eval-set mean=4.149547 (reported 4.149547040462494) over 512 windows in 9.4s; the book-aligned sweep was not run
+[eval] HE seed 3: eval-set mean=4.151253 (reported 4.1512532234191895) over 512 windows in 9.0s; the book-aligned sweep was not run
+[eval] attention-32h seed 1: eval-set mean=4.243823 (reported 4.243823289871216) over 512 windows in 31.8s; the book-aligned sweep was not run
+[eval] attention-32h seed 2: eval-set mean=4.256580 (reported 4.256580650806427) over 512 windows in 29.8s; the book-aligned sweep was not run
+[eval] attention-32h seed 3: eval-set mean=4.250221 (reported 4.2502206563949585) over 512 windows in 31.6s; the book-aligned sweep was not run
+written: results/eval_windows.json

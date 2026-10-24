@@ -1,0 +1,11 @@
+# gate: G4a
+# command: /home/node/.venv/bin/python tools/verify/verify_pairing_evidence.py --results results/quality_gpu_full.json --checkpoint-dir results/checkpoints --out results/pairing_evidence_gpu_full.json --merge-into results/quality_gpu_full.json
+# exit: 0
+# wall: 2.15 s
+# utc: 2026-10-24T08:24:16+00:00
+
+[pairing] loading the corpus from /__modal/volumes/vo-G4RqfqCln2l7f8DBDLCbyf/untransformers
+[pairing] evidence written: results/pairing_evidence_gpu_full.json
+[pairing] same_batches_same_order: verified=True
+[pairing] paired_init_seeds: verified=True
+[pairing] evidence merged into results/quality_gpu_full.json

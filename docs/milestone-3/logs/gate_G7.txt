@@ -1,0 +1,24 @@
+# gate: G7
+# command: /home/node/.venv/bin/python tools/verify/check_systems_results.py --file results/systems.json --require-paired-quality
+# exit: 0
+# wall: 0.06 s
+# utc: 2026-10-24T08:24:17+00:00
+
+[info] device=cuda gpu=Tesla T4 torch=2.11.0+cu130 threads=1
+[info] training_step[HE]: 1.1406s/step, 7170.5031500445775 tok/s, params=4861320, quality=checkpoint
+[info] training_step[attention-32h]: 0.3735s/step, 21880.116095570458 tok/s, params=4861320, quality=checkpoint
+[info] training_step[attention-32h-sdpa]: 0.1965s/step, 41653.15568267861 tok/s, params=4861320, quality=init
+[info] order_effect drift floors: training_step=0.0033336705009787693, prefill=0.008668772499731858, incremental_decode=0.0006877249998069601
+[info] prefill[HE]: contexts [1, 8, 32, 64, 96, 112]
+[info] prefill[attention-32h]: contexts [1, 8, 32, 64, 96, 112]
+[info] prefill[attention-32h-sdpa]: contexts [1, 8, 32, 64, 96, 112]
+[info] incremental_decode[HE]: contexts [1, 8, 32, 64, 96, 112]
+[info] incremental_decode[attention-32h]: contexts [1, 8, 32, 64, 96, 112]
+[info] incremental_decode[attention-32h-sdpa]: contexts [1, 8, 32, 64, 96, 112]
+[info] sublayer_scaling[HE]: contexts [128, 256, 512, 1024, 2048, 4096, 8192]
+[info] sublayer_scaling[attention-32h]: contexts [128, 256, 512, 1024, 2048, 4096, 8192]
+[info] sublayer_scaling[attention-32h-sdpa]: contexts [128, 256, 512, 1024, 2048, 4096, 8192]
+[info] weight_traffic: params=4861320 per arm
+[info] paired_quality seeds: HE=['1', '2', '3'], attention-32h=['1', '2', '3']
+PAIRED_QUALITY_OK: results/systems.json carries quality checkpoints for both arms
+SYSTEMS_OK: results/systems.json (d=128 l=128 batch=64 device=cuda)

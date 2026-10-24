@@ -224,9 +224,9 @@ re-scoring leg was queued on a Colab Tesla T4 from 2026-10-24 07:10 UTC, the
 allocation endpoint kept answering `Service Unavailable`, and the leg was
 stopped rather than polled (the user's instruction, on cost grounds). The CPU
 fallback was measured rather than assumed — the book-aligned path costs
-**19.8 ms per window** for the HE arm and **65.3 ms per window** for the
-attention arm on this 1-core host, i.e. **2.23 h** and **7.37 h** per
-checkpoint and ≈ 29 h for the six — and was rejected. The eval-set half of the
+**18–20 ms per window** for the HE arm and **62–65 ms per window** for the
+attention arm on this 1-core host, i.e. **2.1–2.2 h** and **7.0–7.4 h** per
+checkpoint and ≈ 28 h for the six — and was rejected. The eval-set half of the
 same re-scoring *was* run, on the CPU (§5).
 
 What that leaves: the primary endpoint stands on its own, and the **absence**

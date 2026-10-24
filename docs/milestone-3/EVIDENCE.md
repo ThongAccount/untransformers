@@ -20,7 +20,7 @@ somebody else's number: each row is the output of the command in that row.
 | python | `/home/node/.venv/bin/python` (CPython 3.12.15) |
 | torch | 2.14.1+cpu (local host) |
 | threads | 1 (`torch.set_num_threads(1)` in the drivers) |
-| git | `6448165` (the commit each row was executed at, unless stated) |
+| git | `0ca1014` (the commit each row was executed at, unless stated) |
 | date | 2026-10-24 (UTC) |
 
 The Colab runs carry their own conditions in the artefacts themselves
@@ -34,19 +34,24 @@ alongside them.
 | gate | status | command | exit | matched token | wall |
 |---|---|---|---|---|---|
 | G1 | MET | `/home/node/.venv/bin/python -m pytest tests/test_t14_data_pipeline.py -q` | 0 | `12 passed` | 3.33 s |
-| G2 | MET | `/home/node/.venv/bin/python -m pytest -q` | 0 | `153 passed, 1 skipped` | 16.53 s |
+| G2 | MET | `/home/node/.venv/bin/python -m pytest -q` | 0 | `154 passed, 1 skipped` | 18.27 s |
 | G3 | MET | `… check_quality_results.py --file results/quality_pilot.json --label pilot --arms HE attention-32h --seeds 1 2` | 0 | `PILOT_OK` | 2026-10-24 02:24 UTC (pilot artefact from session `he-pilot-cpu2`) |
 | G3a | MET | `… verify_pairing_evidence.py --results results/quality_pilot.json --out results/pairing_evidence_pilot.json --merge-into results/quality_pilot.json` | 0 | `verified=True` (both claims) | 2026-10-24 02:24 UTC |
 | G4 | MET | `… check_quality_results.py --file results/quality_gpu_full.json --label full --arms HE attention-32h --seeds 1 2 3` | 0 | `FULL_OK` | 0.06 s |
-| G4a | MET | `… verify_pairing_evidence.py --results results/quality_gpu_full.json --checkpoint-dir results/checkpoints --out results/pairing_evidence_gpu_full.json --merge-into results/quality_gpu_full.json` | 0 | `verified=True` (both claims) | 2.74 s |
-| G4b | PENDING | `… summarise_quality.py --file results/quality_gpu_full.json --eval-windows results/eval_windows.json --out results/quality_summary.json` | — | — | the pre-registered statistics + bootstrap + sensitivity; the eval-window re-scoring is queued on a T4 (see below) |
+| G4a | MET | `… verify_pairing_evidence.py --results results/quality_gpu_full.json --checkpoint-dir results/checkpoints --out results/pairing_evidence_gpu_full.json --merge-into results/quality_gpu_full.json` | 0 | `verified=True` (both claims) | 2.25 s |
+| G4b | MET | `… summarise_quality.py --file results/quality_gpu_full.json --eval-windows results/eval_windows.json --out results/quality_summary.json` | 0 | `written: results/quality_summary.json` | 0.22 s |
 | G5 | MET | `/home/node/.venv/bin/python -m pytest tests/test_m3_incremental.py -q` | 0 | `11 passed` | 0.13 s |
 | G6 | MET | `… check_systems_results.py --file results/systems.json` | 0 | `SYSTEMS_OK` | 0.08 s |
-| G7 | MET | `… check_systems_results.py --file results/systems.json --require-paired-quality` | 0 | `PAIRED_QUALITY_OK` + `SYSTEMS_OK` | 0.10 s |
-| G8 | PENDING | `… check_docs.py --systems docs/milestone-3/SYSTEMS.md --scope docs/milestone-3/SCOPE.md` | — | — | the scope decision is the reviewer's (H2); the checker now *fails* until it exists |
-| G8b | PENDING | `… check_docs.py --systems … --scope … --quality docs/milestone-2/QUALITY.md` | — | — | after the tables are rendered |
-| G8c | PENDING | `… check_doc_numbers.py --doc docs/milestone-2/QUALITY.md --results results/quality_gpu_full.json --eval-windows results/eval_windows.json --manifest data/manifest.json` | — | — | the prose numbers against the artefacts |
+| G7 | MET | `… check_systems_results.py --file results/systems.json --require-paired-quality` | 0 | `PAIRED_QUALITY_OK` + `SYSTEMS_OK` | 0.06 s |
+| G8 | PENDING | `… check_docs.py --systems docs/milestone-3/SYSTEMS.md --scope docs/milestone-3/SCOPE.md` | 1 | — | the scope decision is the reviewer's (H2); the checker **fails** until it exists, which is the correct behaviour |
+| G8b | PENDING | `… check_docs.py --systems … --scope … --quality docs/milestone-2/QUALITY.md` | 1 | — | the same five failures, all in `SCOPE.md` §4 |
+| G8c | MET | `… check_doc_numbers.py --doc docs/milestone-2/QUALITY.md --results results/quality_gpu_full.json --eval-windows results/eval_windows.json --manifest data/manifest.json --summary results/quality_summary.json` | 0 | `DOC_NUMBERS_OK` (12 constants) | 0.08 s |
 | G9 | PENDING | `test "$(git rev-parse HEAD)" = "$(git rev-parse origin/research/milestone-1-extractor)" && test -z "$(git status --porcelain)" && echo PUSHED` | — | — | final push (the command was repaired — see below) |
+
+The full output of every gate — the command, the exit code, the wall time and
+the printed text — is committed as `docs/milestone-3/logs/gate_<gate>.txt`, so
+the quotes above have a committed source (`/workspace/temp` is cleared when the
+task ends).
 
 ### G2 note — the suite has grown
 
@@ -302,15 +307,17 @@ had already been downloaded, so only the *scoring* had to be redone.
 
 The CPU fallback was measured and rejected rather than assumed: on this
 1-core host the book-aligned path (the exact `region_window_losses` call the
-GPU leg makes — stride 1, batch 64, one thread) costs **19.8 ms per window
-for the HE arm** and **65.3 ms per window for the attention arm**, i.e.
-**2.23 h** and **7.37 h** per checkpoint, or ≈ 29 h for the six checkpoints
-serially on the single core this container has. The eval-set half of the same
+GPU leg makes — stride 1, batch 64, one thread) costs **18–20 ms per window
+for the HE arm** and **62–65 ms per window for the attention arm**, i.e.
+**2.1–2.2 h** and **7.0–7.4 h** per checkpoint, or ≈ 28 h for the six
+checkpoints serially on the single core this container has (two measurements
+of the same path, 4,096 windows each: `docs/milestone-3/logs/cpu-book-aligned-cost.txt`). The eval-set half of the same
 re-scoring (512 windows per checkpoint) costs 10.2 s per HE checkpoint and
 33.0 s per attention checkpoint. The sweep therefore waits for a T4 — where
 one checkpoint takes ≈ 820 s — rather than running on the CPU; Colab's T4
 pool was saturated while this was written (the allocation endpoint answers
-`Service Unavailable`), and the leg sits in a persistent retry loop.
+`Service Unavailable`), and the leg was later stopped rather than polled —
+see §4 below for how the round ends.
 
 The re-scoring leg was rebuilt so that the next prune cannot cost it again:
 
@@ -325,7 +332,39 @@ The re-scoring leg was rebuilt so that the next prune cannot cost it again:
 
 The cross-check the re-scoring carries is part of the artefact: the
 recomputed eval-set mean must reproduce the final held-out loss the run
-reported. On the CPU rehearsal of the eval-set half (a rehearsal — the
-committed artefact is the T4 one) the six recomputed means reproduce the
-reported losses to within 3 × 10⁻⁷, which is the float32 CPU-vs-GPU
-difference and not a modelling difference.
+reported. The six recomputed means reproduce the reported losses to within
+3 × 10⁻⁷, which is the float32 CPU-vs-GPU difference and not a modelling
+difference.
+
+### 4. The end of the re-scoring leg: the eval set on the CPU, the sweep not run
+
+Colab's T4 pool stayed saturated for the whole window (the allocation
+endpoint answers `Service Unavailable` on every attempt), and the leg was
+**stopped rather than polled**, on the user's instruction about cost. The
+round therefore ends with the re-scoring **half done**, and says so:
+
+| half | status | measured on | why |
+|---|---|---|---|
+| the eval set (512 windows per checkpoint) | **done** | the 1-core CPU host (float32, torch 2.14.1+cpu), 122 s for the six checkpoints | the runs themselves are on a Tesla T4 (cuda, torch 2.11.0+cu130); the recomputed means reproduce the reported final held-out losses to within 3 × 10⁻⁷ |
+| the book-aligned stride-1 sweep (406,339 windows per checkpoint) | **not run** | — | it needs a GPU; the CPU cost was measured at 18–20 ms/window (HE) and 62–65 ms/window (attention) — 2.1–2.2 h and 7.0–7.4 h per checkpoint, ≈ 28 h for the six — and was rejected |
+
+`results/eval_windows.json` is the artefact of the half that was run. It was
+produced by the repository's own tool with the new `--skip-book-aligned` flag,
+so the artefact records the book-aligned block as **`not run`**, with the
+reason, instead of leaving an empty block that could be read as a measurement
+of zero. `results/quality_summary.json` (the pre-registered statistics and the
+eval-set bootstrap) is built from it by G4b.
+
+The gap is recorded as deviation **D-27**, stated in `docs/milestone-2/QUALITY.md`
+§6 (the sensitivity analysis is not run and no sensitivity claim is made), and
+moved into the "does not establish" list in §7. The primary endpoint — the
+paired per-seed difference on the run's own held-out stream — is unaffected by
+it: the protocol calls the book-aligned metric an *addition* (§2.3), reported
+alongside the primary endpoint and never in place of it.
+
+What this costs the round: the protocol's rule for the book-aligned metric —
+that a disagreement between the two orderings would be reported as the finding
+— could not be exercised, so the round says nothing about whether the arm
+ordering on the three unseen books agrees with the ordering on the run's own
+metric. That is a limit on the claims, not a neutral detail, and it is on the
+list of things the scope decision (§4) has to weigh.

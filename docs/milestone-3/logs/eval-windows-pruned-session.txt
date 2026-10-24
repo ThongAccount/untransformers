@@ -1,0 +1,5 @@
+
+===== /usr/bin/python3 experiments/eval_checkpoints.py --checkpoint-dir /content/checkpoints --arms HE attention-32h --seeds 1 2 3 --out /content/results/eval_windows.json --device cuda --batch 256 =====
+[eval] HE seed 1: eval-set mean=4.138239 (reported 4.138238847255707), book-aligned mean=4.126204 over 406339 windows in 819.9s
+[eval] HE seed 2: eval-set mean=4.149547 (reported 4.149547040462494), book-aligned mean=4.139390 over 406339 windows in 821.9s
+[eval] HE seed 3: eval-set mean=4.151253 (reported 4.1512532234191895), book-aligned mean=4.140211 over 406339 windows in 821.7s

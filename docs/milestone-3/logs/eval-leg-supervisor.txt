@@ -1,0 +1,684 @@
+[07:10:49] round 1
+[07:10:51] creating the session he-gpu4 (attempt 1)
+[colab] Creating session 'he-gpu4'...
+╭───────────────────── Traceback (most recent call last) ──────────────────────╮
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/comma │
+│ nds/session.py:141 in new                                                    │
+│                                                                              │
+│   138 │                                                                      │
+│   139 │   typer.echo(f"[colab] Creating session '{name}'...")                │
+│   140 │   try:                                                               │
+│ ❱ 141 │   │   res = state.client.assign(                                     │
+│   142 │   │   │   uuid.uuid4(), variant=variant, accelerator=accelerator,    │
+│       shape=shape                                                            │
+│   143 │   │   )                                                              │
+│   144 │   except TooManyAssignmentsError:                                    │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:289 in assign                                                           │
+│                                                                              │
+│   286 │   │   backoff = max(0.0, float(os.getenv("COLAB_CLI_RETRY_BACKOFF",  │
+│       "10")))                                                                │
+│   287 │   │   for attempt in range(retries + 1):                             │
+│   288 │   │   │   try:                                                       │
+│ ❱ 289 │   │   │   │   res = self._post_assignment(                           │
+│   290 │   │   │   │   │   notebook_hash, assignment.token, variant,          │
+│       accelerator, shape                                                     │
+│   291 │   │   │   │   )                                                      │
+│   292 │   │   │   │   break                                                  │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:358 in _post_assignment                                                 │
+│                                                                              │
+│   355 │   ) -> PostAssignmentResponse:                                       │
+│   356 │   │   url = self._build_assign_url(notebook_hash, variant,           │
+│       accelerator, shape)                                                    │
+│   357 │   │   headers = {COLAB_XSRF_TOKEN_HEADER["key"]: xsrf_token}         │
+│ ❱ 358 │   │   return self._issue_request(                                    │
+│   359 │   │   │   url, method="POST", headers=headers,                       │
+│       schema=PostAssignmentResponse                                          │
+│   360 │   │   )                                                              │
+│   361                                                                        │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:238 in _issue_request                                                   │
+│                                                                              │
+│   235 │   │   self.logger.debug(f"Response Headers: {response.headers}")     │
+│   236 │   │   self.logger.debug(f"Response Body: {response.text}")           │
+│   237 │   │   if not response.ok:                                            │
+│ ❱ 238 │   │   │   raise ColabRequestError(                                   │
+│   239 │   │   │   │   f"Failed to issue request {method} {endpoint}:         │
+│       {response.reason}",                                                    │
+│   240 │   │   │   │   request=response.request,                              │
+│   241 │   │   │   │   response=response,                                     │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ColabRequestError: Failed to issue request POST 
+https://colab.research.google.com/tun/m/assign?nbh=0b5317d4_58d9_47e2_b7ae_84a8a
+f8a336c........&variant=GPU&accelerator=T4: Service Unavailable
+[07:14:26] the allocation was refused; waiting a minute and trying again
+[07:15:28] creating the session he-gpu4 (attempt 2)
+[colab] Creating session 'he-gpu4'...
+╭───────────────────── Traceback (most recent call last) ──────────────────────╮
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/comma │
+│ nds/session.py:141 in new                                                    │
+│                                                                              │
+│   138 │                                                                      │
+│   139 │   typer.echo(f"[colab] Creating session '{name}'...")                │
+│   140 │   try:                                                               │
+│ ❱ 141 │   │   res = state.client.assign(                                     │
+│   142 │   │   │   uuid.uuid4(), variant=variant, accelerator=accelerator,    │
+│       shape=shape                                                            │
+│   143 │   │   )                                                              │
+│   144 │   except TooManyAssignmentsError:                                    │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:289 in assign                                                           │
+│                                                                              │
+│   286 │   │   backoff = max(0.0, float(os.getenv("COLAB_CLI_RETRY_BACKOFF",  │
+│       "10")))                                                                │
+│   287 │   │   for attempt in range(retries + 1):                             │
+│   288 │   │   │   try:                                                       │
+│ ❱ 289 │   │   │   │   res = self._post_assignment(                           │
+│   290 │   │   │   │   │   notebook_hash, assignment.token, variant,          │
+│       accelerator, shape                                                     │
+│   291 │   │   │   │   )                                                      │
+│   292 │   │   │   │   break                                                  │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:358 in _post_assignment                                                 │
+│                                                                              │
+│   355 │   ) -> PostAssignmentResponse:                                       │
+│   356 │   │   url = self._build_assign_url(notebook_hash, variant,           │
+│       accelerator, shape)                                                    │
+│   357 │   │   headers = {COLAB_XSRF_TOKEN_HEADER["key"]: xsrf_token}         │
+│ ❱ 358 │   │   return self._issue_request(                                    │
+│   359 │   │   │   url, method="POST", headers=headers,                       │
+│       schema=PostAssignmentResponse                                          │
+│   360 │   │   )                                                              │
+│   361                                                                        │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:238 in _issue_request                                                   │
+│                                                                              │
+│   235 │   │   self.logger.debug(f"Response Headers: {response.headers}")     │
+│   236 │   │   self.logger.debug(f"Response Body: {response.text}")           │
+│   237 │   │   if not response.ok:                                            │
+│ ❱ 238 │   │   │   raise ColabRequestError(                                   │
+│   239 │   │   │   │   f"Failed to issue request {method} {endpoint}:         │
+│       {response.reason}",                                                    │
+│   240 │   │   │   │   request=response.request,                              │
+│   241 │   │   │   │   response=response,                                     │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ColabRequestError: Failed to issue request POST 
+https://colab.research.google.com/tun/m/assign?nbh=ca0ceedd_6b16_484c_80d3_76daf
+ee93cd6........&variant=GPU&accelerator=T4: Service Unavailable
+[07:19:04] the allocation was refused; waiting a minute and trying again
+[07:20:06] creating the session he-gpu4 (attempt 3)
+[colab] Creating session 'he-gpu4'...
+╭───────────────────── Traceback (most recent call last) ──────────────────────╮
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/comma │
+│ nds/session.py:141 in new                                                    │
+│                                                                              │
+│   138 │                                                                      │
+│   139 │   typer.echo(f"[colab] Creating session '{name}'...")                │
+│   140 │   try:                                                               │
+│ ❱ 141 │   │   res = state.client.assign(                                     │
+│   142 │   │   │   uuid.uuid4(), variant=variant, accelerator=accelerator,    │
+│       shape=shape                                                            │
+│   143 │   │   )                                                              │
+│   144 │   except TooManyAssignmentsError:                                    │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:289 in assign                                                           │
+│                                                                              │
+│   286 │   │   backoff = max(0.0, float(os.getenv("COLAB_CLI_RETRY_BACKOFF",  │
+│       "10")))                                                                │
+│   287 │   │   for attempt in range(retries + 1):                             │
+│   288 │   │   │   try:                                                       │
+│ ❱ 289 │   │   │   │   res = self._post_assignment(                           │
+│   290 │   │   │   │   │   notebook_hash, assignment.token, variant,          │
+│       accelerator, shape                                                     │
+│   291 │   │   │   │   )                                                      │
+│   292 │   │   │   │   break                                                  │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:358 in _post_assignment                                                 │
+│                                                                              │
+│   355 │   ) -> PostAssignmentResponse:                                       │
+│   356 │   │   url = self._build_assign_url(notebook_hash, variant,           │
+│       accelerator, shape)                                                    │
+│   357 │   │   headers = {COLAB_XSRF_TOKEN_HEADER["key"]: xsrf_token}         │
+│ ❱ 358 │   │   return self._issue_request(                                    │
+│   359 │   │   │   url, method="POST", headers=headers,                       │
+│       schema=PostAssignmentResponse                                          │
+│   360 │   │   )                                                              │
+│   361                                                                        │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:238 in _issue_request                                                   │
+│                                                                              │
+│   235 │   │   self.logger.debug(f"Response Headers: {response.headers}")     │
+│   236 │   │   self.logger.debug(f"Response Body: {response.text}")           │
+│   237 │   │   if not response.ok:                                            │
+│ ❱ 238 │   │   │   raise ColabRequestError(                                   │
+│   239 │   │   │   │   f"Failed to issue request {method} {endpoint}:         │
+│       {response.reason}",                                                    │
+│   240 │   │   │   │   request=response.request,                              │
+│   241 │   │   │   │   response=response,                                     │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ColabRequestError: Failed to issue request POST 
+https://colab.research.google.com/tun/m/assign?nbh=85fbc700_75c9_4118_af3f_62d11
+f6e0270........&variant=GPU&accelerator=T4: Service Unavailable
+[07:23:42] the allocation was refused; waiting a minute and trying again
+[07:24:44] creating the session he-gpu4 (attempt 4)
+[colab] Creating session 'he-gpu4'...
+╭───────────────────── Traceback (most recent call last) ──────────────────────╮
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/comma │
+│ nds/session.py:141 in new                                                    │
+│                                                                              │
+│   138 │                                                                      │
+│   139 │   typer.echo(f"[colab] Creating session '{name}'...")                │
+│   140 │   try:                                                               │
+│ ❱ 141 │   │   res = state.client.assign(                                     │
+│   142 │   │   │   uuid.uuid4(), variant=variant, accelerator=accelerator,    │
+│       shape=shape                                                            │
+│   143 │   │   )                                                              │
+│   144 │   except TooManyAssignmentsError:                                    │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:289 in assign                                                           │
+│                                                                              │
+│   286 │   │   backoff = max(0.0, float(os.getenv("COLAB_CLI_RETRY_BACKOFF",  │
+│       "10")))                                                                │
+│   287 │   │   for attempt in range(retries + 1):                             │
+│   288 │   │   │   try:                                                       │
+│ ❱ 289 │   │   │   │   res = self._post_assignment(                           │
+│   290 │   │   │   │   │   notebook_hash, assignment.token, variant,          │
+│       accelerator, shape                                                     │
+│   291 │   │   │   │   )                                                      │
+│   292 │   │   │   │   break                                                  │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:358 in _post_assignment                                                 │
+│                                                                              │
+│   355 │   ) -> PostAssignmentResponse:                                       │
+│   356 │   │   url = self._build_assign_url(notebook_hash, variant,           │
+│       accelerator, shape)                                                    │
+│   357 │   │   headers = {COLAB_XSRF_TOKEN_HEADER["key"]: xsrf_token}         │
+│ ❱ 358 │   │   return self._issue_request(                                    │
+│   359 │   │   │   url, method="POST", headers=headers,                       │
+│       schema=PostAssignmentResponse                                          │
+│   360 │   │   )                                                              │
+│   361                                                                        │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:238 in _issue_request                                                   │
+│                                                                              │
+│   235 │   │   self.logger.debug(f"Response Headers: {response.headers}")     │
+│   236 │   │   self.logger.debug(f"Response Body: {response.text}")           │
+│   237 │   │   if not response.ok:                                            │
+│ ❱ 238 │   │   │   raise ColabRequestError(                                   │
+│   239 │   │   │   │   f"Failed to issue request {method} {endpoint}:         │
+│       {response.reason}",                                                    │
+│   240 │   │   │   │   request=response.request,                              │
+│   241 │   │   │   │   response=response,                                     │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ColabRequestError: Failed to issue request POST 
+https://colab.research.google.com/tun/m/assign?nbh=3672978d_ee29_49a2_92a9_b24b6
+f6b2f57........&variant=GPU&accelerator=T4: Service Unavailable
+[07:28:16] the allocation was refused; waiting a minute and trying again
+[07:29:18] creating the session he-gpu4 (attempt 5)
+[colab] Creating session 'he-gpu4'...
+╭───────────────────── Traceback (most recent call last) ──────────────────────╮
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/comma │
+│ nds/session.py:141 in new                                                    │
+│                                                                              │
+│   138 │                                                                      │
+│   139 │   typer.echo(f"[colab] Creating session '{name}'...")                │
+│   140 │   try:                                                               │
+│ ❱ 141 │   │   res = state.client.assign(                                     │
+│   142 │   │   │   uuid.uuid4(), variant=variant, accelerator=accelerator,    │
+│       shape=shape                                                            │
+│   143 │   │   )                                                              │
+│   144 │   except TooManyAssignmentsError:                                    │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:289 in assign                                                           │
+│                                                                              │
+│   286 │   │   backoff = max(0.0, float(os.getenv("COLAB_CLI_RETRY_BACKOFF",  │
+│       "10")))                                                                │
+│   287 │   │   for attempt in range(retries + 1):                             │
+│   288 │   │   │   try:                                                       │
+│ ❱ 289 │   │   │   │   res = self._post_assignment(                           │
+│   290 │   │   │   │   │   notebook_hash, assignment.token, variant,          │
+│       accelerator, shape                                                     │
+│   291 │   │   │   │   )                                                      │
+│   292 │   │   │   │   break                                                  │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:358 in _post_assignment                                                 │
+│                                                                              │
+│   355 │   ) -> PostAssignmentResponse:                                       │
+│   356 │   │   url = self._build_assign_url(notebook_hash, variant,           │
+│       accelerator, shape)                                                    │
+│   357 │   │   headers = {COLAB_XSRF_TOKEN_HEADER["key"]: xsrf_token}         │
+│ ❱ 358 │   │   return self._issue_request(                                    │
+│   359 │   │   │   url, method="POST", headers=headers,                       │
+│       schema=PostAssignmentResponse                                          │
+│   360 │   │   )                                                              │
+│   361                                                                        │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:238 in _issue_request                                                   │
+│                                                                              │
+│   235 │   │   self.logger.debug(f"Response Headers: {response.headers}")     │
+│   236 │   │   self.logger.debug(f"Response Body: {response.text}")           │
+│   237 │   │   if not response.ok:                                            │
+│ ❱ 238 │   │   │   raise ColabRequestError(                                   │
+│   239 │   │   │   │   f"Failed to issue request {method} {endpoint}:         │
+│       {response.reason}",                                                    │
+│   240 │   │   │   │   request=response.request,                              │
+│   241 │   │   │   │   response=response,                                     │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ColabRequestError: Failed to issue request POST 
+https://colab.research.google.com/tun/m/assign?nbh=ff9db243_de0e_4490_9c00_29ed5
+c423e9d........&variant=GPU&accelerator=T4: Service Unavailable
+[07:32:21] creating the session he-gpu4 (attempt 1)
+[colab] Creating session 'he-gpu4'...
+╭───────────────────── Traceback (most recent call last) ──────────────────────╮
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/comma │
+│ nds/session.py:141 in new                                                    │
+│                                                                              │
+│   138 │                                                                      │
+│   139 │   typer.echo(f"[colab] Creating session '{name}'...")                │
+│   140 │   try:                                                               │
+│ ❱ 141 │   │   res = state.client.assign(                                     │
+│   142 │   │   │   uuid.uuid4(), variant=variant, accelerator=accelerator,    │
+│       shape=shape                                                            │
+│   143 │   │   )                                                              │
+│   144 │   except TooManyAssignmentsError:                                    │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:289 in assign                                                           │
+│                                                                              │
+│   286 │   │   backoff = max(0.0, float(os.getenv("COLAB_CLI_RETRY_BACKOFF",  │
+│       "10")))                                                                │
+│   287 │   │   for attempt in range(retries + 1):                             │
+│   288 │   │   │   try:                                                       │
+│ ❱ 289 │   │   │   │   res = self._post_assignment(                           │
+│   290 │   │   │   │   │   notebook_hash, assignment.token, variant,          │
+│       accelerator, shape                                                     │
+│   291 │   │   │   │   )                                                      │
+│   292 │   │   │   │   break                                                  │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:358 in _post_assignment                                                 │
+│                                                                              │
+│   355 │   ) -> PostAssignmentResponse:                                       │
+│   356 │   │   url = self._build_assign_url(notebook_hash, variant,           │
+│       accelerator, shape)                                                    │
+│   357 │   │   headers = {COLAB_XSRF_TOKEN_HEADER["key"]: xsrf_token}         │
+│ ❱ 358 │   │   return self._issue_request(                                    │
+│   359 │   │   │   url, method="POST", headers=headers,                       │
+│       schema=PostAssignmentResponse                                          │
+│   360 │   │   )                                                              │
+│   361                                                                        │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:238 in _issue_request                                                   │
+│                                                                              │
+│   235 │   │   self.logger.debug(f"Response Headers: {response.headers}")     │
+│   236 │   │   self.logger.debug(f"Response Body: {response.text}")           │
+│   237 │   │   if not response.ok:                                            │
+│ ❱ 238 │   │   │   raise ColabRequestError(                                   │
+│   239 │   │   │   │   f"Failed to issue request {method} {endpoint}:         │
+│       {response.reason}",                                                    │
+│   240 │   │   │   │   request=response.request,                              │
+│   241 │   │   │   │   response=response,                                     │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ColabRequestError: Failed to issue request POST 
+https://colab.research.google.com/tun/m/assign?nbh=04565e9f_5789_4101_acac_819b2
+bf3862d........&variant=GPU&accelerator=T4: Service Unavailable
+[07:35:53] the allocation was refused; waiting a minute and trying again
+[07:36:54] creating the session he-gpu4 (attempt 2)
+[colab] Creating session 'he-gpu4'...
+╭───────────────────── Traceback (most recent call last) ──────────────────────╮
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/comma │
+│ nds/session.py:141 in new                                                    │
+│                                                                              │
+│   138 │                                                                      │
+│   139 │   typer.echo(f"[colab] Creating session '{name}'...")                │
+│   140 │   try:                                                               │
+│ ❱ 141 │   │   res = state.client.assign(                                     │
+│   142 │   │   │   uuid.uuid4(), variant=variant, accelerator=accelerator,    │
+│       shape=shape                                                            │
+│   143 │   │   )                                                              │
+│   144 │   except TooManyAssignmentsError:                                    │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:289 in assign                                                           │
+│                                                                              │
+│   286 │   │   backoff = max(0.0, float(os.getenv("COLAB_CLI_RETRY_BACKOFF",  │
+│       "10")))                                                                │
+│   287 │   │   for attempt in range(retries + 1):                             │
+│   288 │   │   │   try:                                                       │
+│ ❱ 289 │   │   │   │   res = self._post_assignment(                           │
+│   290 │   │   │   │   │   notebook_hash, assignment.token, variant,          │
+│       accelerator, shape                                                     │
+│   291 │   │   │   │   )                                                      │
+│   292 │   │   │   │   break                                                  │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:358 in _post_assignment                                                 │
+│                                                                              │
+│   355 │   ) -> PostAssignmentResponse:                                       │
+│   356 │   │   url = self._build_assign_url(notebook_hash, variant,           │
+│       accelerator, shape)                                                    │
+│   357 │   │   headers = {COLAB_XSRF_TOKEN_HEADER["key"]: xsrf_token}         │
+│ ❱ 358 │   │   return self._issue_request(                                    │
+│   359 │   │   │   url, method="POST", headers=headers,                       │
+│       schema=PostAssignmentResponse                                          │
+│   360 │   │   )                                                              │
+│   361                                                                        │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:238 in _issue_request                                                   │
+│                                                                              │
+│   235 │   │   self.logger.debug(f"Response Headers: {response.headers}")     │
+│   236 │   │   self.logger.debug(f"Response Body: {response.text}")           │
+│   237 │   │   if not response.ok:                                            │
+│ ❱ 238 │   │   │   raise ColabRequestError(                                   │
+│   239 │   │   │   │   f"Failed to issue request {method} {endpoint}:         │
+│       {response.reason}",                                                    │
+│   240 │   │   │   │   request=response.request,                              │
+│   241 │   │   │   │   response=response,                                     │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ColabRequestError: Failed to issue request POST 
+https://colab.research.google.com/tun/m/assign?nbh=10146522_7f61_4b8d_991e_3f41d
+1b8efea........&variant=GPU&accelerator=T4: Service Unavailable
+[07:40:25] the allocation was refused; waiting a minute and trying again
+[07:41:27] creating the session he-gpu4 (attempt 3)
+[colab] Creating session 'he-gpu4'...
+╭───────────────────── Traceback (most recent call last) ──────────────────────╮
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/comma │
+│ nds/session.py:141 in new                                                    │
+│                                                                              │
+│   138 │                                                                      │
+│   139 │   typer.echo(f"[colab] Creating session '{name}'...")                │
+│   140 │   try:                                                               │
+│ ❱ 141 │   │   res = state.client.assign(                                     │
+│   142 │   │   │   uuid.uuid4(), variant=variant, accelerator=accelerator,    │
+│       shape=shape                                                            │
+│   143 │   │   )                                                              │
+│   144 │   except TooManyAssignmentsError:                                    │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:289 in assign                                                           │
+│                                                                              │
+│   286 │   │   backoff = max(0.0, float(os.getenv("COLAB_CLI_RETRY_BACKOFF",  │
+│       "10")))                                                                │
+│   287 │   │   for attempt in range(retries + 1):                             │
+│   288 │   │   │   try:                                                       │
+│ ❱ 289 │   │   │   │   res = self._post_assignment(                           │
+│   290 │   │   │   │   │   notebook_hash, assignment.token, variant,          │
+│       accelerator, shape                                                     │
+│   291 │   │   │   │   )                                                      │
+│   292 │   │   │   │   break                                                  │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:358 in _post_assignment                                                 │
+│                                                                              │
+│   355 │   ) -> PostAssignmentResponse:                                       │
+│   356 │   │   url = self._build_assign_url(notebook_hash, variant,           │
+│       accelerator, shape)                                                    │
+│   357 │   │   headers = {COLAB_XSRF_TOKEN_HEADER["key"]: xsrf_token}         │
+│ ❱ 358 │   │   return self._issue_request(                                    │
+│   359 │   │   │   url, method="POST", headers=headers,                       │
+│       schema=PostAssignmentResponse                                          │
+│   360 │   │   )                                                              │
+│   361                                                                        │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:238 in _issue_request                                                   │
+│                                                                              │
+│   235 │   │   self.logger.debug(f"Response Headers: {response.headers}")     │
+│   236 │   │   self.logger.debug(f"Response Body: {response.text}")           │
+│   237 │   │   if not response.ok:                                            │
+│ ❱ 238 │   │   │   raise ColabRequestError(                                   │
+│   239 │   │   │   │   f"Failed to issue request {method} {endpoint}:         │
+│       {response.reason}",                                                    │
+│   240 │   │   │   │   request=response.request,                              │
+│   241 │   │   │   │   response=response,                                     │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ColabRequestError: Failed to issue request POST 
+https://colab.research.google.com/tun/m/assign?nbh=c7bcf3f0_772d_42da_8bc9_23c80
+2519871........&variant=GPU&accelerator=T4: Service Unavailable
+[07:44:59] the allocation was refused; waiting a minute and trying again
+[07:46:01] creating the session he-gpu4 (attempt 4)
+[colab] Creating session 'he-gpu4'...
+╭───────────────────── Traceback (most recent call last) ──────────────────────╮
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/comma │
+│ nds/session.py:141 in new                                                    │
+│                                                                              │
+│   138 │                                                                      │
+│   139 │   typer.echo(f"[colab] Creating session '{name}'...")                │
+│   140 │   try:                                                               │
+│ ❱ 141 │   │   res = state.client.assign(                                     │
+│   142 │   │   │   uuid.uuid4(), variant=variant, accelerator=accelerator,    │
+│       shape=shape                                                            │
+│   143 │   │   )                                                              │
+│   144 │   except TooManyAssignmentsError:                                    │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:289 in assign                                                           │
+│                                                                              │
+│   286 │   │   backoff = max(0.0, float(os.getenv("COLAB_CLI_RETRY_BACKOFF",  │
+│       "10")))                                                                │
+│   287 │   │   for attempt in range(retries + 1):                             │
+│   288 │   │   │   try:                                                       │
+│ ❱ 289 │   │   │   │   res = self._post_assignment(                           │
+│   290 │   │   │   │   │   notebook_hash, assignment.token, variant,          │
+│       accelerator, shape                                                     │
+│   291 │   │   │   │   )                                                      │
+│   292 │   │   │   │   break                                                  │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:358 in _post_assignment                                                 │
+│                                                                              │
+│   355 │   ) -> PostAssignmentResponse:                                       │
+│   356 │   │   url = self._build_assign_url(notebook_hash, variant,           │
+│       accelerator, shape)                                                    │
+│   357 │   │   headers = {COLAB_XSRF_TOKEN_HEADER["key"]: xsrf_token}         │
+│ ❱ 358 │   │   return self._issue_request(                                    │
+│   359 │   │   │   url, method="POST", headers=headers,                       │
+│       schema=PostAssignmentResponse                                          │
+│   360 │   │   )                                                              │
+│   361                                                                        │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:238 in _issue_request                                                   │
+│                                                                              │
+│   235 │   │   self.logger.debug(f"Response Headers: {response.headers}")     │
+│   236 │   │   self.logger.debug(f"Response Body: {response.text}")           │
+│   237 │   │   if not response.ok:                                            │
+│ ❱ 238 │   │   │   raise ColabRequestError(                                   │
+│   239 │   │   │   │   f"Failed to issue request {method} {endpoint}:         │
+│       {response.reason}",                                                    │
+│   240 │   │   │   │   request=response.request,                              │
+│   241 │   │   │   │   response=response,                                     │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ColabRequestError: Failed to issue request POST 
+https://colab.research.google.com/tun/m/assign?nbh=304c6cfd_5532_49dc_a077_86ee9
+aae7483........&variant=GPU&accelerator=T4: Service Unavailable
+[07:49:34] the allocation was refused; waiting a minute and trying again
+[07:50:36] creating the session he-gpu4 (attempt 5)
+[colab] Creating session 'he-gpu4'...
+╭───────────────────── Traceback (most recent call last) ──────────────────────╮
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/comma │
+│ nds/session.py:141 in new                                                    │
+│                                                                              │
+│   138 │                                                                      │
+│   139 │   typer.echo(f"[colab] Creating session '{name}'...")                │
+│   140 │   try:                                                               │
+│ ❱ 141 │   │   res = state.client.assign(                                     │
+│   142 │   │   │   uuid.uuid4(), variant=variant, accelerator=accelerator,    │
+│       shape=shape                                                            │
+│   143 │   │   )                                                              │
+│   144 │   except TooManyAssignmentsError:                                    │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:289 in assign                                                           │
+│                                                                              │
+│   286 │   │   backoff = max(0.0, float(os.getenv("COLAB_CLI_RETRY_BACKOFF",  │
+│       "10")))                                                                │
+│   287 │   │   for attempt in range(retries + 1):                             │
+│   288 │   │   │   try:                                                       │
+│ ❱ 289 │   │   │   │   res = self._post_assignment(                           │
+│   290 │   │   │   │   │   notebook_hash, assignment.token, variant,          │
+│       accelerator, shape                                                     │
+│   291 │   │   │   │   )                                                      │
+│   292 │   │   │   │   break                                                  │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:358 in _post_assignment                                                 │
+│                                                                              │
+│   355 │   ) -> PostAssignmentResponse:                                       │
+│   356 │   │   url = self._build_assign_url(notebook_hash, variant,           │
+│       accelerator, shape)                                                    │
+│   357 │   │   headers = {COLAB_XSRF_TOKEN_HEADER["key"]: xsrf_token}         │
+│ ❱ 358 │   │   return self._issue_request(                                    │
+│   359 │   │   │   url, method="POST", headers=headers,                       │
+│       schema=PostAssignmentResponse                                          │
+│   360 │   │   )                                                              │
+│   361                                                                        │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:238 in _issue_request                                                   │
+│                                                                              │
+│   235 │   │   self.logger.debug(f"Response Headers: {response.headers}")     │
+│   236 │   │   self.logger.debug(f"Response Body: {response.text}")           │
+│   237 │   │   if not response.ok:                                            │
+│ ❱ 238 │   │   │   raise ColabRequestError(                                   │
+│   239 │   │   │   │   f"Failed to issue request {method} {endpoint}:         │
+│       {response.reason}",                                                    │
+│   240 │   │   │   │   request=response.request,                              │
+│   241 │   │   │   │   response=response,                                     │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ColabRequestError: Failed to issue request POST 
+https://colab.research.google.com/tun/m/assign?nbh=b9b2aa2a_799c_4981_8bc2_168b9
+0794f05........&variant=GPU&accelerator=T4: Service Unavailable
+[07:54:09] the allocation was refused; waiting a minute and trying again
+[07:55:11] creating the session he-gpu4 (attempt 6)
+[colab] Creating session 'he-gpu4'...
+╭───────────────────── Traceback (most recent call last) ──────────────────────╮
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/comma │
+│ nds/session.py:141 in new                                                    │
+│                                                                              │
+│   138 │                                                                      │
+│   139 │   typer.echo(f"[colab] Creating session '{name}'...")                │
+│   140 │   try:                                                               │
+│ ❱ 141 │   │   res = state.client.assign(                                     │
+│   142 │   │   │   uuid.uuid4(), variant=variant, accelerator=accelerator,    │
+│       shape=shape                                                            │
+│   143 │   │   )                                                              │
+│   144 │   except TooManyAssignmentsError:                                    │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:289 in assign                                                           │
+│                                                                              │
+│   286 │   │   backoff = max(0.0, float(os.getenv("COLAB_CLI_RETRY_BACKOFF",  │
+│       "10")))                                                                │
+│   287 │   │   for attempt in range(retries + 1):                             │
+│   288 │   │   │   try:                                                       │
+│ ❱ 289 │   │   │   │   res = self._post_assignment(                           │
+│   290 │   │   │   │   │   notebook_hash, assignment.token, variant,          │
+│       accelerator, shape                                                     │
+│   291 │   │   │   │   )                                                      │
+│   292 │   │   │   │   break                                                  │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:358 in _post_assignment                                                 │
+│                                                                              │
+│   355 │   ) -> PostAssignmentResponse:                                       │
+│   356 │   │   url = self._build_assign_url(notebook_hash, variant,           │
+│       accelerator, shape)                                                    │
+│   357 │   │   headers = {COLAB_XSRF_TOKEN_HEADER["key"]: xsrf_token}         │
+│ ❱ 358 │   │   return self._issue_request(                                    │
+│   359 │   │   │   url, method="POST", headers=headers,                       │
+│       schema=PostAssignmentResponse                                          │
+│   360 │   │   )                                                              │
+│   361                                                                        │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:238 in _issue_request                                                   │
+│                                                                              │
+│   235 │   │   self.logger.debug(f"Response Headers: {response.headers}")     │
+│   236 │   │   self.logger.debug(f"Response Body: {response.text}")           │
+│   237 │   │   if not response.ok:                                            │
+│ ❱ 238 │   │   │   raise ColabRequestError(                                   │
+│   239 │   │   │   │   f"Failed to issue request {method} {endpoint}:         │
+│       {response.reason}",                                                    │
+│   240 │   │   │   │   request=response.request,                              │
+│   241 │   │   │   │   response=response,                                     │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ColabRequestError: Failed to issue request POST 
+https://colab.research.google.com/tun/m/assign?nbh=c3d3a1f1_08e4_4425_8909_4bb1f
+fee0385........&variant=GPU&accelerator=T4: Service Unavailable
+[07:58:43] the allocation was refused; waiting a minute and trying again
+[07:59:44] creating the session he-gpu4 (attempt 7)
+[colab] Creating session 'he-gpu4'...
+╭───────────────────── Traceback (most recent call last) ──────────────────────╮
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/comma │
+│ nds/session.py:141 in new                                                    │
+│                                                                              │
+│   138 │                                                                      │
+│   139 │   typer.echo(f"[colab] Creating session '{name}'...")                │
+│   140 │   try:                                                               │
+│ ❱ 141 │   │   res = state.client.assign(                                     │
+│   142 │   │   │   uuid.uuid4(), variant=variant, accelerator=accelerator,    │
+│       shape=shape                                                            │
+│   143 │   │   )                                                              │
+│   144 │   except TooManyAssignmentsError:                                    │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:289 in assign                                                           │
+│                                                                              │
+│   286 │   │   backoff = max(0.0, float(os.getenv("COLAB_CLI_RETRY_BACKOFF",  │
+│       "10")))                                                                │
+│   287 │   │   for attempt in range(retries + 1):                             │
+│   288 │   │   │   try:                                                       │
+│ ❱ 289 │   │   │   │   res = self._post_assignment(                           │
+│   290 │   │   │   │   │   notebook_hash, assignment.token, variant,          │
+│       accelerator, shape                                                     │
+│   291 │   │   │   │   )                                                      │
+│   292 │   │   │   │   break                                                  │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:358 in _post_assignment                                                 │
+│                                                                              │
+│   355 │   ) -> PostAssignmentResponse:                                       │
+│   356 │   │   url = self._build_assign_url(notebook_hash, variant,           │
+│       accelerator, shape)                                                    │
+│   357 │   │   headers = {COLAB_XSRF_TOKEN_HEADER["key"]: xsrf_token}         │
+│ ❱ 358 │   │   return self._issue_request(                                    │
+│   359 │   │   │   url, method="POST", headers=headers,                       │
+│       schema=PostAssignmentResponse                                          │
+│   360 │   │   )                                                              │
+│   361                                                                        │
+│                                                                              │
+│ /data/uv/tools/google-colab-cli/lib/python3.12/site-packages/colab_cli/clien │
+│ t.py:238 in _issue_request                                                   │
+│                                                                              │
+│   235 │   │   self.logger.debug(f"Response Headers: {response.headers}")     │
+│   236 │   │   self.logger.debug(f"Response Body: {response.text}")           │
+│   237 │   │   if not response.ok:                                            │
+│ ❱ 238 │   │   │   raise ColabRequestError(                                   │
+│   239 │   │   │   │   f"Failed to issue request {method} {endpoint}:         │
+│       {response.reason}",                                                    │
+│   240 │   │   │   │   request=response.request,                              │
+│   241 │   │   │   │   response=response,                                     │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ColabRequestError: Failed to issue request POST 
+https://colab.research.google.com/tun/m/assign?nbh=4f87205b_68be_434d_95e6_f604a
+f070d2f........&variant=GPU&accelerator=T4: Service Unavailable
+[08:03:18] the allocation was refused; waiting a minute and trying again

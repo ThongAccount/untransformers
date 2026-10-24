@@ -1,0 +1,21 @@
+[05:27:59] the session he-gpu3 is alive
+[05:28:01] the session holds: runs: ['HE_seed1.json', 'HE_seed2.json', 'HE_seed3.json', 'attention-32h_seed1.json', 'attention-32h_seed2.json', 'attention-32h_seed3.json']
+[05:28:01]   uploading HE_seed1.pt
+[colab] Uploaded '/workspace/temp/gpu_artifacts/checkpoints/HE_seed1.pt' to '/content/checkpoints/HE_seed1.pt'
+[05:28:08]   uploading HE_seed2.pt
+[colab] Uploaded '/workspace/temp/gpu_artifacts/checkpoints/HE_seed2.pt' to '/content/checkpoints/HE_seed2.pt'
+[05:28:16]   uploading HE_seed3.pt
+[colab] Uploaded '/workspace/temp/gpu_artifacts/checkpoints/HE_seed3.pt' to '/content/checkpoints/HE_seed3.pt'
+[05:28:23]   uploading attention-32h_seed1.pt
+[colab] Uploaded '/workspace/temp/gpu_artifacts/checkpoints/attention-32h_seed1.pt' to '/content/checkpoints/attention-32h_seed1.pt'
+[05:28:31]   uploading attention-32h_seed2.pt
+[colab] Uploaded '/workspace/temp/gpu_artifacts/checkpoints/attention-32h_seed2.pt' to '/content/checkpoints/attention-32h_seed2.pt'
+[05:28:38]   uploading attention-32h_seed3.pt
+[colab] Uploaded '/workspace/temp/gpu_artifacts/checkpoints/attention-32h_seed3.pt' to '/content/checkpoints/attention-32h_seed3.pt'
+[colab] Uploaded '/workspace/temp/colab_post_entry.py' to '/content/colab_post_entry.py'
+[05:28:50] starting the post-processing exec
+[git] fetch rc=0 reset rc=0 tooling=HEAD is now at b2a3221 fix(m3): the sublayer cache is warmed in pieces, not in one shot
+[measured] the artefacts were produced by commit 5b296cad33e8e9911bcb5da0336f52b173054e37
+[systems] rc=0
+[merge] rc=0
+[pairing] rc=0

@@ -1,0 +1,172 @@
+[02:32:37] [repo] commit=5b296cad33e8e9911bcb5da0336f52b173054e37
+[02:32:37] running the CPU suite
+[02:32:55] [pytest] rc=0 112 passed in 13.73s
+[02:32:55] [run] /usr/bin/python3 experiments/run_quality.py --arms HE --seeds 1 --steps 2000 --eval-every 250 --eval-batches 8 --train-seed 0 --label full --out /content/runs/HE_seed1.json --checkpoint-dir /content/checkpoints --device cuda --save-checkpoints --print-every 100
+===== HE seed 1 =====
+[pairing] same_batches_same_order=True paired_init_seeds=True
+[HE] starting, seeds=[1], steps=2000
+[HE seed 1] step 100/2000 train_loss=6.265198
+[HE seed 1] step 200/2000 train_loss=5.542348
+[HE seed 1] step 300/2000 train_loss=5.162744
+[HE seed 1] step 400/2000 train_loss=4.801756
+[HE seed 1] step 500/2000 train_loss=4.608935
+[HE seed 1] step 600/2000 train_loss=4.390344
+[HE seed 1] step 700/2000 train_loss=4.358855
+[HE seed 1] step 800/2000 train_loss=4.303785
+[HE seed 1] step 900/2000 train_loss=4.176131
+[HE seed 1] step 1000/2000 train_loss=4.091541
+[HE seed 1] step 1100/2000 train_loss=4.030340
+[HE seed 1] step 1200/2000 train_loss=4.018611
+[HE seed 1] step 1300/2000 train_loss=3.909883
+[HE seed 1] step 1400/2000 train_loss=3.944539
+[HE seed 1] step 1500/2000 train_loss=3.898885
+[HE seed 1] step 1600/2000 train_loss=3.861306
+[HE seed 1] step 1700/2000 train_loss=3.777465
+[HE seed 1] step 1800/2000 train_loss=3.779819
+[HE seed 1] step 1900/2000 train_loss=3.855301
+[HE seed 1] step 2000/2000 train_loss=3.773112
+[HE] done in 2354.8s; final held-out loss per seed: {1: 4.138238847255707}
+results written: /content/runs/HE_seed1.json
+[03:12:12] [run] HE seed 1 rc=0 wall=2357.4s
+[03:12:12] [run] /usr/bin/python3 experiments/run_quality.py --arms HE --seeds 2 --steps 2000 --eval-every 250 --eval-batches 8 --train-seed 0 --label full --out /content/runs/HE_seed2.json --checkpoint-dir /content/checkpoints --device cuda --save-checkpoints --print-every 100
+===== HE seed 2 =====
+[pairing] same_batches_same_order=True paired_init_seeds=True
+[HE] starting, seeds=[2], steps=2000
+[HE seed 2] step 100/2000 train_loss=6.300547
+[HE seed 2] step 200/2000 train_loss=5.548735
+[HE seed 2] step 300/2000 train_loss=5.154523
+[HE seed 2] step 400/2000 train_loss=4.803727
+[HE seed 2] step 500/2000 train_loss=4.608282
+[HE seed 2] step 600/2000 train_loss=4.389810
+[HE seed 2] step 700/2000 train_loss=4.358781
+[HE seed 2] step 800/2000 train_loss=4.316283
+[HE seed 2] step 900/2000 train_loss=4.191362
+[HE seed 2] step 1000/2000 train_loss=4.104480
+[HE seed 2] step 1100/2000 train_loss=4.056498
+[HE seed 2] step 1200/2000 train_loss=4.031904
+[HE seed 2] step 1300/2000 train_loss=3.920455
+[HE seed 2] step 1400/2000 train_loss=3.954816
+[HE seed 2] step 1500/2000 train_loss=3.895627
+[HE seed 2] step 1600/2000 train_loss=3.873057
+[HE seed 2] step 1700/2000 train_loss=3.800185
+[HE seed 2] step 1800/2000 train_loss=3.797265
+[HE seed 2] step 1900/2000 train_loss=3.866303
+[HE seed 2] step 2000/2000 train_loss=3.797794
+[HE] done in 2357.2s; final held-out loss per seed: {2: 4.149547040462494}
+results written: /content/runs/HE_seed2.json
+[03:51:33] [run] HE seed 2 rc=0 wall=2360.2s
+[03:51:33] [run] /usr/bin/python3 experiments/run_quality.py --arms HE --seeds 3 --steps 2000 --eval-every 250 --eval-batches 8 --train-seed 0 --label full --out /content/runs/HE_seed3.json --checkpoint-dir /content/checkpoints --device cuda --save-checkpoints --print-every 100
+===== HE seed 3 =====
+[pairing] same_batches_same_order=True paired_init_seeds=True
+[HE] starting, seeds=[3], steps=2000
+[HE seed 3] step 100/2000 train_loss=6.163788
+[HE seed 3] step 200/2000 train_loss=5.479820
+[HE seed 3] step 300/2000 train_loss=5.169222
+[HE seed 3] step 400/2000 train_loss=4.835649
+[HE seed 3] step 500/2000 train_loss=4.651502
+[HE seed 3] step 600/2000 train_loss=4.408418
+[HE seed 3] step 700/2000 train_loss=4.379795
+[HE seed 3] step 800/2000 train_loss=4.319679
+[HE seed 3] step 900/2000 train_loss=4.186193
+[HE seed 3] step 1000/2000 train_loss=4.104200
+[HE seed 3] step 1100/2000 train_loss=4.048986
+[HE seed 3] step 1200/2000 train_loss=4.044045
+[HE seed 3] step 1300/2000 train_loss=3.927555
+[HE seed 3] step 1400/2000 train_loss=3.944726
+[HE seed 3] step 1500/2000 train_loss=3.908810
+[HE seed 3] step 1600/2000 train_loss=3.885623
+[HE seed 3] step 1700/2000 train_loss=3.796533
+[HE seed 3] step 1800/2000 train_loss=3.801935
+[HE seed 3] step 1900/2000 train_loss=3.870740
+[HE seed 3] step 2000/2000 train_loss=3.794409
+[HE] done in 2359.5s; final held-out loss per seed: {3: 4.1512532234191895}
+results written: /content/runs/HE_seed3.json
+[04:30:55] [run] HE seed 3 rc=0 wall=2362.3s
+[04:30:55] [run] /usr/bin/python3 experiments/run_quality.py --arms attention-32h --seeds 1 --steps 2000 --eval-every 250 --eval-batches 8 --train-seed 0 --label full --out /content/runs/attention-32h_seed1.json --checkpoint-dir /content/checkpoints --device cuda --save-checkpoints --print-every 100
+===== attention-32h seed 1 =====
+[pairing] same_batches_same_order=True paired_init_seeds=True
+[attention-32h] starting, seeds=[1], steps=2000
+[attention-32h seed 1] step 100/2000 train_loss=6.266018
+[attention-32h seed 1] step 200/2000 train_loss=5.616338
+[attention-32h seed 1] step 300/2000 train_loss=5.297494
+[attention-32h seed 1] step 400/2000 train_loss=4.943584
+[attention-32h seed 1] step 500/2000 train_loss=4.735766
+[attention-32h seed 1] step 600/2000 train_loss=4.526242
+[attention-32h seed 1] step 700/2000 train_loss=4.490864
+[attention-32h seed 1] step 800/2000 train_loss=4.428068
+[attention-32h seed 1] step 900/2000 train_loss=4.308986
+[attention-32h seed 1] step 1000/2000 train_loss=4.219971
+[attention-32h seed 1] step 1100/2000 train_loss=4.168790
+[attention-32h seed 1] step 1200/2000 train_loss=4.143650
+[attention-32h seed 1] step 1300/2000 train_loss=4.057563
+[attention-32h seed 1] step 1400/2000 train_loss=4.082556
+[attention-32h seed 1] step 1500/2000 train_loss=4.018557
+[attention-32h seed 1] step 1600/2000 train_loss=4.001113
+[attention-32h seed 1] step 1700/2000 train_loss=3.900575
+[attention-32h seed 1] step 1800/2000 train_loss=3.904095
+[attention-32h seed 1] step 1900/2000 train_loss=4.013744
+[attention-32h seed 1] step 2000/2000 train_loss=3.902055
+[attention-32h] done in 796.1s; final held-out loss per seed: {1: 4.243823289871216}
+results written: /content/runs/attention-32h_seed1.json
+[04:44:14] [run] attention-32h seed 1 rc=0 wall=798.8s
+[04:44:14] [run] /usr/bin/python3 experiments/run_quality.py --arms attention-32h --seeds 2 --steps 2000 --eval-every 250 --eval-batches 8 --train-seed 0 --label full --out /content/runs/attention-32h_seed2.json --checkpoint-dir /content/checkpoints --device cuda --save-checkpoints --print-every 100
+===== attention-32h seed 2 =====
+[pairing] same_batches_same_order=True paired_init_seeds=True
+[attention-32h] starting, seeds=[2], steps=2000
+[attention-32h seed 2] step 100/2000 train_loss=6.235134
+[attention-32h seed 2] step 200/2000 train_loss=5.592762
+[attention-32h seed 2] step 300/2000 train_loss=5.280943
+[attention-32h seed 2] step 400/2000 train_loss=4.929823
+[attention-32h seed 2] step 500/2000 train_loss=4.735305
+[attention-32h seed 2] step 600/2000 train_loss=4.526717
+[attention-32h seed 2] step 700/2000 train_loss=4.490924
+[attention-32h seed 2] step 800/2000 train_loss=4.433187
+[attention-32h seed 2] step 900/2000 train_loss=4.315327
+[attention-32h seed 2] step 1000/2000 train_loss=4.231481
+[attention-32h seed 2] step 1100/2000 train_loss=4.193411
+[attention-32h seed 2] step 1200/2000 train_loss=4.155764
+[attention-32h seed 2] step 1300/2000 train_loss=4.073267
+[attention-32h seed 2] step 1400/2000 train_loss=4.099673
+[attention-32h seed 2] step 1500/2000 train_loss=4.028430
+[attention-32h seed 2] step 1600/2000 train_loss=4.015381
+[attention-32h seed 2] step 1700/2000 train_loss=3.914768
+[attention-32h seed 2] step 1800/2000 train_loss=3.922482
+[attention-32h seed 2] step 1900/2000 train_loss=4.008567
+[attention-32h seed 2] step 2000/2000 train_loss=3.941227
+[attention-32h] done in 796.1s; final held-out loss per seed: {2: 4.256580650806427}
+results written: /content/runs/attention-32h_seed2.json
+[04:57:33] [run] attention-32h seed 2 rc=0 wall=798.8s
+[04:57:33] [run] /usr/bin/python3 experiments/run_quality.py --arms attention-32h --seeds 3 --steps 2000 --eval-every 250 --eval-batches 8 --train-seed 0 --label full --out /content/runs/attention-32h_seed3.json --checkpoint-dir /content/checkpoints --device cuda --save-checkpoints --print-every 100
+===== attention-32h seed 3 =====
+[pairing] same_batches_same_order=True paired_init_seeds=True
+[attention-32h] starting, seeds=[3], steps=2000
+[attention-32h seed 3] step 100/2000 train_loss=6.232171
+[attention-32h seed 3] step 200/2000 train_loss=5.691920
+[attention-32h seed 3] step 300/2000 train_loss=5.356661
+[attention-32h seed 3] step 400/2000 train_loss=5.003279
+[attention-32h seed 3] step 500/2000 train_loss=4.801212
+[attention-32h seed 3] step 600/2000 train_loss=4.568983
+[attention-32h seed 3] step 700/2000 train_loss=4.514978
+[attention-32h seed 3] step 800/2000 train_loss=4.440149
+[attention-32h seed 3] step 900/2000 train_loss=4.325772
+[attention-32h seed 3] step 1000/2000 train_loss=4.220567
+[attention-32h seed 3] step 1100/2000 train_loss=4.186767
+[attention-32h seed 3] step 1200/2000 train_loss=4.157939
+[attention-32h seed 3] step 1300/2000 train_loss=4.072679
+[attention-32h seed 3] step 1400/2000 train_loss=4.102331
+[attention-32h seed 3] step 1500/2000 train_loss=4.035770
+[attention-32h seed 3] step 1600/2000 train_loss=4.003891
+[attention-32h seed 3] step 1700/2000 train_loss=3.917734
+[attention-32h seed 3] step 1800/2000 train_loss=3.916464
+[attention-32h seed 3] step 1900/2000 train_loss=4.010618
+[attention-32h seed 3] step 2000/2000 train_loss=3.922068
+[attention-32h] done in 796.1s; final held-out loss per seed: {3: 4.2502206563949585}
+results written: /content/runs/attention-32h_seed3.json
+[05:10:51] [run] attention-32h seed 3 rc=0 wall=798.8s
+[05:10:51] [sweep] all runs done
+[05:10:51] running the T15 GPU smoke
+[05:10:57] [t15] rc=0
+[05:10:57] [systems] /usr/bin/python3 experiments/run_systems.py --arms HE attention-32h attention-32h-sdpa --systems-arms HE attention-32h attention-32h-sdpa --device cuda --out /content/systems.json --d 128 --l 128 --layers 18 --ffn 512 --vocab 5000 --batch 64 --heads 32 --trials 10 --warmup 2 --gen-tokens 16 --decode-trials 5 --checkpoint-dir /content/checkpoints
+[05:13:11] [systems] rc=1
+[05:13:17] [tar] rc=0 
+[05:13:17] SWEEP_ENTRY_DONE
