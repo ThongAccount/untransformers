@@ -41,20 +41,151 @@ import json
 import math
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
-# Two-sided 95% t quantiles, df = 1..30 (t_{0.975, df}).
-T975 = [12.706, 4.303, 3.182, 2.776, 2.571, 2.447, 2.365, 2.306, 2.262, 2.228,
-        2.201, 2.179, 2.160, 2.145, 2.131, 2.120, 2.110, 2.101, 2.093, 2.086,
-        2.080, 2.074, 2.069, 2.064, 2.060, 2.056, 2.052, 2.048, 2.045, 2.042]
-# One-sided 80% t quantiles, df = 1..30 (t_{0.80, df}).
-T80 = [1.282, 1.061, 0.845, 0.765, 0.706, 0.666, 0.636, 0.613, 0.593, 0.577,
-       0.563, 0.552, 0.542, 0.533, 0.525, 0.518, 0.512, 0.507, 0.502, 0.497,
-       0.493, 0.489, 0.486, 0.483, 0.480, 0.477, 0.474, 0.471, 0.469, 0.466]
-NORMAL_975 = 1.959964
-NORMAL_80 = 0.841621
+# --------------------------------------------------------------------------
+# the Student-t quantile, COMPUTED rather than tabulated
+# --------------------------------------------------------------------------
+# The protocol (§3.2) fixes the statistics, not a table: the 95% CI is
+# `d̄ ± 2.484 · s_d` (t₀.₉₇₅,₂ = 4.3027) and the MDD is `3.097 · s_d`
+# ((t₀.₉₇₅,₂ + t₀.₈₀,₂)/√3, t₀.₈₀,₂ = 1.0607). Those are the exact quantiles
+# rounded to four decimals.
+#
+# This builder used to read them from a three-decimal table. Its 95% column
+# was right, but its 80% column was wrong for 29 of its 30 rows (it listed the
+# 80% *normal* quantile and one wrong entry, e.g. 0.845 at df = 3 where the
+# exact value is 0.978), and the "seeds needed for 80% power" loop used that
+# column — understating the seeds required by 10-24%. The quantiles are now
+# inverted from the Student-t CDF numerically, and `verify_protocol_constants`
+# fails the run if the computed values stop reproducing the protocol's stated
+# constants.
+def _betacf(a: float, b: float, x: float, itmax: int = 300,
+            eps: float = 3e-16) -> float:
+    """The continued fraction of the incomplete beta function (Lentz's method)."""
+    tiny = 1e-300
+    qab, qap, qam = a + b, a + 1.0, a - 1.0
+    c = 1.0
+    d = 1.0 - qab * x / qap
+    if abs(d) < tiny:
+        d = tiny
+    d = 1.0 / d
+    h = d
+    for m in range(1, itmax + 1):
+        m2 = 2 * m
+        aa = m * (b - m) * x / ((qam + m2) * (a + m2))
+        d = 1.0 + aa * d
+        if abs(d) < tiny:
+            d = tiny
+        c = 1.0 + aa / c
+        if abs(c) < tiny:
+            c = tiny
+        d = 1.0 / d
+        h *= d * c
+        aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2))
+        d = 1.0 + aa * d
+        if abs(d) < tiny:
+            d = tiny
+        c = 1.0 + aa / c
+        if abs(c) < tiny:
+            c = tiny
+        d = 1.0 / d
+        delta = d * c
+        h *= delta
+        if abs(delta - 1.0) < eps:
+            break
+    return h
+
+
+def _betai(a: float, b: float, x: float) -> float:
+    """The regularised incomplete beta function I_x(a, b)."""
+    if x <= 0.0:
+        return 0.0
+    if x >= 1.0:
+        return 1.0
+    log_bt = (math.lgamma(a + b) - math.lgamma(a) - math.lgamma(b)
+              + a * math.log(x) + b * math.log1p(-x))
+    bt = math.exp(log_bt)
+    if x < (a + 1.0) / (a + b + 2.0):
+        return bt * _betacf(a, b, x) / a
+    return 1.0 - bt * _betacf(b, a, 1.0 - x) / b
+
+
+def student_t_cdf(t: float, df: int) -> float:
+    """P(T <= t) for a Student-t with `df` degrees of freedom."""
+    if df <= 0:
+        return float("nan")
+    x = df / (df + t * t)
+    tail = 0.5 * _betai(df / 2.0, 0.5, x)
+    return 1.0 - tail if t > 0 else tail
+
+
+_T_QUANTILE_CACHE: Dict[Tuple[float, int], float] = {}
+
+
+def student_t_ppf(p: float, df: int) -> float:
+    """The Student-t quantile t_{p, df}, by bisection on the CDF.
+
+    Exact to ~1e-12 (the bracket is halved 200 times), so the protocol's
+    constants are reproduced rather than rounded into them.
+    """
+    if df <= 0 or not (0.0 < p < 1.0):
+        return float("nan")
+    key = (p, df)
+    cached = _T_QUANTILE_CACHE.get(key)
+    if cached is not None:
+        return cached
+    lo, hi = 0.0, 1.0
+    while student_t_cdf(hi, df) < p:
+        hi *= 2.0
+        if hi > 1e6:
+            break
+    for _ in range(200):
+        mid = 0.5 * (lo + hi)
+        if student_t_cdf(mid, df) < p:
+            lo = mid
+        else:
+            hi = mid
+    q = 0.5 * (lo + hi)
+    _T_QUANTILE_CACHE[key] = q
+    return q
+
+
+# the constants the protocol states, with the precision at which it states them
+PROTOCOL_CONSTANTS: Dict[str, Dict[str, float]] = {
+    "t_975_df2": {"stated": 4.3027, "tolerance": 5e-5},
+    "t_80_df2": {"stated": 1.0607, "tolerance": 5e-5},
+    "ci_half_width_constant": {"stated": 2.484, "tolerance": 5e-4},
+    "mdd_constant": {"stated": 3.097, "tolerance": 5e-4},
+}
+
+
+def verify_protocol_constants() -> Dict[str, Dict[str, float]]:
+    """Check the computed quantiles against the protocol's stated constants.
+
+    If this fails, the statistics have drifted from the pre-registration and
+    the run must stop rather than print numbers the protocol does not claim.
+    """
+    t975 = student_t_ppf(0.975, 2)
+    t80 = student_t_ppf(0.80, 2)
+    computed = {
+        "t_975_df2": t975,
+        "t_80_df2": t80,
+        "ci_half_width_constant": t975 / math.sqrt(3),
+        "mdd_constant": (t975 + t80) / math.sqrt(3),
+    }
+    out: Dict[str, Dict[str, float]] = {}
+    for key, spec in PROTOCOL_CONSTANTS.items():
+        diff = computed[key] - spec["stated"]
+        out[key] = {
+            "stated": spec["stated"],
+            "computed": computed[key],
+            "difference": diff,
+            "tolerance": spec["tolerance"],
+            "ok": abs(diff) <= spec["tolerance"],
+        }
+    return out
 
 
 def _eval_windows(results: Dict) -> Optional[int]:
@@ -73,14 +204,6 @@ def _eval_target_tokens(results: Dict) -> Optional[int]:
     if windows and l_ctx:
         return int(windows) * int(l_ctx)
     return None
-
-
-def t_quantile(table: Sequence[float], df: int, normal: float) -> float:
-    if df <= 0:
-        return float("nan")
-    if df <= len(table):
-        return table[df - 1]
-    return normal
 
 
 def mean_sd(values: Sequence[float]) -> Dict:
@@ -118,12 +241,13 @@ def paired_block(values_a: Dict[int, float], values_b: Dict[int, float]) -> Dict
         sd = math.sqrt(sum((d - d_mean) ** 2 for d in diffs) / (n - 1))
         se = sd / math.sqrt(n)
         df = n - 1
-        t975 = t_quantile(T975, df, NORMAL_975)
-        t80 = t_quantile(T80, df, NORMAL_80)
+        t975 = student_t_ppf(0.975, df)
+        t80 = student_t_ppf(0.80, df)
         half = t975 * se
         out["std_difference_ddof1"] = sd
         out["standard_error"] = se
         out["t_critical_95"] = t975
+        out["t_critical_80"] = t80
         out["ci95"] = [d_mean - half, d_mean + half]
         out["ci95_excludes_zero"] = bool(d_mean - half > 0 or d_mean + half < 0)
         out["mdd_80_power"] = (t975 + t80) * se
@@ -135,8 +259,8 @@ def paired_block(values_a: Dict[int, float], values_b: Dict[int, float]) -> Dict
             needed = None
             for cand in range(max(n, 2), 1001):
                 se_c = sd / math.sqrt(cand)
-                mdd_c = (t_quantile(T975, cand - 1, NORMAL_975) +
-                         t_quantile(T80, cand - 1, NORMAL_80)) * se_c
+                mdd_c = (student_t_ppf(0.975, cand - 1) +
+                         student_t_ppf(0.80, cand - 1)) * se_c
                 if mdd_c <= abs(d_mean):
                     needed = cand
                     break
@@ -149,6 +273,7 @@ def paired_block(values_a: Dict[int, float], values_b: Dict[int, float]) -> Dict
         out["std_difference_ddof1"] = None
         out["standard_error"] = None
         out["t_critical_95"] = None
+        out["t_critical_80"] = None
         out["ci95"] = [None, None]
         out["ci95_excludes_zero"] = False
         out["mdd_80_power"] = None
@@ -226,6 +351,18 @@ def main() -> int:
     ap.add_argument("--bootstrap-resamples", type=int, default=1000)
     args = ap.parse_args()
 
+    # The protocol's stated constants must still come out of the computed
+    # quantiles; if they do not, the statistics have drifted from the
+    # pre-registration and nothing is printed.
+    constants = verify_protocol_constants()
+    drifted = {k: v for k, v in constants.items() if not v["ok"]}
+    if drifted:
+        for key, row in drifted.items():
+            print(f"FAIL: the computed {key} = {row['computed']!r} does not reproduce "
+                  f"the protocol's stated {row['stated']!r} (difference "
+                  f"{row['difference']!r}, tolerance {row['tolerance']!r})")
+        return 1
+
     path = Path(args.file)
     data = json.loads(path.read_text(encoding="utf-8"))
     results = data.get("results") or {}
@@ -261,6 +398,7 @@ def main() -> int:
             "commit": data.get("commit"),
         },
         "endpoints": {},
+        "protocol_constants": constants,
     }
 
     for endpoint, label in (("final", "primary: held-out loss at the final step"),

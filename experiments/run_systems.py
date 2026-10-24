@@ -194,15 +194,26 @@ def order_schedule(arms: Sequence[str]) -> List[str]:
 
 
 def _order_effect(slot_rows: List[Dict], block: str) -> Dict:
-    """Per-arm A/A null + drift floor from the slot rows of one block."""
-    by_arm: Dict[str, List[Dict]] = {}
-    for row in slot_rows:
-        by_arm.setdefault(row["arm"], []).append(row)
+    """Per-(arm, context) A/A null + the drift floor from the slot rows.
 
-    aa_null: Dict[str, Dict] = {}
+    The null is the same arm measured at the start and at the end of the
+    palindromic order **at the same context**. It has to be same-context: the
+    prefill and incremental-decode blocks carry one row per context length per
+    slot, so an arm-level comparison across the whole block would measure the
+    growth of the latency with the context, not the run-order drift. The floor
+    for a context is the largest such same-context spread over the arms (the
+    conservative choice, stated before the numbers landed), and the block's
+    `drift_floor_seconds` is the largest of those floors.
+    """
+    groups: Dict = {}
+    for row in slot_rows:
+        groups.setdefault((row["arm"], row.get("context_tokens")), []).append(row)
+
+    aa_null_by_context: Dict[str, Dict[str, Dict]] = {}
     worst_abs = 0.0
     worst_rel = 0.0
-    for arm, rows in by_arm.items():
+    for (arm, ctx), rows in sorted(groups.items(),
+                                   key=lambda kv: (kv[0][0], str(kv[0][1]))):
         rows = sorted(rows, key=lambda r: r["order_index"])
         if len(rows) < 2:
             continue
@@ -212,7 +223,8 @@ def _order_effect(slot_rows: List[Dict], block: str) -> Dict:
             continue
         diff = last - first
         rel = abs(diff) / first if first else float("inf")
-        aa_null[arm] = {
+        aa_null_by_context.setdefault(str(ctx), {})[arm] = {
+            "context_tokens": ctx,
             "first_slot_order_index": rows[0]["order_index"],
             "last_slot_order_index": rows[-1]["order_index"],
             "first_slot_median_seconds": first,
@@ -224,16 +236,24 @@ def _order_effect(slot_rows: List[Dict], block: str) -> Dict:
         worst_abs = max(worst_abs, abs(diff))
         worst_rel = max(worst_rel, rel)
 
+    floor_by_context = {
+        ctx: max(abs(v["difference_seconds"]) for v in arms.values())
+        for ctx, arms in aa_null_by_context.items()
+    }
+
     return {
         "block": block,
-        "aa_null": aa_null,
+        "aa_null_by_context": aa_null_by_context,
+        "floor_by_context_seconds": floor_by_context,
         "drift_floor_seconds": worst_abs,
         "drift_floor_relative": worst_rel,
         "interpretation": (
             "A/A null: the same arm measured at the start and at the end of the "
-            "measurement order. The spread of this null is the run-order drift "
-            "floor; an arm-to-arm difference smaller than it is not resolvable "
-            "against clock/thermal drift."
+            "measurement order AT THE SAME CONTEXT. The spread of that null is "
+            "the run-order drift floor; an arm-to-arm difference smaller than "
+            "the floor of its context is not resolvable against clock/thermal "
+            "drift. The block's drift_floor_seconds is the largest of the "
+            "per-context floors."
         ),
     }
 

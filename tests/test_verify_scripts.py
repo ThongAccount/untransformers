@@ -204,14 +204,41 @@ def _systems():
                         "units": {"per_token_latency": "seconds for one token",
                                   "state_bytes": "bytes per layer (analytic)"},
                         "denominator": f"one token at context T={c}, sublayer-1 only"})
+    # the slot rows: every arm is measured in two slots of the palindromic ABBA
+    # order, so the A/A null is that arm's first and last slot AT THE SAME
+    # CONTEXT
+    ts_slots, pre_slots, dec_slots = [], [], []
+    for idx, arm in enumerate(cfg["order_schedule"]):
+        ts_slots.append({"arm": arm, "order_index": idx, "latency_stats": _stats(0.1)})
+        for c in (1, 8):
+            pre_slots.append({"arm": arm, "order_index": idx, "context_tokens": c,
+                              "latency_stats": _stats(0.01)})
+            dec_slots.append({"arm": arm, "order_index": idx, "context_tokens": c,
+                              "latency_stats": _stats(0.001)})
+
+    def _null(contexts, median):
+        by_ctx = {}
+        for ctx in contexts:
+            key = "None" if ctx is None else str(ctx)
+            by_ctx[key] = {
+                a: {"context_tokens": ctx,
+                    "first_slot_order_index": idx,
+                    "last_slot_order_index": len(cfg["order_schedule"]) - 1 - idx,
+                    "first_slot_median_seconds": median,
+                    "last_slot_median_seconds": median,
+                    "difference_seconds": 0.0,
+                    "absolute_difference_seconds": 0.0,
+                    "relative_difference": 0.0}
+                for idx, a in enumerate(arms)}
+        floors = {ctx: 0.0 for ctx in by_ctx}
+        return {"block": "x", "aa_null_by_context": by_ctx,
+                "floor_by_context_seconds": floors,
+                "drift_floor_seconds": 0.0, "drift_floor_relative": 0.0}
+
     order_effect = {
-        block: {"block": block,
-                "aa_null": {a: {"difference_seconds": 0.0,
-                                 "first_slot_median_seconds": 0.1,
-                                 "last_slot_median_seconds": 0.1,
-                                 "relative_difference": 0.0} for a in arms},
-                "drift_floor_seconds": 0.0}
-        for block in ("training_step", "prefill", "incremental_decode")
+        "training_step": _null([None], 0.1),
+        "prefill": _null([1, 8], 0.01),
+        "incremental_decode": _null([1, 8], 0.001),
     }
     weight_traffic = {
         a: {"label": "analytic (formula over the parameter count, not measured)",
@@ -249,8 +276,11 @@ def _systems():
                         "arms": list(arms)},
         "config": cfg,
         "training_step": [step(a) for a in arms],
+        "training_step_slots": ts_slots,
         "prefill": [r for a in arms for r in pre(a)],
+        "prefill_slots": pre_slots,
         "incremental_decode": [r for a in arms for r in inc(a)],
+        "incremental_decode_slots": dec_slots,
         "sublayer_scaling": sub,
         "weight_traffic": weight_traffic,
         "state_traffic": state_traffic,
@@ -359,7 +389,7 @@ def test_systems_checker_requires_the_sdpa_baseline(tmp_path):
 def test_systems_checker_requires_the_aa_null(tmp_path):
     """S2: every arm needs an A/A null and a drift floor."""
     data = _systems()
-    data["order_effect"]["training_step"]["aa_null"].pop("HE")
+    data["order_effect"]["training_step"]["aa_null_by_context"]["None"].pop("HE")
     p = _write(tmp_path, "s_no_aa.json", data)
     r = _run("check_systems_results.py", "--file", str(p))
     assert r.returncode == 1
@@ -369,6 +399,36 @@ def test_systems_checker_requires_the_aa_null(tmp_path):
     p = _write(tmp_path, "s_no_floor.json", data)
     r = _run("check_systems_results.py", "--file", str(p))
     assert r.returncode == 1
+
+
+def test_systems_checker_rejects_a_cross_context_null(tmp_path):
+    """The A/A null must compare the same arm at the SAME context.
+
+    A null that compares the smallest context with the largest one measures
+    the growth of the latency with the context, not the run-order drift, and
+    every verdict judged against it would be wrong for the wrong reason.
+    """
+    data = _systems()
+    oe = data["order_effect"]["prefill"]
+    # pretend the null at context 1 was really the gap between context 1 and 8
+    oe["aa_null_by_context"]["1"]["HE"]["difference_seconds"] = 0.5
+    oe["aa_null_by_context"]["1"]["HE"]["absolute_difference_seconds"] = 0.5
+    oe["floor_by_context_seconds"]["1"] = 0.5
+    oe["drift_floor_seconds"] = 0.5
+    p = _write(tmp_path, "s_cross_context.json", data)
+    r = _run("check_systems_results.py", "--file", str(p))
+    assert r.returncode == 1
+    assert "same-context" in r.stdout
+
+
+def test_systems_checker_requires_the_per_context_null(tmp_path):
+    """An artefact with only an arm-level null cannot be judged per context."""
+    data = _systems()
+    data["order_effect"]["prefill"].pop("aa_null_by_context")
+    p = _write(tmp_path, "s_no_per_context.json", data)
+    r = _run("check_systems_results.py", "--file", str(p))
+    assert r.returncode == 1
+    assert "same-context" in r.stdout
 
 
 def test_systems_checker_requires_enough_trials(tmp_path):

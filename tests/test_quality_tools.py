@@ -138,23 +138,92 @@ def test_statistics_are_the_pre_registered_ones(tmp_path):
                         rel_tol=1e-9)
     assert math.isclose(block["standard_error"], math.sqrt(0.005) / math.sqrt(2),
                         rel_tol=1e-9)
-    # CI = d̄ ± t(0.975, df=1) * SE, with t = 12.706
-    t = 12.706
+    # CI = d̄ ± t(0.975, df=1) * SE. The quantile is computed (12.7062047364...),
+    # not read from a three-decimal table.
+    t = sq.student_t_ppf(0.975, 1)
+    # for df = 1 the Student-t is the Cauchy distribution, whose quantile has
+    # the closed form tan((p - 0.5)·pi) — an independent check of the CDF
+    assert math.isclose(t, math.tan(0.475 * math.pi), rel_tol=1e-12)
     half = t * math.sqrt(0.005) / math.sqrt(2)
-    assert math.isclose(block["ci95"][0], 0.15 - half, rel_tol=1e-9)
-    assert math.isclose(block["ci95"][1], 0.15 + half, rel_tol=1e-9)
+    assert math.isclose(block["ci95"][0], 0.15 - half, rel_tol=1e-12)
+    assert math.isclose(block["ci95"][1], 0.15 + half, rel_tol=1e-12)
     # with df = 1 the t quantile is 12.706, so the half-width is 0.635 > d̄:
     # this interval COVERS zero and the comparison is NOT resolved
     assert block["ci95_excludes_zero"] is False
     assert block["resolved"] is False
     assert block["verdict"] == "not resolved at n = 2"
-    # MDD = (t(0.975,1) + t(0.80,1)) * SE = (12.706 + 1.282) * SE
-    assert math.isclose(block["mdd_80_power"], (12.706 + 1.282) * math.sqrt(0.005) / math.sqrt(2),
-                        rel_tol=1e-9)
+    # MDD = (t(0.975,1) + t(0.80,1)) * SE
+    t80 = sq.student_t_ppf(0.80, 1)
+    assert math.isclose(t80, math.tan(0.3 * math.pi), rel_tol=1e-12)
+    assert math.isclose(block["mdd_80_power"], (t + t80) * math.sqrt(0.005) / math.sqrt(2),
+                        rel_tol=1e-12)
     # perplexity: exp(loss) per arm, ratio exp(d̄)
     assert math.isclose(block["perplexity_ratio"], math.exp(0.15), rel_tol=1e-12)
     assert math.isclose(block["perplexity_ratio_ci95"][0], math.exp(0.15 - half),
                         rel_tol=1e-9)
+
+
+def test_the_t_quantiles_reproduce_the_protocols_constants():
+    """The computed quantiles must still BE the protocol's constants.
+
+    The protocol (§3.2) states the 95% CI as `d̄ ± 2.484·s_d`
+    (t₀.₉₇₅,₂ = 4.3027) and the MDD as `3.097·s_d` (t₀.₈₀,₂ = 1.0607). Those
+    are the exact quantiles rounded to four decimals, so the computed values
+    must reproduce them; if they ever stop, the statistics have drifted from
+    the pre-registration and the tool refuses to print anything.
+    """
+    sys.path.insert(0, str(REPO / "tools"))
+    import summarise_quality as sq  # noqa: E402
+
+    constants = sq.verify_protocol_constants()
+    assert all(row["ok"] for row in constants.values()), constants
+    # independent closed forms: df = 1 is the Cauchy, df = 2 has an
+    # algebraic CDF (F(t) = 0.5 + t/(2·sqrt(2 + t²)))
+    assert math.isclose(sq.student_t_ppf(0.975, 1), math.tan(0.475 * math.pi),
+                        rel_tol=1e-12)
+    assert math.isclose(sq.student_t_ppf(0.80, 1), math.tan(0.3 * math.pi),
+                        rel_tol=1e-12)
+    assert math.isclose(sq.student_t_ppf(0.975, 2), math.sqrt(1.805 / 0.0975),
+                        rel_tol=1e-12)
+
+
+def test_the_protocol_constant_check_can_fail():
+    """The check is a gate, not a decoration."""
+    sys.path.insert(0, str(REPO / "tools"))
+    import summarise_quality as sq  # noqa: E402
+
+    stated = sq.PROTOCOL_CONSTANTS["t_975_df2"]["stated"]
+    stated_ci = sq.PROTOCOL_CONSTANTS["ci_half_width_constant"]["stated"]
+    try:
+        sq.PROTOCOL_CONSTANTS["t_975_df2"]["stated"] = 4.0
+        out = sq.verify_protocol_constants()
+        assert out["t_975_df2"]["ok"] is False
+        assert out["mdd_constant"]["ok"] is True  # the computed value is unchanged
+        sq.PROTOCOL_CONSTANTS["t_975_df2"]["stated"] = stated
+        sq.PROTOCOL_CONSTANTS["ci_half_width_constant"]["stated"] = 2.0
+        out = sq.verify_protocol_constants()
+        assert out["ci_half_width_constant"]["ok"] is False
+    finally:
+        sq.PROTOCOL_CONSTANTS["t_975_df2"]["stated"] = stated
+        sq.PROTOCOL_CONSTANTS["ci_half_width_constant"]["stated"] = stated_ci
+    assert sq.verify_protocol_constants()["t_975_df2"]["ok"] is True
+
+
+def test_the_seeds_needed_loop_uses_the_computed_80_percent_quantile():
+    """The 80% t quantile is not the one the old table listed.
+
+    The old table's 80% column was wrong for 29 of its 30 rows, and the
+    "seeds needed for 80% power" loop used it: at an effect of 0.8·s_d it
+    said 12 seeds where the correct answer is 15.
+    """
+    sys.path.insert(0, str(REPO / "tools"))
+    import summarise_quality as sq  # noqa: E402
+
+    # the paired differences are [-0.2, 0.8, 1.8] -> d̄ = 0.8, s_d = 1 (ddof=1)
+    block = sq.paired_block({1: 1.0, 2: 1.8, 3: 2.8}, {1: 1.2, 2: 1.0, 3: 1.0})
+    assert math.isclose(block["mean_difference"], 0.8, rel_tol=1e-12)
+    assert math.isclose(block["std_difference_ddof1"], 1.0, rel_tol=1e-12)
+    assert block["seeds_needed_for_80_power_at_observed_effect"] == 15
 
 
 def test_a_large_paired_effect_is_resolved():

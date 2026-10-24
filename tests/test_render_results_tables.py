@@ -233,20 +233,26 @@ def _slot(arm, order_index, median, lo, hi):
 def test_every_arm_to_arm_difference_carries_the_drift_floor_and_a_verdict(tmp_path):
     """The reviewer's pre-registered rule: a difference is resolvable iff it
     exceeds the A/A null's spread for the same block and context; below the
-    floor it is not resolvable, whatever its sign."""
+    floor it is not resolvable, whatever its sign.
+
+    The null is the same arm measured at the start and at the end of the
+    palindromic order, so its spread is the gap between those two slot
+    medians — not the range of the trials inside one slot.
+    """
     d = {"training_step": [
             {"arm": "HE", "step_seconds": {"median": 0.50, "n": 20}},
             {"arm": "attention-32h", "step_seconds": {"median": 0.45, "n": 20}}],
          "training_step_slots": [
-            _slot("HE", 0, 0.50, 0.35, 0.55), _slot("HE", 1, 0.50, 0.36, 0.56),
+            _slot("HE", 0, 0.50, 0.35, 0.55), _slot("HE", 1, 0.56, 0.36, 0.56),
             _slot("attention-32h", 2, 0.45, 0.40, 0.60),
-            _slot("attention-32h", 3, 0.45, 0.41, 0.61)]}
+            _slot("attention-32h", 3, 0.50, 0.41, 0.61)]}
     p = tmp_path / "s.json"
     p.write_text(json.dumps(d), encoding="utf-8")
     md = rrt.render_systems_differences(d)
-    # the floor is max-min across the null's repetitions, the largest over arms
-    assert "0.210000" in md
-    # the difference and the verdict
+    # the floor is the largest same-context null spread over the arms:
+    # HE drifted by 0.06, attention-32h by 0.05 -> the floor is 0.06
+    assert "0.060000" in md
+    # the difference and the verdict: 0.05 < 0.06 -> not resolvable
     assert "0.050000" in md
     assert "| not resolvable |" in md
     assert "| **resolvable** |" not in md
@@ -258,3 +264,69 @@ def test_every_arm_to_arm_difference_carries_the_drift_floor_and_a_verdict(tmp_p
     d["training_step"][0]["step_seconds"]["median"] = 0.90
     md = rrt.render_systems_differences(d)
     assert "**resolvable**" in md
+
+
+def test_the_floor_is_a_same_context_null_not_a_cross_context_one(tmp_path):
+    """A null that mixes contexts is not a drift floor.
+
+    The prefill block carries one row per context per slot. If the floor were
+    taken across contexts, every verdict at the small context would be judged
+    against the growth of the latency with the context — a floor that has
+    nothing to do with drift.
+    """
+    d = {"prefill": [
+            {"arm": "HE", "context_tokens": 1, "latency": {"median": 0.10, "n": 20}},
+            {"arm": "HE", "context_tokens": 112, "latency": {"median": 1.10, "n": 20}},
+            {"arm": "attention-32h", "context_tokens": 1,
+             "latency": {"median": 0.11, "n": 20}},
+            {"arm": "attention-32h", "context_tokens": 112,
+             "latency": {"median": 1.11, "n": 20}}],
+         "prefill_slots": [
+            {"arm": "HE", "order_index": 0, "context_tokens": 1,
+             "latency_stats": {"median": 0.10, "n": 10}},
+            {"arm": "HE", "order_index": 0, "context_tokens": 112,
+             "latency_stats": {"median": 1.10, "n": 10}},
+            {"arm": "HE", "order_index": 3, "context_tokens": 1,
+             "latency_stats": {"median": 0.101, "n": 10}},
+            {"arm": "HE", "order_index": 3, "context_tokens": 112,
+             "latency_stats": {"median": 1.101, "n": 10}},
+            {"arm": "attention-32h", "order_index": 1, "context_tokens": 1,
+             "latency_stats": {"median": 0.11, "n": 10}},
+            {"arm": "attention-32h", "order_index": 1, "context_tokens": 112,
+             "latency_stats": {"median": 1.11, "n": 10}},
+            {"arm": "attention-32h", "order_index": 2, "context_tokens": 1,
+             "latency_stats": {"median": 0.111, "n": 10}},
+            {"arm": "attention-32h", "order_index": 2, "context_tokens": 112,
+             "latency_stats": {"median": 1.111, "n": 10}}]}
+    md = rrt.render_systems_differences(d)
+    # the same-context floor is 0.001 (the drift of the arm at that context);
+    # the cross-context gap (1.10 - 0.10 = 1.00) must NOT appear as a floor
+    assert "| 1 | HE | attention-32h | 0.100000 | 0.110000 | -0.010000 |" in md
+    row_1 = [line for line in md.splitlines() if line.startswith("| prefill | 1 |")]
+    assert row_1, md
+    assert row_1[0].endswith("| 0.001000 | **resolvable** |"), row_1[0]
+    row_112 = [line for line in md.splitlines() if line.startswith("| prefill | 112 |")]
+    assert row_112[0].endswith("| 0.001000 | **resolvable** |"), row_112[0]
+    assert "1.000000" not in md
+
+
+def test_the_paired_difference_column_is_never_empty(tmp_path):
+    """The renderer must read the key the merge actually writes.
+
+    The merged artefact writes `differences_arm_a_minus_arm_b`; the renderer
+    used to read `differences_arm_a_minus_b`, which made the per-seed
+    difference column render empty — a silently blank column in the write-up.
+    """
+    p = Path(__file__).resolve().parents[1] / "results" / "quality_pilot.json"
+    md = rrt.render_quality(p)
+    # the paired table has one row per seed and a number in the difference column
+    rows = [line for line in md.splitlines()
+            if line.startswith("| ") and " HE | " not in line and " | **" not in line]
+    diff_rows = [line for line in md.splitlines()
+                 if line.startswith("| 1 |") or line.startswith("| 2 |")]
+    assert diff_rows, "the paired table must have its per-seed rows"
+    for line in diff_rows:
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        assert len(cells) == 4, line
+        for cell in cells:
+            assert cell and cell.lower() not in ("none", "nan", "—"), line

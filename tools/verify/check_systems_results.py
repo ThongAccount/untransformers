@@ -31,6 +31,7 @@ import json
 import math
 import sys
 from pathlib import Path
+from typing import Dict, List
 
 SCHEMA = "untransformers-systems-run/2"
 ARMS = ("HE", "attention-32h", "attention-32h-sdpa")
@@ -47,6 +48,43 @@ def _has_stats(row: Dict, key: str) -> bool:
             and _finite(st.get("n")) and st.get("n", 0) > 0
             and _finite(st.get("p10")) and _finite(st.get("p90"))
             and _finite(st.get("min")))
+
+
+def _slot_median(row: Dict):
+    """The median of one measurement slot, whatever block it came from."""
+    for key in ("latency_stats", "latency", "step_seconds",
+                "steady_state_per_token_seconds"):
+        block = row.get(key)
+        if isinstance(block, dict) and block.get("median") is not None:
+            return float(block["median"])
+    return None
+
+
+def _recompute_same_context_null(slots: List[Dict]):
+    """Recompute the A/A null from the slot rows.
+
+    The null is the same arm measured at the start and at the end of the
+    palindromic order **at the same context**. Returns the per-(arm, context)
+    spreads and the per-context floor (the largest spread over the arms).
+    """
+    groups: Dict = {}
+    for r in slots:
+        groups.setdefault((r.get("arm"), r.get("context_tokens")), []).append(r)
+    spread: Dict = {}
+    for (arm, ctx), rows in groups.items():
+        rows = sorted(rows, key=lambda r: r.get("order_index", 0))
+        if len(rows) < 2:
+            continue
+        first = _slot_median(rows[0])
+        last = _slot_median(rows[-1])
+        if first is None or last is None:
+            continue
+        spread[(arm, ctx)] = abs(last - first)
+    floors: Dict = {}
+    for (_arm, ctx), value in spread.items():
+        key = str(ctx)
+        floors[key] = max(floors.get(key, 0.0), value)
+    return spread, floors
 
 
 def _quality_block_ok(row: Dict) -> bool:
@@ -154,21 +192,49 @@ def main() -> int:
 
     # --- S2: order effect / A/A null ---------------------------------------
     order = data.get("order_effect", {}) or {}
+    slot_keys = {"training_step": "training_step_slots",
+                 "prefill": "prefill_slots",
+                 "incremental_decode": "incremental_decode_slots"}
     for block in ("training_step", "prefill", "incremental_decode"):
         oe = order.get(block) or {}
         check(bool(oe), f"order_effect.{block} missing (S2)")
         if not oe:
             continue
-        aa = oe.get("aa_null") or {}
-        for arm in ARMS:
-            entry = aa.get(arm)
+        by_ctx = oe.get("aa_null_by_context") or {}
+        check(bool(by_ctx),
+              f"order_effect.{block}: no same-context A/A null (S2) — the null must "
+              f"compare the arm's first and last slot AT THE SAME CONTEXT, otherwise "
+              f"it measures the growth of the latency with the context")
+        floors = oe.get("floor_by_context_seconds") or {}
+        check(bool(floors), f"order_effect.{block}: no per-context drift floor (S2)")
+        slots = data.get(slot_keys[block]) or []
+        spread, recomputed = _recompute_same_context_null(slots)
+        check(bool(spread),
+              f"order_effect.{block}: no slot rows to recompute the null from (S2)")
+        for (arm, ctx), value in sorted(spread.items(), key=lambda kv: str(kv[0])):
+            entry = (by_ctx.get(str(ctx)) or {}).get(arm)
             if not entry:
-                failures.append(f"order_effect.{block}: no A/A null for arm {arm} (S2)")
+                failures.append(f"order_effect.{block}: no A/A null for arm {arm} "
+                                f"at context {ctx} (S2)")
                 continue
             check(_finite(entry.get("difference_seconds")),
-                  f"order_effect.{block}[{arm}]: A/A difference missing")
+                  f"order_effect.{block}[{arm}@{ctx}]: A/A difference missing")
+            check(abs(abs(entry.get("difference_seconds", 0.0)) - value) <= 1e-12,
+                  f"order_effect.{block}[{arm}@{ctx}]: the A/A difference "
+                  f"{entry.get('difference_seconds')!r} is not the same-context null "
+                  f"recomputed from the slot rows ({value!r})")
+        for ctx, floor in sorted(recomputed.items()):
+            check(abs((floors.get(ctx) or 0.0) - floor) <= 1e-12,
+                  f"order_effect.{block}: the drift floor at context {ctx} is "
+                  f"{floors.get(ctx)!r}, but the same-context null recomputed from "
+                  f"the slot rows gives {floor!r}")
         check(_finite(oe.get("drift_floor_seconds")),
               f"order_effect.{block}: drift floor missing (S2)")
+        if recomputed:
+            check(abs((oe.get("drift_floor_seconds") or 0.0)
+                      - max(recomputed.values())) <= 1e-12,
+                  f"order_effect.{block}: the block drift floor is not the largest "
+                  f"per-context floor")
     notes.append("order_effect drift floors: " + ", ".join(
         f"{b}={(order.get(b) or {}).get('drift_floor_seconds')}"
         for b in ("training_step", "prefill", "incremental_decode")))

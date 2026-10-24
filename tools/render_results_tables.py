@@ -125,7 +125,8 @@ def render_quality(path: Path) -> str:
         out.append("| seed | HE | attention-32h | difference |\n|---|---|---|---|")
         fa = paired.get("arm_a_final_held_out_loss", {})
         fb = paired.get("arm_b_final_held_out_loss", {})
-        diffs = paired.get("differences_arm_a_minus_b", {})
+        diffs = (paired.get("differences_arm_a_minus_arm_b")
+                 or paired.get("differences_arm_a_minus_b") or {})
         for s in paired.get("seeds", []):
             out.append(f"| {s} | {_fmt(fa.get(str(s)), 6)} | {_fmt(fb.get(str(s)), 6)} | "
                        f"{_fmt(diffs.get(str(s)), 6)} |")
@@ -145,7 +146,8 @@ def render_quality(path: Path) -> str:
         if not isinstance(disp, dict) or not disp:
             continue
         out.append(f"**{arm}**\n")
-        out.append("| step | n | mean held-out loss | std |\n|---|---|---|---|")
+        out.append("| step | n | mean held-out loss | std (population, ddof=0 — "
+                   "descriptive only) |\n|---|---|---|---|")
         for step, p in sorted(disp.items(), key=lambda kv: int(kv[0])):
             out.append(f"| {step} | {p.get('n')} | {_fmt(p.get('mean'), 6)} | "
                        f"{_fmt(p.get('std'), 6)} |")
@@ -163,23 +165,56 @@ def _quality_cell(q: dict) -> str:
     return "architecture at initialisation (no quality level)"
 
 
+def _ctx_sort_key(key):
+    """Sort the context keys numerically ("8" before "112"), model shape first."""
+    if key == "None":
+        return (0, 0.0, "")
+    try:
+        return (1, float(key), key)
+    except (TypeError, ValueError):
+        return (2, 0.0, str(key))
+
+
+def _slot_median(row: dict):
+    """The median of one measurement slot, whatever block it came from.
+
+    The slot rows carry the timed statistics under `latency_stats`; the
+    fallback keys are the block-specific ones.
+    """
+    for key in ("latency_stats", "latency", "step_seconds",
+                "steady_state_per_token_seconds"):
+        block = row.get(key)
+        if isinstance(block, dict) and block.get("median") is not None:
+            return float(block["median"])
+    return None
+
+
 def _aa_spread_by_context(slots: list[dict]) -> dict:
-    """(arm, context) -> the A/A null's max-min spread, in seconds.
+    """(arm, context) -> the A/A null's spread, in seconds.
 
     The null is the same arm measured at the start and at the end of the
-    palindromic order. Its two slots carry the timed samples, so the spread is
-    max(the slots' maxima) - min(the slots' minima).
+    palindromic order **at the same context**. Its repetitions are those two
+    slot medians, so the spread is the max-min over them.
+
+    It has to be same-context: the prefill and incremental-decode blocks carry
+    one row per context length per slot, so an arm-level comparison across the
+    whole block would measure the growth of the latency with the context, not
+    the run-order drift.
     """
     by: dict = {}
     for s in slots:
-        st = s.get("latency_stats") or {}
-        lo, hi = st.get("min"), st.get("max")
-        if lo is None or hi is None:
+        med = _slot_median(s)
+        if med is None:
             continue
         key = (s.get("arm"), s.get("context_tokens"))
-        cur = by.get(key)
-        by[key] = [lo, hi] if cur is None else [min(cur[0], lo), max(cur[1], hi)]
-    return {k: (v[1] - v[0]) for k, v in by.items()}
+        by.setdefault(key, []).append((s.get("order_index", 0), med))
+    out: dict = {}
+    for key, rows in by.items():
+        if len(rows) < 2:
+            continue
+        rows.sort()
+        out[key] = abs(rows[-1][1] - rows[0][1])
+    return out
 
 
 def _floor_by_context(slots: list[dict]) -> dict:
@@ -314,27 +349,43 @@ def render_systems(path: Path) -> str:
     if oe:
         out.append("### Run-order null (A/A) and the drift floor\n")
         out.append("Every arm is measured twice, in a palindromic (ABBA) order, so the "
-                   "same arm appears at the start and at the end of the order. The "
-                   "spread of that null is the run-order drift floor: an arm-to-arm "
-                   "difference smaller than the floor is not resolvable against "
-                   "clock/thermal drift.\n")
-        out.append("| block | arm | first slot (index) | last slot (index) | "
-                   "first median s | last median s | difference s | relative |")
-        out.append("|---|---|---|---|---|---|---|---|")
+                   "same arm appears at the start and at the end of the order **at the "
+                   "same context**. The spread of that null is the run-order drift "
+                   "floor: an arm-to-arm difference smaller than the floor of its "
+                   "context is not resolvable against clock/thermal drift. The floor "
+                   "of a context is the largest such spread over the arms.\n")
+        out.append("| block | context | arm | first slot (index) | last slot (index) | "
+                   "first median s | last median s | difference s | relative | "
+                   "floor at this context (s) |")
+        out.append("|---|---|---|---|---|---|---|---|---|---|")
         for block, entry in oe.items():
-            for arm, row in (entry.get("aa_null") or {}).items():
-                out.append(f"| {block} | {arm} | {row.get('first_slot_order_index')} | "
-                           f"{row.get('last_slot_order_index')} | "
-                           f"{_fmt(row.get('first_slot_median_seconds'), 6)} | "
-                           f"{_fmt(row.get('last_slot_median_seconds'), 6)} | "
-                           f"{_fmt(row.get('difference_seconds'), 6)} | "
-                           f"{_fmt(row.get('relative_difference'), 4)} |")
+            by_ctx = entry.get("aa_null_by_context") or {}
+            floors = entry.get("floor_by_context_seconds") or {}
+            for ctx_key in sorted(by_ctx, key=_ctx_sort_key):
+                arms = by_ctx[ctx_key] or {}
+                floor = floors.get(ctx_key)
+                for arm in sorted(arms):
+                    row = arms[arm] or {}
+                    ctx_label = "model shape" if ctx_key == "None" else ctx_key
+                    out.append(f"| {block} | {ctx_label} | {arm} | "
+                               f"{row.get('first_slot_order_index')} | "
+                               f"{row.get('last_slot_order_index')} | "
+                               f"{_fmt(row.get('first_slot_median_seconds'), 6)} | "
+                               f"{_fmt(row.get('last_slot_median_seconds'), 6)} | "
+                               f"{_fmt(row.get('difference_seconds'), 6)} | "
+                               f"{_fmt(row.get('relative_difference'), 4)} | "
+                               f"{_fmt(floor, 6)} |")
         out.append("")
-        out.append("| block | drift floor (s) | drift floor (relative) |\n|---|---|---|")
+        out.append("| block | the artefact's block-level A/A difference (s) | "
+                   "relative |\n|---|---|---|")
         for block, entry in oe.items():
             out.append(f"| {block} | {_fmt(entry.get('drift_floor_seconds'), 6)} | "
                        f"{_fmt(entry.get('drift_floor_relative'), 4)} |")
         out.append("")
+        out.append("The artefact's block-level difference is the **largest** of the "
+                   "per-context floors above — the same-context null, never a "
+                   "cross-context one. The verdicts in the next table use the floor "
+                   "of the context they are printed in.\n")
 
     out.append(render_systems_differences(d))
 
