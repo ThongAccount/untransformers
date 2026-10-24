@@ -33,14 +33,15 @@ in the wall-clock rows.
   with one; a row whose quality level names a checkpoint carries that
   checkpoint's held-out loss.
 * **The arms are measured twice, in a palindromic (ABBA) order.** The A/A
-  null — the same arm at the start and at the end of the order — is the
-  run-order drift floor. An arm-to-arm difference smaller than the floor is
-  not resolvable against clock/thermal drift, and is reported as such rather
-  than as a result.
+  null — the same arm at the start and at the end of the order, **at the same
+  context** — is the run-order drift floor. An arm-to-arm difference smaller
+  than the floor of its context is not resolvable against clock/thermal drift,
+  and is reported as such rather than as a result.
 * **The floor is printed next to every arm-to-arm difference.** The rule was
   fixed before the systems numbers existed: the floor for a block and a
-  context is the **max−min spread across the A/A null's repetitions**, taken
-  as the **largest** such spread over the arms at that context; a difference
+  context is the **max−min spread across the A/A null's repetitions** (the
+  same arm, first slot and last slot, at that context), taken as the
+  **largest** such spread over the arms at that context; a difference
   is **resolvable** iff its absolute value exceeds that floor, and below the
   floor it is **not resolvable, whatever its sign**. Exceeding the floor is
   necessary, not sufficient, for a claim — the kernel caveat still travels

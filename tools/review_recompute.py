@@ -498,8 +498,10 @@ def main() -> int:
             mine_needed = mine.get("seeds_needed_for_80_power_at_observed_effect")
             their_needed = theirs.get("seeds_needed_for_80_power_at_observed_effect")
             if mine_needed is not None and their_needed is not None:
-                checks.add(f"{endpoint}: the seeds-needed figure agrees (within one seed)",
-                           abs(int(mine_needed) - int(their_needed)) <= 1,
+                # exact now: both sides invert the Student-t CDF numerically, so
+                # any difference means one of them still uses a table
+                checks.add(f"{endpoint}: the seeds-needed figure agrees exactly",
+                           int(mine_needed) == int(their_needed),
                            f"reviewer={mine_needed} artefact={their_needed}")
             elif (mine_needed is None) != (their_needed is None):
                 checks.add(f"{endpoint}: the seeds-needed figure agrees",
@@ -509,8 +511,34 @@ def main() -> int:
             checks.close(f"{endpoint}: the builder's t critical value",
                          mine.get("t_critical_95"), theirs.get("t_critical_95"),
                          rel=1e-3, abs_=1e-4)
+            checks.close(f"{endpoint}: the builder's 80% t critical value",
+                         mine.get("t_critical_80"), theirs.get("t_critical_80"),
+                         rel=1e-6, abs_=1e-9)
             review[f"summary_agreement_{endpoint}"] = {
                 "reviewer": mine, "artefact": theirs}
+
+        # the protocol's stated constants, as the builder computed them
+        constants = summary.get("protocol_constants") or {}
+        if constants:
+            t975_2 = student_t_ppf(0.975, 2)
+            t80_2 = student_t_ppf(0.80, 2)
+            for key, expected in (("t_975_df2", t975_2), ("t_80_df2", t80_2)):
+                checks.close(f"protocol constant {key} (the builder's computation)",
+                             expected, (constants.get(key) or {}).get("computed"),
+                             rel=1e-9, abs_=1e-12)
+            checks.close("protocol constant: the CI half-width constant",
+                         t975_2 / math.sqrt(3),
+                         (constants.get("ci_half_width_constant") or {}).get("computed"),
+                         rel=1e-9, abs_=1e-12)
+            checks.close("protocol constant: the MDD constant",
+                         (t975_2 + t80_2) / math.sqrt(3),
+                         (constants.get("mdd_constant") or {}).get("computed"),
+                         rel=1e-9, abs_=1e-12)
+            checks.add("the builder's protocol constants all reproduce",
+                       all((row.get("ok") is True) for row in constants.values()),
+                       "verify_protocol_constants() refuses to print if the computed "
+                       "quantiles stop reproducing the protocol's stated constants")
+            review["protocol_constants_recomputed"] = constants
 
     # --- eval windows: bootstrap + book-aligned sensitivity ----------------
     if args.eval_windows:
@@ -562,19 +590,36 @@ def main() -> int:
         verdicts = systems_verdicts(systems, nulls)
         review["systems_null_recomputed"] = nulls
         review["systems_verdicts"] = verdicts
+        order_effect = systems.get("order_effect") or {}
         for block, entry in nulls.items():
             artefact_floor = entry.get("artefact_block_floor_seconds")
             same_max = entry.get("reviewer_max_same_context_floor_seconds")
-            if artefact_floor is None or same_max is None:
-                continue
-            multi = len(entry.get("floor_per_context_seconds") or {}) > 1
-            if multi:
-                checks.add(f"{block}: the artefact's drift floor is a same-context null",
-                           artefact_floor <= same_max * (1 + 1e-9) + 1e-12,
-                           f"artefact block floor={artefact_floor!r}; the largest "
-                           f"same-context null spread the reviewer recomputes is "
-                           f"{same_max!r} — a larger block floor means it contains "
-                           f"cross-context differences")
+            floors = entry.get("floor_per_context_seconds") or {}
+            block_entry = order_effect.get(block) or {}
+            artefact_floors = block_entry.get("floor_by_context_seconds") or {}
+            artefact_null = block_entry.get("aa_null_by_context") or {}
+            checks.add(f"{block}: the artefact carries a same-context A/A null",
+                       bool(artefact_null) and bool(artefact_floors),
+                       "the null must compare the arm's first and last slot AT THE "
+                       "SAME CONTEXT ('aa_null_by_context' + "
+                       "'floor_by_context_seconds'); an arm-level null across the "
+                       "block measures the growth of the latency with the context, "
+                       "not the run-order drift")
+            for ctx, floor in sorted(floors.items()):
+                checks.close(f"{block}: the drift floor at context {ctx}",
+                             floor, artefact_floors.get(ctx))
+            for ctx, arms in sorted((entry.get("null_per_arm_and_context") or {}).items()):
+                for arm, mine_row in sorted(arms.items()):
+                    theirs_row = (artefact_null.get(ctx) or {}).get(arm) or {}
+                    checks.add(f"{block}: the artefact carries the A/A null for "
+                               f"{arm} at context {ctx}",
+                               bool(theirs_row), f"artefact row={theirs_row!r}")
+                    checks.close(f"{block}: the A/A null for {arm} at context {ctx}",
+                                 mine_row.get("absolute_difference_seconds"),
+                                 abs(theirs_row.get("difference_seconds") or 0.0))
+            if artefact_floor is not None and same_max is not None:
+                checks.close(f"{block}: the block drift floor is the largest "
+                             f"same-context floor", same_max, artefact_floor)
             checks.add(f"{block}: every arm-to-arm difference has a verdict",
                        all(v.get("floor_seconds") is not None for v in verdicts
                            if v["block"] == block),
