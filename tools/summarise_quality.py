@@ -245,6 +245,23 @@ def main() -> int:
                             for s in seeds if s in runs and runs[s].get("train_curve")}
     summary["final_train_loss"] = train_final
 
+    # the full curves (protocol §3.2: "the full per-seed eval curve for both
+    # arms (all 8 eval points), so the reader can see whether the final point
+    # is a plateau or a spike")
+    curves = {}
+    for arm in (args.arm_a, args.arm_b):
+        runs = {r["seed"]: r for r in (results.get(arm) or {}).get("runs", [])}
+        curves[arm] = {
+            str(s): {
+                "evals": [{"step": int(e["step"]),
+                           "held_out_loss": float(e["held_out_loss"])}
+                          for e in (runs[s].get("evals") or [])],
+                "train_curve": [float(v) for v in (runs[s].get("train_curve") or [])],
+            }
+            for s in seeds if s in runs
+        }
+    summary["curves"] = curves
+
     # --- eval-set bootstrap + book-aligned sensitivity ----------------------
     if args.eval_windows:
         ev = json.loads(Path(args.eval_windows).read_text(encoding="utf-8"))

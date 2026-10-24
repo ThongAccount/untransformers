@@ -44,26 +44,70 @@ def _quality():
 def _systems():
     return {
         "environment": {"device": "cuda", "gpu": "Tesla T4", "torch": "2.11.0+cu130",
-                        "python": "3.13.15", "torch_threads": 1},
+                        "python": "3.13.15", "torch_threads": 1,
+                        "numerics": {"dtype": "float32", "allow_tf32_matmul": False,
+                                     "allow_tf32_cudnn": False,
+                                     "float32_matmul_precision": "highest",
+                                     "cudnn_benchmark": False,
+                                     "cudnn_deterministic": True},
+                        "arms": ["HE", "attention-32h", "attention-32h-sdpa"],
+                        "git_commit": "c" * 40, "git_branch": "research/x",
+                        "git_dirty": False},
         "config": {"d": 128, "l": 128, "n_layers": 18, "ffn_width": 512, "vocab": 5000,
-                   "batch_size": 64, "n_heads": 32, "trials": 5, "warmup": 2,
-                   "gen_tokens": 16},
-        "training_step": [{"arm": "HE", "step_seconds": {"median": 0.5, "mean": 0.5,
-                                                          "p10": 0.4, "p90": 0.6},
+                   "batch_size": 64, "n_heads": 32, "trials": 10, "warmup": 2,
+                   "gen_tokens": 16, "decode_trials": 5,
+                   "order_schedule": ["HE", "attention-32h", "attention-32h-sdpa",
+                                      "attention-32h-sdpa", "attention-32h", "HE"],
+                   "order_schedule_kind": "palindromic (ABBA)"},
+        "training_step": [{"arm": "HE",
+                           "step_seconds": {"median": 0.5, "mean": 0.5, "p10": 0.4,
+                                            "p90": 0.6, "min": 0.35, "n": 20},
                            "tokens_per_second": 1000.0, "n_params": 10,
-                           "memory": {"peak_rss_bytes": 1}}],
-        "prefill": [{"arm": "HE", "context_tokens": 8, "latency": {"median": 0.01},
-                     "tokens_per_second": 10.0, "memory": {"peak_rss_bytes": 1}}],
+                           "memory": {"peak_rss_bytes": 1, "scope": "per-arm"},
+                           "quality": {"loaded": True, "seed": 1,
+                                       "final_held_out_loss": 6.5},
+                           "kernel_caveat": "eager loop vs fused kernel"}],
+        "prefill": [{"arm": "HE", "context_tokens": 8,
+                      "latency": {"median": 0.01, "p10": 0.009, "p90": 0.011,
+                                  "min": 0.009, "n": 20},
+                      "tokens_per_second": 10.0, "memory": {"peak_rss_bytes": 1},
+                      "quality": {"loaded": False}}],
         "incremental_decode": [{"arm": "HE", "context_tokens": 8,
-                                "per_token_seconds": {"median": 0.002, "samples": 4},
-                                "tokens_per_second": 500.0, "cache_bytes_at_prompt": 64}],
+                                "per_token_seconds": {"median": 0.002, "n": 16},
+                                "first_token_seconds": {"median": 0.003},
+                                "steady_state_per_token_seconds": {"median": 0.0019},
+                                "tokens_per_second": 500.0,
+                                "tokens_per_second_including_first_token": 480.0,
+                                "cache_bytes_at_prompt": 64,
+                                "cache_bytes_per_layer": 32,
+                                "quality": {"loaded": False}}],
         "sublayer_scaling": [{"arm": "HE", "context_tokens": 128,
-                              "per_token_seconds": {"median": 0.002, "samples": 4},
+                              "per_token_seconds": {"median": 0.002, "n": 10},
                               "state_bytes_per_layer": 10,
-                              "state_bytes_all_layers": 180}],
+                              "state_bytes_all_layers": 180,
+                              "state_bytes_formula": "(l - 1) * d * 4 bytes"}],
+        "state_traffic": {"HE": {"state_bytes_per_layer_per_token": 10,
+                                 "state_bytes_all_layers_per_token": 180,
+                                 "state_bytes_per_layer_formula": "(l - 1) * d * 4",
+                                 "grows_with_context": False,
+                                 "note": "HE's state is flat"}},
         "weight_traffic": {"HE": {"n_params": 10, "parameter_bytes_fp32": 40,
                                   "training_step_parameter_bytes_read": 120,
-                                  "decode_step_parameter_bytes_read": 40}},
+                                  "decode_step_parameter_bytes_read": 40,
+                                  "training_step_parameter_bytes_formula":
+                                      "3 * n_params * 4 bytes",
+                                  "decode_step_parameter_bytes_formula":
+                                      "1 * n_params * 4 bytes",
+                                  "note": "analytic"}},
+        "order_effect": {"training_step": {
+            "block": "training_step",
+            "aa_null": {"HE": {"first_slot_order_index": 0, "last_slot_order_index": 5,
+                               "first_slot_median_seconds": 0.5,
+                               "last_slot_median_seconds": 0.51,
+                               "difference_seconds": 0.01,
+                               "relative_difference": 0.02}},
+            "drift_floor_seconds": 0.01, "drift_floor_relative": 0.02}},
+        "caveats": ["the CPU memory rows are process-level"],
         "paired_quality": {"HE": {"1": {"steps": 2000, "final_held_out_loss": 6.5}}},
     }
 
@@ -85,8 +129,24 @@ def test_systems_tables_carry_conditions_and_numbers(tmp_path):
     p.write_text(json.dumps(_systems()), encoding="utf-8")
     md = rrt.render_systems(p)
     assert "Tesla T4" in md
-    assert "| HE | 0.5000 |" in md
-    assert "| HE | 8 | 0.01000 |" in md
-    assert "| HE | 8 | 0.002000 | 4 |" in md
-    assert "| HE | 128 | 0.002000 | 10 | 180 |" in md
+    # the conditions: the numerics flags and the commit
+    assert "highest" in md and "allow_tf32" in md
+    assert "c" * 40 in md
+    # the training step: median, mean, p10, p90, min, n, throughput, memory scope
+    assert "| HE | 0.5000 | 0.5000 | 0.4000 | 0.6000 | 0.3500 | 20 | 1000.0 | 10 | 1 |" in md
+    # ... and the quality level of the timed model (S8)
+    assert "trained checkpoint (seed 1, held-out loss 6.500000)" in md
+    # the prefill row carries its percentiles and n
+    assert "| HE | 8 | 0.01000 | 0.00900 | 0.01100 | 0.00900 | 20 | 10.00 |" in md
+    # the decode row separates the first token from the steady state (S4)
+    assert "| HE | 8 | 0.003000 | 0.001900 | 0.002000 | 16 |" in md
+    # the sublayer row is labelled analytic and prints its formula
+    assert "| HE | 128 | 0.002000 |" in md and "180 |" in md
+    assert "(l - 1) * d * 4 bytes" in md
+    # the traffic block
     assert "| HE | 10 | 40 | 120 | 40 |" in md
+    assert "3 * n_params * 4 bytes" in md
+    # the A/A null and the drift floor (S2)
+    assert "Run-order null" in md and "0.0100" in md
+    # the caveats travel with the artefact
+    assert "the CPU memory rows are process-level" in md

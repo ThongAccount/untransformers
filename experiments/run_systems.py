@@ -517,8 +517,8 @@ def measure_sublayer_scaling(arms: List[str], cfg: TrainConfig, device: torch.de
             stats["warmup"] = warmup
             if arm == "HE":
                 state_bytes = (cfg.l - 1) * cfg.d * 4
-                state_formula = "(l - 1) * d * 4 bytes = "
-                f"({cfg.l} - 1) * {cfg.d} * 4"
+                state_formula = (f"(l - 1) * d * 4 bytes = "
+                                 f"({cfg.l} - 1) * {cfg.d} * 4")
                 state_note = ("HE keeps only the last l-1 projected vectors, so its "
                               "state is flat in the context length")
             else:
