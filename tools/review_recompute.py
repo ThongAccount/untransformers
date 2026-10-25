@@ -376,7 +376,8 @@ def systems_measured_commit(systems: Dict) -> Dict:
                  "source_has_same_context_null": None,
                  "source_has_legacy_cross_context_null": None}
     commit = (systems.get("commit")
-              or (systems.get("environment") or {}).get("commit"))
+              or (systems.get("environment") or {}).get("commit")
+              or (systems.get("environment") or {}).get("git_commit"))
     out["commit"] = commit
     if not commit:
         out["note"] = "the artefact does not record the commit it was measured at"
