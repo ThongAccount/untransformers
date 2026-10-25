@@ -125,7 +125,27 @@ artefacts stay unreviewed outside the repository.
 
 ## 4. The decision and its rationale
 
-_filled in below once the measured artefacts and the gates are in._
+**Decision: Option A — execution-only.**
+
+This repository stays an execution-only research artefact: the replication, the harness, the measured artefacts, the gates and the write-ups. No claim beyond "this is what we measured, under these conditions". No publication outside the repository, no runtime change, no product surface.
+
+**Rationale against the criteria in §3.**
+
+1. *Is the quality comparison resolved at n = 3?* Yes. The 95% CI for the paired difference excludes 0 on both endpoints (primary d̄ = −0.103862, CI [−0.114544, −0.093180]; secondary d̄ = −0.108946, CI [−0.111585, −0.106307]), so the pre-registered rule (§3.2) is satisfied and the comparison is resolved at n = 3 within this protocol.
+
+2. *Are the systems differences resolvable above the run-order drift floor?* Yes, where the table says resolvable. Every arm-to-arm difference carries its per-context floor, and the reviewer's per-(arm, context) recomputation agrees with the artefact's floors (abs_diff = 0.0). G6 and G7 are MET.
+
+3. *Does anything here support a claim about the paper's own numbers?* No, and nothing in this repository may say so: the corpus is a substitute, the metric differs, and the budget is 3.333% of the paper's (disclosures D-C and D-22; criterion 3).
+
+4. *Is the round reproducible and self-consistent?* Yes. The gates, the artefacts and the evidence ledger agree (G2, G4, G4a, G4b, G6, G7, G8c MET), and the reviewer's independent re-computation is `REVIEW_RECOMPUTE_OK: 162 checks`.
+
+5. *What would each option cost in credibility?* Broadening to Option B would require the write-up to soften disclosures — in particular the data-order variance lower bound (L-01) and the not-run book-aligned sensitivity (D-27, L-05) — which criterion 5 rules out at any price. Stopping (Option C) would discard a real gated result that the round actually produced. Option A keeps the result with its disclosures attached.
+
+**Why REVIEW.md and this section are separate.** The decision is recorded here, in SCOPE.md, while the reviewer's independent verdict lives in REVIEW.md, so the decision does not self-certify and each document can be checked against the other.
+
+**Falsifiers (§6).** A not-resolved quality comparison, systems differences below the drift floor, or a gate/evidence failure would revisit the whole round before any scope call. None of those conditions obtained.
+
+**Open items.** The book-aligned sensitivity analysis was not run (L-05, D-27) and the data-order variance remains a lower bound (L-01); both stay declared limitations, not open bugs.
 
 ## 5. What the round left open (the declared limitations)
 
